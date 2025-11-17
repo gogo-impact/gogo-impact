@@ -6,6 +6,7 @@ import DialogContent from '@mui/material/DialogContent';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import COLORS from '../../assets/colors';
+import { useLocation } from 'react-router-dom';
 
 type SpotifyEmbedsSectionProps = {
   title?: string;
@@ -117,6 +118,7 @@ function SpotifyEmbedsSection({
   const [showMentorProfiles, setShowMentorProfiles] = useState(false);
   const [showAllSongs, setShowAllSongs] = useState(false);
   const modalGridRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
 
   // Light entrance animation similar to disciplines modal (optional no-op if not supported)
   useEffect(() => {
@@ -131,6 +133,20 @@ function SpotifyEmbedsSection({
       card.style.transform = 'none';
     });
   }, [showMentorProfiles, showAllSongs]);
+
+  // Open specific music modal when arriving with query params and music hash
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const modal = params.get('modal');
+    const hash = (location.hash || '').replace('#', '');
+    if (hash === 'music') {
+      if (modal === 'mentor') {
+        setShowMentorProfiles(true);
+      } else if (modal === 'all') {
+        setShowAllSongs(true);
+      }
+    }
+  }, [location]);
 
   // Spotify artist profile embeds (mentor profiles)
   const mentorArtistEmbeds: string[] = [

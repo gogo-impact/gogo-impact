@@ -3,6 +3,7 @@ import {
   Typography,
   Grid,
   TextField,
+  MenuItem,
   Button,
   Paper,
   Box,
@@ -27,14 +28,23 @@ import ScreenGrid from "../components/ScreenGrid.tsx";
 import COLORS from "../../assets/colors.ts";
 import styled from "styled-components";
 import HeroSection from "../components/HeroSection.tsx";
+import MissionSection from "../sections/MissionSection.tsx";
 import { signUpload } from "../services/upload.api.ts";
 import { saveMedia } from "../services/media.api.ts";
-import { fetchHeroContent, saveHeroContent } from "../services/impact.api.ts";
+import {
+  fetchHeroContent,
+  saveHeroContent,
+  fetchMissionContent,
+  saveMissionContent,
+  fetchDefaults,
+  saveDefaults,
+} from "../services/impact.api.ts";
 import "../../assets/fonts/fonts.css";
 import { useSnackbar } from "notistack";
 import ColorPickerPopover from "../components/ColorPickerPopover";
 
 const MemoHeroSection = React.memo(HeroSection);
+const MemoMissionSection = React.memo(MissionSection);
 
 function useDebouncedValue<T>(value: T, delayMs: number): T {
   const [debounced, setDebounced] = React.useState(value);
@@ -174,19 +184,58 @@ function toHex(color: string): string {
   return "#000000";
 }
 
+// Simple color helpers for preview contrast/debug
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const h = toHex(hex).replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return { r, g, b };
+}
+
+function relativeLuminance(hex: string): number {
+  const { r, g, b } = hexToRgb(hex);
+  const srgb = [r, g, b]
+    .map((v) => v / 255)
+    .map((c) =>
+      c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4),
+    );
+  // Rec. 709 luminance
+  return 0.2126 * srgb[0] + 0.7152 * srgb[1] + 0.0722 * srgb[2];
+}
+
+function getReadableTextColor(bgHex: string): string {
+  // Return white for dark backgrounds, dark for light backgrounds
+  const L = relativeLuminance(bgHex);
+  return L > 0.4 ? "#0f1118" : "#ffffff";
+}
+
+function withAlphaHex(hex: string, alpha: number): string {
+  const { r, g, b } = hexToRgb(hex);
+  return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(1, alpha))})`;
+}
+
 // Styled components for dark theme
 const CustomPaper = styled(Paper)`
   && {
-    background-color: #151821; /* increase specificity to beat MuiPaper background */
+    /* Frosted glass effect */
+    background-color: rgba(21, 24, 33, 0.55); /* liquid glass */
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    backdrop-filter: blur(12px) saturate(140%);
     color: white;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+      0 10px 30px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
     font-family: "Century Gothic", "Arial", sans-serif;
   }
 `;
 
 const CustomTextField = styled(TextField)`
   & .MuiOutlinedInput-root {
+    background: rgba(255, 255, 255, 0.06);
+    -webkit-backdrop-filter: blur(8px) saturate(140%);
+    backdrop-filter: blur(8px) saturate(140%);
     color: white;
     & fieldset {
       border-color: rgba(255, 255, 255, 0.3);
@@ -206,12 +255,38 @@ const CustomTextField = styled(TextField)`
   }
 `;
 
-// Force preview hero to be shorter (20% less height than default 85vh)
-const PreviewFrame = styled.div`
-  & section {
-    min-height: 68vh !important; /* 80% of 85vh */
+/* Scope styles for clearer button states and glass look */
+const FrostedScope = styled.div`
+  /* Base glass look for outlined buttons */
+  .MuiButton-root.MuiButton-outlined {
+    background: rgba(255, 255, 255, 0.06);
+    -webkit-backdrop-filter: blur(6px) saturate(140%);
+    backdrop-filter: blur(6px) saturate(140%);
+    border-color: rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.9);
+    transition:
+      transform 0.15s ease,
+      background 0.2s ease,
+      border-color 0.2s ease;
+  }
+  .MuiButton-root.MuiButton-outlined:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.28);
+    transform: translateY(-1px);
+  }
+  /* Clear disabled state for all buttons */
+  .MuiButton-root.Mui-disabled,
+  button.Mui-disabled {
+    opacity: 0.45 !important;
+    color: rgba(255, 255, 255, 0.35) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    cursor: not-allowed !important;
   }
 `;
+
+// Preview frame wrapper (no overrides to internal section heights)
+const PreviewFrame = styled.div``;
 
 // Simple circular degree picker
 function DegreePicker({
@@ -340,11 +415,42 @@ interface HeroSection {
 }
 
 interface MissionSection {
-  title: string;
-  content: string;
-  image: File | null;
-  imagePreview: string | null;
+  // enable/visibility
   enabled: boolean;
+  // basic copy
+  title: string;
+  badgeLabel: string;
+  statementTitle: string;
+  statementText: string;
+  statementMeta: string;
+  serial: string;
+  // per-text colors
+  statementTitleColor?: string | null;
+  statementTextColor?: string | null;
+  statementMetaColor?: string | null;
+  serialColor?: string | null;
+  // title gradient override (optional text style)
+  titleGradient?: string | null;
+  // background controls (parity with hero)
+  degree: number;
+  color1: string;
+  color2: string;
+  gradientOpacity: number;
+  backgroundImageUrl: string | null;
+  backgroundImagePreview: string | null;
+  backgroundImageFile?: File | null;
+  backgroundGrayscale: boolean;
+  // stats and modal editing
+  stats: Array<{
+    id: string;
+    number: string | number;
+    label: string;
+    color?: string;
+    action?: "none" | "openModal";
+    modalId?: string | null;
+  }>;
+  modalTitle?: string;
+  disciplinesItems: string[]; // list of discipline names
 }
 
 interface ImpactSection {
@@ -407,6 +513,23 @@ interface ImpactReportForm {
  */
 function ImpactReportCustomizationPage() {
   const { enqueueSnackbar } = useSnackbar();
+  // Disable outermost page scroll while this page is mounted
+  useEffect(() => {
+    // Always jump to the top of the page on mount
+    try {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    } catch {}
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+    const prevBodyOverflow = document.body.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.documentElement.style.overflow = prevHtmlOverflow;
+      document.body.style.overflow = prevBodyOverflow;
+    };
+  }, []);
   // Current tab state
   const [currentTab, setCurrentTab] = useState(0);
 
@@ -435,12 +558,82 @@ function ImpactReportCustomizationPage() {
       enabled: true,
     },
     mission: {
-      title: "Our Mission",
-      content:
-        "Guitars Over Guns is a 501(c)(3) organization that connects youth with professional musician mentors to help them overcome hardship, find their voice and reach their potential through music, art and mentorship.",
-      image: null,
-      imagePreview: null,
       enabled: true,
+      title: "Our Mission",
+      badgeLabel: "Since 2008",
+      statementTitle: "MISSION STATEMENT — ADMIT ALL",
+      statementText:
+        "Our mission is to empower youth through music, art and mentorship. Guitars Over Guns offers students from our most vulnerable communities a combination of arts education and mentorship with paid, professional musician mentors to help them overcome hardship, find their voice and reach their potential as tomorrow's leaders. Since 2008, we have served nearly 12,000 students.",
+      statementMeta: "ISSUED 2025 • CHOOSE YOUR SOUND",
+      serial: "SN-GOGO-2025",
+      statementTitleColor: null,
+      statementTextColor: null,
+      statementMetaColor: null,
+      serialColor: null,
+      titleGradient:
+        "linear-gradient(to right, rgb(126,154,255), rgb(191,175,255), rgb(178,255,241))",
+      degree: 180,
+      color1: "#5038a0",
+      color2: "#121242",
+      gradientOpacity: 0,
+      backgroundImageUrl: null,
+      backgroundImagePreview: null,
+      backgroundImageFile: null,
+      backgroundGrayscale: false,
+      stats: [
+        {
+          id: "students",
+          number: 1622,
+          label: "Students",
+          color: "#22C55E",
+          action: "none",
+          modalId: null,
+        },
+        {
+          id: "mentors",
+          number: 105,
+          label: "Paid Mentors",
+          color: "#3B82F6",
+          action: "none",
+          modalId: null,
+        },
+        {
+          id: "sites",
+          number: 59,
+          label: "School & Community Sites",
+          color: "#8B5CF6",
+          action: "none",
+          modalId: null,
+        },
+        {
+          id: "disciplines",
+          number: 12,
+          label: "Artistic Disciplines",
+          color: "#FDE047",
+          action: "openModal",
+          modalId: "disciplines",
+        },
+      ],
+      modalTitle: "Artistic Disciplines",
+      disciplinesItems: [
+        "Music Production",
+        "Guitar",
+        "Drums",
+        "Piano",
+        "Vocals",
+        "Bass",
+        "DJing",
+        "Songwriting",
+        "Dance",
+        "Visual Art",
+        "Digital Art",
+        "Spoken Word",
+        "Theater",
+        "Sound Engineering",
+        "Brass Instruments",
+        "Woodwind Instruments",
+        "Strings",
+      ],
     },
     impact: {
       title: "Our Impact",
@@ -592,9 +785,42 @@ function ImpactReportCustomizationPage() {
     }
   }
   // EyeDropper and swatches are implemented inside ColorPickerPopover
+  // Mission color picker (separate instance so hero logic remains untouched)
+  const [missionColorPickerAnchor, setMissionColorPickerAnchor] =
+    useState<HTMLElement | null>(null);
+  const [missionColorPickerField, setMissionColorPickerField] = useState<
+    | "statementTitleColor"
+    | "statementTextColor"
+    | "statementMetaColor"
+    | "serialColor"
+    | null
+  >(null);
+  const missionPickerOpen = Boolean(missionColorPickerAnchor);
+  const currentMissionPickerColor = missionColorPickerField
+    ? missionColorPickerField === "statementTitleColor"
+      ? impactReportForm.mission.statementTitleColor || "#ffffff"
+      : missionColorPickerField === "statementTextColor"
+        ? impactReportForm.mission.statementTextColor || "#b8ffe9"
+        : missionColorPickerField === "statementMetaColor"
+          ? impactReportForm.mission.statementMetaColor ||
+            "rgba(255,255,255,0.75)"
+          : impactReportForm.mission.serialColor || "rgba(255,255,255,0.55)"
+    : "#000000";
 
   // Refs for file inputs
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
+  const [missionUploadPct, setMissionUploadPct] = useState<number | null>(null);
+  // Defaults swatch editor state
+  const [defaultSwatch, setDefaultSwatch] = useState<string[] | null>(null);
+  const [defaultsPickerAnchor, setDefaultsPickerAnchor] =
+    useState<HTMLElement | null>(null);
+  const defaultsPickerOpen = Boolean(defaultsPickerAnchor);
+  const [defaultsPickerValue, setDefaultsPickerValue] =
+    useState<string>("#1946f5");
+  const [selectedSwatchIndex, setSelectedSwatchIndex] = useState<number | null>(
+    null,
+  );
+  const DEFAULT_SWATCH_SIZE = 6;
 
   // Generic image upload handler (currently used for mission image)
   const handleImageUpload = (
@@ -919,6 +1145,114 @@ function ImpactReportCustomizationPage() {
     })();
   }, []);
 
+  // Prefill mission from backend
+  useEffect(() => {
+    (async () => {
+      const mission = await fetchMissionContent();
+      if (!mission) return;
+      const g = parseGradient(mission.backgroundColor as string | null);
+      const alphaMatch = (mission.backgroundColor as string | "").match(
+        /rgba\([^,]+,[^,]+,[^,]+,\s*(\d*\.?\d+)\)/i,
+      );
+      const parsedAlpha = alphaMatch
+        ? Math.max(0, Math.min(1, parseFloat(alphaMatch[1] || "1")))
+        : undefined;
+      setImpactReportForm((prev) => {
+        const next: ImpactReportForm = {
+          ...prev,
+          mission: {
+            ...prev.mission,
+            title: mission.title ?? prev.mission.title,
+            titleGradient:
+              (mission as any)?.titleGradient ?? prev.mission.titleGradient,
+            badgeLabel: (mission as any)?.badgeLabel ?? prev.mission.badgeLabel,
+            statementTitle:
+              (mission as any)?.statementTitle ?? prev.mission.statementTitle,
+            statementText:
+              (mission as any)?.statementText ?? prev.mission.statementText,
+            statementMeta:
+              (mission as any)?.statementMeta ?? prev.mission.statementMeta,
+            serial: (mission as any)?.serial ?? prev.mission.serial,
+            statementTitleColor:
+              (mission as any)?.statementTitleColor ??
+              prev.mission.statementTitleColor ??
+              null,
+            statementTextColor:
+              (mission as any)?.statementTextColor ??
+              prev.mission.statementTextColor ??
+              null,
+            statementMetaColor:
+              (mission as any)?.statementMetaColor ??
+              prev.mission.statementMetaColor ??
+              null,
+            serialColor:
+              (mission as any)?.serialColor ?? prev.mission.serialColor ?? null,
+            degree: g.degree,
+            color1: toHex(g.color1),
+            color2: toHex(g.color2),
+            gradientOpacity:
+              typeof parsedAlpha === "number"
+                ? parsedAlpha
+                : prev.mission.gradientOpacity,
+            backgroundImageUrl: (mission as any)?.backgroundImage ?? null,
+            backgroundImagePreview: null,
+            backgroundImageFile: null,
+            backgroundGrayscale:
+              (mission as any)?.backgroundImageGrayscale === true
+                ? true
+                : false,
+            stats: Array.isArray((mission as any)?.stats)
+              ? ((mission as any)?.stats as any[]).map((s, idx) => ({
+                  id: String(s?.id ?? idx),
+                  number: s?.number ?? "",
+                  label: s?.label ?? "",
+                  color: s?.color ?? undefined,
+                  action: s?.action ?? "none",
+                  modalId: s?.modalId ?? null,
+                }))
+              : prev.mission.stats,
+            modalTitle:
+              ((mission as any)?.modals ?? []).find(
+                (m: any) => m?.id === "disciplines",
+              )?.title ?? prev.mission.modalTitle,
+            disciplinesItems:
+              ((mission as any)?.modals ?? [])
+                .find((m: any) => m?.id === "disciplines")
+                ?.items?.map((it: any) => it?.name)
+                .filter(Boolean) ?? prev.mission.disciplinesItems,
+          },
+        };
+        setSavedSnapshot(next);
+        return next;
+      });
+    })();
+  }, []);
+
+  // Prefill defaults (swatch) from backend
+  useEffect(() => {
+    (async () => {
+      const defs = await fetchDefaults();
+      const brand = [
+        COLORS.gogo_blue,
+        COLORS.gogo_purple,
+        COLORS.gogo_teal,
+        COLORS.gogo_yellow,
+        COLORS.gogo_pink,
+        COLORS.gogo_green,
+      ];
+      const incoming =
+        defs?.colorSwatch &&
+        Array.isArray(defs.colorSwatch) &&
+        defs.colorSwatch.length > 0
+          ? defs.colorSwatch
+          : brand;
+      const normalized = Array.from({ length: DEFAULT_SWATCH_SIZE }).map(
+        (_, i) => incoming[i] ?? brand[i % brand.length],
+      );
+      setDefaultSwatch(normalized);
+    })();
+  }, []);
+
   // Handle form submission
   const handleSave = async () => {
     setIsSubmitting(true);
@@ -1033,6 +1367,128 @@ function ImpactReportCustomizationPage() {
       };
       console.log("[admin][hero] save payload", payload);
       await saveHeroContent(payload);
+      // Save Defaults (swatch)
+      if (defaultSwatch && defaultSwatch.length > 0) {
+        await saveDefaults({ colorSwatch: defaultSwatch });
+      }
+      // ======= Mission save =======
+      // Compose mission gradient
+      const mSafeDegree = Math.max(
+        1,
+        Math.min(360, Number(impactReportForm.mission.degree) || 180),
+      );
+      const mSafeColor1 = isValidColorStop(impactReportForm.mission.color1)
+        ? impactReportForm.mission.color1
+        : "#5038a0";
+      const mSafeColor2 = isValidColorStop(impactReportForm.mission.color2)
+        ? impactReportForm.mission.color2
+        : "#121242";
+      const mSafeAlpha = Math.max(
+        0,
+        Math.min(1, Number(impactReportForm.mission.gradientOpacity) || 0),
+      );
+      const missionBackgroundColor = composeGradient(
+        mSafeDegree,
+        mSafeColor1,
+        mSafeColor2,
+        mSafeAlpha,
+      );
+
+      // Upload mission background image if pending
+      let missionBackgroundImagePayload =
+        impactReportForm.mission.backgroundImageUrl ?? null;
+      if (impactReportForm.mission.backgroundImageFile) {
+        const file = impactReportForm.mission.backgroundImageFile as File;
+        const ext = (file.name.split(".").pop() || "bin").toLowerCase();
+        const signed = await signUpload({
+          contentType: file.type,
+          extension: ext,
+          key: `mission/background.${ext}`,
+        });
+        setMissionUploadPct(0);
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("PUT", signed.uploadUrl);
+          if (file.type) xhr.setRequestHeader("Content-Type", file.type);
+          xhr.upload.onprogress = (evt) => {
+            if (evt.lengthComputable) {
+              const pct = Math.round((evt.loaded / evt.total) * 100);
+              setMissionUploadPct(pct);
+            }
+          };
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) resolve();
+            else reject(new Error(`Upload failed: ${xhr.status}`));
+          };
+          xhr.onerror = () => reject(new Error("Network error during upload"));
+          xhr.send(file);
+        });
+        try {
+          await saveMedia({
+            key: signed.key,
+            publicUrl: signed.publicUrl,
+            contentType: file.type,
+            bytes: file.size,
+            tag: "mission-background",
+          });
+        } catch {
+          // non-fatal
+        }
+        missionBackgroundImagePayload = signed.publicUrl;
+        setImpactReportForm((prev) => ({
+          ...prev,
+          mission: {
+            ...prev.mission,
+            backgroundImageUrl: signed.publicUrl,
+            backgroundImageFile: null,
+          },
+        }));
+        setMissionUploadPct(null);
+      }
+
+      const missionPayload: Record<string, unknown> = {
+        backgroundColor: missionBackgroundColor,
+        backgroundImage: missionBackgroundImagePayload,
+        backgroundImageGrayscale:
+          impactReportForm.mission.backgroundGrayscale || undefined,
+        // layout / a11y are not exposed here; can be added later
+        title: impactReportForm.mission.title,
+        titleGradient: impactReportForm.mission.titleGradient || undefined,
+        badgeLabel: impactReportForm.mission.badgeLabel,
+        statementTitle: impactReportForm.mission.statementTitle,
+        statementTitleColor:
+          impactReportForm.mission.statementTitleColor || undefined,
+        statementText: impactReportForm.mission.statementText,
+        statementTextColor:
+          impactReportForm.mission.statementTextColor || undefined,
+        statementMeta: impactReportForm.mission.statementMeta,
+        statementMetaColor:
+          impactReportForm.mission.statementMetaColor || undefined,
+        serial: impactReportForm.mission.serial,
+        serialColor: impactReportForm.mission.serialColor || undefined,
+        // stats
+        stats: impactReportForm.mission.stats.map((s) => ({
+          id: s.id,
+          number: s.number,
+          label: s.label,
+          color: s.color || undefined,
+          action: s.action || "none",
+          modalId: s.modalId || null,
+        })),
+        // modals: single "disciplines"
+        modals: [
+          {
+            id: "disciplines",
+            title:
+              impactReportForm.mission.modalTitle || "Artistic Disciplines",
+            items: impactReportForm.mission.disciplinesItems
+              .filter(Boolean)
+              .map((name) => ({ name })),
+          },
+        ],
+      };
+      console.log("[admin][mission] save payload", missionPayload);
+      await saveMissionContent(missionPayload);
       enqueueSnackbar("Impact report saved", { variant: "success" });
       setIsDirty(false);
       setLastSavedAt(new Date());
@@ -1052,20 +1508,55 @@ function ImpactReportCustomizationPage() {
   };
 
   // Discard changes and restore last saved snapshot
-  const handleDiscard = () => {
+  const handleDiscard = async () => {
     if (!savedSnapshot) return;
     const restore = JSON.parse(
       JSON.stringify(savedSnapshot),
     ) as ImpactReportForm;
     setImpactReportForm(restore);
     setIsDirty(false);
+    // Close any open pickers
+    setColorPickerAnchor(null);
+    setColorPickerField(null);
+    setMissionColorPickerAnchor(null);
+    setMissionColorPickerField(null as any);
+    setDefaultsPickerAnchor(null);
+    setSelectedSwatchIndex(null);
+    // Reload default swatch from backend (Mongo)
+    try {
+      const defs = await fetchDefaults();
+      const brand = [
+        COLORS.gogo_blue,
+        COLORS.gogo_purple,
+        COLORS.gogo_teal,
+        COLORS.gogo_yellow,
+        COLORS.gogo_pink,
+        COLORS.gogo_green,
+      ];
+      const incoming =
+        defs?.colorSwatch &&
+        Array.isArray(defs.colorSwatch) &&
+        defs.colorSwatch.length > 0
+          ? defs.colorSwatch
+          : brand;
+      const normalized = Array.from({ length: DEFAULT_SWATCH_SIZE }).map(
+        (_, i) => incoming[i] ?? brand[i % brand.length],
+      );
+      setDefaultSwatch(normalized);
+    } catch {
+      // ignore fetch errors on discard; keep current swatch if failed
+    }
     enqueueSnackbar("Changes discarded", { variant: "info" });
   };
 
   // No preview toggle; preview is always visible on the left
 
   // Tab configuration
-  const tabs = [{ label: "Hero Section", value: 0 }];
+  const tabs = [
+    { label: "Defaults", value: 0 },
+    { label: "Hero Section", value: 1 },
+    { label: "Mission Section", value: 2 },
+  ];
 
   // Build and debounce the preview hero override
   const liveHeroOverride = useMemo(
@@ -1109,929 +1600,2147 @@ function ImpactReportCustomizationPage() {
 
   const debouncedHeroOverride = useDebouncedValue(liveHeroOverride, 300);
 
-  return (
-    <ScreenGrid>
-      <Grid
-        item
-        container
-        spacing={{ xs: 2, md: 3 }}
-        sx={{ width: "100%", px: { xs: 1, sm: 2, md: 3 } }}
-      >
-        {/* Left column: title + permanent preview */}
-        <Grid item xs={12} md={8}>
-          <Box
-            sx={{ position: { md: "sticky" as const }, top: { md: 24 }, mb: 2 }}
-          >
-            <Typography
-              variant="h2"
-              color="white"
-              sx={{
-                mb: 1,
-                textAlign: { xs: "center", md: "left" },
-                fontFamily: "'Airwaves', 'Century Gothic', 'Arial', sans-serif",
-              }}
-            >
-              Customize Impact Report
-            </Typography>
-            <Typography
-              variant="subtitle1"
-              color="white"
-              sx={{
-                mb: 2,
-                textAlign: { xs: "center", md: "left" },
-                maxWidth: 600,
-              }}
-            >
-              Customize all sections of the impact report to match your
-              organization's needs
-            </Typography>
-            <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={isMobilePreview}
-                    onChange={(e) => setIsMobilePreview(e.target.checked)}
-                    sx={{
-                      "& .MuiSwitch-switchBase.Mui-checked": {
-                        color: COLORS.gogo_blue,
-                      },
-                      "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                        { backgroundColor: COLORS.gogo_blue },
-                    }}
-                  />
-                }
-                label="Mobile view"
-                sx={{ color: "white" }}
-              />
-            </Box>
-            <Box sx={{ display: "flex", justifyContent: "center" }}>
-              <CustomPaper
-                sx={{
-                  p: 0,
-                  overflow: "hidden",
-                  width: isMobilePreview ? { xs: "100%", md: 380 } : "100%",
-                  maxWidth: isMobilePreview ? 440 : "none",
-                }}
-              >
-                <PreviewFrame>
-                  <Box
-                    sx={{
-                      borderRadius: 2,
-                      overflow: "hidden",
-                      boxShadow: flashPreviewHero
-                        ? `0 0 0 3px ${COLORS.gogo_blue}`
-                        : "none",
-                      transition: "box-shadow 0.3s ease",
-                    }}
-                  >
-                    <MemoHeroSection
-                      disableFetch
-                      disableAnimations
-                      heroOverride={debouncedHeroOverride}
-                    />
-                  </Box>
-                </PreviewFrame>
-              </CustomPaper>
-            </Box>
-          </Box>
-        </Grid>
+  // Build and debounce the preview mission override
+  const liveMissionOverride = useMemo(
+    () => ({
+      title: impactReportForm.mission.title,
+      titleGradient: impactReportForm.mission.titleGradient || undefined,
+      badgeLabel: impactReportForm.mission.badgeLabel,
+      statementTitle: impactReportForm.mission.statementTitle,
+      statementTitleColor:
+        impactReportForm.mission.statementTitleColor || undefined,
+      statementText: impactReportForm.mission.statementText,
+      statementTextColor:
+        impactReportForm.mission.statementTextColor || undefined,
+      statementMeta: impactReportForm.mission.statementMeta,
+      statementMetaColor:
+        impactReportForm.mission.statementMetaColor || undefined,
+      serial: impactReportForm.mission.serial,
+      serialColor: impactReportForm.mission.serialColor || undefined,
+      backgroundColor: composeGradient(
+        impactReportForm.mission.degree,
+        impactReportForm.mission.color1,
+        impactReportForm.mission.color2,
+        impactReportForm.mission.gradientOpacity,
+      ),
+      backgroundImage:
+        impactReportForm.mission.backgroundImagePreview ||
+        impactReportForm.mission.backgroundImageUrl ||
+        null,
+      backgroundImageGrayscale: impactReportForm.mission.backgroundGrayscale,
+      stats: impactReportForm.mission.stats.map((s) => ({
+        id: s.id,
+        number: s.number,
+        label: s.label,
+        color: s.color,
+        action: s.action,
+        modalId: s.modalId ?? null,
+      })),
+      statsTitle: "At a Glance",
+      modals: [
+        {
+          id: "disciplines",
+          title: impactReportForm.mission.modalTitle || "Artistic Disciplines",
+          items: impactReportForm.mission.disciplinesItems
+            .filter(Boolean)
+            .map((name) => ({ name })),
+        },
+      ],
+    }),
+    [impactReportForm.mission],
+  );
+  const debouncedMissionOverride = useDebouncedValue(liveMissionOverride, 300);
 
-        {/* Right column: header + tabs + forms */}
-        <Grid item xs={12} md={4}>
-          {/* Sticky group: actions box then tabs box */}
-          <Box
+  // Viewport simulator (desktop/tablet/mobile artboard)
+  const VIEWPORTS = [
+    { label: "Desktop 1440×900", width: 1440, height: 900 },
+    { label: "Laptop 1280×800", width: 1280, height: 800 },
+    { label: "Tablet 1024×768", width: 1024, height: 768 },
+    { label: "Mobile 390×844", width: 390, height: 844 },
+  ] as const;
+  const [viewportIdx, setViewportIdx] = useState<number>(0);
+  const artboardRef = useRef<HTMLDivElement | null>(null);
+  const artboardOuterRef = useRef<HTMLDivElement | null>(null);
+  const rightPaneRef = useRef<HTMLDivElement | null>(null);
+  const [artboardScale, setArtboardScale] = useState<number>(1);
+
+  useEffect(() => {
+    function recomputeScale() {
+      const outer = artboardOuterRef.current;
+      if (!outer) return;
+      const { width: availW, height: availH } = outer.getBoundingClientRect();
+      const vp = VIEWPORTS[viewportIdx];
+      if (!vp) return;
+      // Fit by width; allow height to overflow to enable scrolling inside the simulated viewport
+      const scale = Math.max(0.1, Math.min(1, availW / vp.width));
+      setArtboardScale(scale);
+    }
+    recomputeScale();
+    const ro = new ResizeObserver(recomputeScale);
+    if (artboardOuterRef.current) ro.observe(artboardOuterRef.current);
+    window.addEventListener("resize", recomputeScale);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", recomputeScale);
+    };
+  }, [viewportIdx]);
+
+  // Ensure inner scrollable panes are top-aligned on mount
+  useEffect(() => {
+    if (artboardRef.current) {
+      artboardRef.current.scrollTop = 0;
+    }
+    if (rightPaneRef.current) {
+      rightPaneRef.current.scrollTop = 0;
+    }
+  }, []);
+
+  return (
+    <FrostedScope>
+      <ScreenGrid>
+        <Grid
+          item
+          container
+          spacing={{ xs: 2, md: 3 }}
+          sx={{ width: "100%", px: { xs: 1, sm: 2, md: 3 } }}
+        >
+          {/* Left column: title + permanent preview */}
+          <Grid
+            item
+            xs={12}
+            md={8}
             sx={{
-              position: "sticky",
-              top: 16,
-              zIndex: 5,
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
-              mb: 2,
+              // Left pane no longer scrolls; scroll is inside the preview itself
+              maxHeight: "none",
+              overflow: "visible",
+              pr: { md: 1 },
             }}
           >
-            <CustomPaper sx={{ p: { xs: 1.5, sm: 2 } }}>
+            <Box sx={{ mb: 2 }}>
+              <Typography
+                variant="h2"
+                color="white"
+                sx={{
+                  mb: 1,
+                  textAlign: { xs: "center", md: "left" },
+                  fontFamily:
+                    "'Airwaves', 'Century Gothic', 'Arial', sans-serif",
+                }}
+              >
+                Customize Impact Report
+              </Typography>
+              <Typography
+                variant="subtitle1"
+                color="white"
+                sx={{
+                  mb: 2,
+                  textAlign: { xs: "center", md: "left" },
+                  maxWidth: 600,
+                }}
+              >
+                Customize all sections of the impact report to match your
+                organization's needs
+              </Typography>
               <Box
                 sx={{
                   display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 2,
+                  justifyContent: "center",
+                  mb: 1,
+                  gap: 1,
                   flexWrap: "wrap",
                 }}
               >
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1.5,
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <Typography variant="subtitle2" sx={{ opacity: 0.8 }}>
-                    Editor
-                  </Typography>
-                  {isDirty ? (
-                    <Typography variant="body2" color="warning.main">
-                      Unsaved changes
-                    </Typography>
-                  ) : (
-                    <Typography variant="body2" color="rgba(255,255,255,0.7)">
-                      {lastSavedAt
-                        ? `All changes saved · ${lastSavedAt.toLocaleTimeString()}`
-                        : "No recent changes"}
-                    </Typography>
-                  )}
-                </Box>
-                <Box sx={{ display: "flex", gap: 1 }}>
-                  <Tooltip
-                    title={
-                      heroUploadPct !== null
-                        ? "Please wait for the upload to finish"
-                        : ""
-                    }
-                    disableHoverListener={heroUploadPct === null}
-                  >
-                    <span>
-                      <Button
-                        variant="contained"
-                        startIcon={<SaveIcon />}
-                        onClick={handleSave}
-                        disabled={isSubmitting || heroUploadPct !== null}
-                        sx={{
-                          bgcolor: COLORS.gogo_blue,
-                          "&:hover": { bgcolor: "#0066cc" },
-                        }}
-                      >
-                        {isSubmitting ? "Saving..." : "Save Changes"}
-                      </Button>
-                    </span>
-                  </Tooltip>
-                  <Button
-                    variant="outlined"
-                    color="inherit"
-                    onClick={handleDiscard}
-                    disabled={!isDirty}
-                  >
-                    Discard Changes
-                  </Button>
-                </Box>
-              </Box>
-            </CustomPaper>
-            <CustomPaper sx={{ p: 0 }}>
-              <Tabs
-                value={currentTab}
-                onChange={(_, newValue) => {
-                  if (isDirty) {
-                    enqueueSnackbar(
-                      "Save or discard changes before switching tabs",
-                      { variant: "info" },
-                    );
-                    return;
-                  }
-                  setCurrentTab(newValue);
-                }}
-                variant="scrollable"
-                scrollButtons="auto"
-                sx={{
-                  borderBottom: "1px solid rgba(255,255,255,0.1)",
-                  "& .MuiTab-root": {
-                    color: "rgba(255,255,255,0.7)",
-                    minWidth: { xs: "auto", sm: 120 },
-                    fontSize: { xs: "0.75rem", sm: "0.875rem" },
-                    "&.Mui-selected": {
-                      color: COLORS.gogo_blue,
-                    },
-                  },
-                  "& .MuiTabs-indicator": {
-                    backgroundColor: COLORS.gogo_blue,
-                  },
-                }}
-              >
-                {tabs.map((tab) => (
-                  <Tab
-                    key={tab.value}
-                    label={tab.label}
-                    value={tab.value}
-                    disabled={isDirty}
-                  />
-                ))}
-              </Tabs>
-            </CustomPaper>
-          </Box>
-
-          {/* Tab content */}
-          <CustomPaper
-            sx={{
-              p: { xs: 2, sm: 3 },
-              minHeight: { xs: 400, md: 600 },
-              overflow: "auto",
-            }}
-          >
-            {/* Hero Section */}
-            {currentTab === 0 && (
-              <Box>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    mb: 3,
-                  }}
-                >
-                  <Typography
-                    variant="h5"
-                    sx={{
-                      fontFamily:
-                        "'Airwaves', 'Century Gothic', 'Arial', sans-serif",
-                    }}
-                  >
-                    Hero Section
-                  </Typography>
+                <Box>
                   <FormControlLabel
                     control={
                       <Switch
-                        checked={impactReportForm.hero.enabled}
-                        onChange={(e) =>
-                          handleSectionChange(
-                            "hero",
-                            "enabled",
-                            e.target.checked,
-                          )
-                        }
+                        checked={isMobilePreview}
+                        onChange={(e) => setIsMobilePreview(e.target.checked)}
                         sx={{
                           "& .MuiSwitch-switchBase.Mui-checked": {
                             color: COLORS.gogo_blue,
                           },
                           "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                            {
-                              backgroundColor: COLORS.gogo_blue,
-                            },
+                            { backgroundColor: COLORS.gogo_blue },
                         }}
                       />
                     }
-                    label="Enable Section"
+                    label="Mobile margins"
                     sx={{ color: "white" }}
                   />
                 </Box>
-                <Divider sx={{ mb: 3, bgcolor: "rgba(255,255,255,0.1)" }} />
+                <Box>
+                  <TextField
+                    select
+                    size="small"
+                    value={viewportIdx}
+                    onChange={(e) => setViewportIdx(Number(e.target.value))}
+                    sx={{
+                      minWidth: 220,
+                      "& .MuiOutlinedInput-root": {
+                        background: "rgba(255,255,255,0.06)",
+                        color: "white",
+                      },
+                    }}
+                  >
+                    {VIEWPORTS.map((vp, i) => (
+                      <MenuItem key={vp.label} value={i}>
+                        {vp.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Box>
+              </Box>
+              <Box
+                ref={artboardOuterRef}
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "flex-start",
+                  // Do not scroll the wrapper; the artboard scrolls
+                  overflow: "hidden",
+                  // Match the visual "window" height; enough to feel like a viewport
+                  height: { xs: "60vh", md: "calc(100vh - 160px)" },
+                }}
+              >
+                <CustomPaper
+                  sx={{
+                    p: 0,
+                    overflow: "hidden",
+                    // The paper matches the scaled artboard size exactly
+                    width: `${VIEWPORTS[viewportIdx].width * artboardScale}px`,
+                    height: `${VIEWPORTS[viewportIdx].height * artboardScale}px`,
+                  }}
+                >
+                  <PreviewFrame>
+                    <Box
+                      ref={artboardRef}
+                      sx={{
+                        borderRadius: 2,
+                        // Scroll inside the simulated viewport
+                        overflowY: "auto",
+                        overflowX: "hidden",
+                        WebkitOverflowScrolling: "touch",
+                        boxShadow:
+                          currentTab === 1 && flashPreviewHero
+                            ? `0 0 0 3px ${COLORS.gogo_blue}`
+                            : "none",
+                        transition: "box-shadow 0.3s ease",
+                        // Artboard (large viewport) simulated via transform scale
+                        width: `${VIEWPORTS[viewportIdx].width}px`,
+                        height: `${VIEWPORTS[viewportIdx].height}px`,
+                        transform: `scale(${artboardScale})`,
+                        transformOrigin: "top left",
+                        background: "#0f1118",
+                        // Make the outer paper size fit the scaled artboard
+                        // (parent Box uses its own size, here we just ensure we don't overflow)
+                      }}
+                      style={{
+                        // Dynamic inline style to help layout compute scaled height
+                        marginBottom: `${Math.max(0, VIEWPORTS[viewportIdx].height * artboardScale * 0.02)}px`,
+                      }}
+                    >
+                      {currentTab === 0 ? (
+                        <Box sx={{ p: 2 }}>
+                          <Grid container spacing={2}>
+                            {(defaultSwatch ?? []).map((c, i) => {
+                              const text = getReadableTextColor(c);
+                              const accent =
+                                (defaultSwatch ?? [])[
+                                  (i + 1) % (defaultSwatch?.length || 1) || 0
+                                ] || c;
+                              const subtle = withAlphaHex(
+                                text === "#ffffff" ? "#000000" : "#ffffff",
+                                0.08,
+                              );
+                              return (
+                                <Grid
+                                  item
+                                  xs={12}
+                                  sm={6}
+                                  key={`swatch-preview-left-${i}`}
+                                >
+                                  <Box
+                                    sx={{
+                                      position: "relative",
+                                      minHeight: 160,
+                                      borderRadius: 2,
+                                      overflow: "hidden",
+                                      boxShadow: "0 10px 30px rgba(0,0,0,0.28)",
+                                      border:
+                                        "1px solid rgba(255,255,255,0.08)",
+                                      background: c,
+                                    }}
+                                  >
+                                    <Box
+                                      sx={{
+                                        position: "absolute",
+                                        left: 0,
+                                        top: 0,
+                                        bottom: 0,
+                                        width: "30%",
+                                        backgroundImage: `repeating-linear-gradient(0deg, ${subtle}, ${subtle} 6px, transparent 6px, transparent 14px)`,
+                                      }}
+                                    />
+                                    <Box
+                                      sx={{
+                                        position: "absolute",
+                                        right: -20,
+                                        top: -20,
+                                        width: 120,
+                                        height: 120,
+                                        borderRadius: "50%",
+                                        background: withAlphaHex(accent, 0.35),
+                                        border: `4px solid ${withAlphaHex(text, 0.4)}`,
+                                      }}
+                                    />
+                                    <Box
+                                      sx={{
+                                        position: "absolute",
+                                        left: "38%",
+                                        bottom: 12,
+                                        width: 0,
+                                        height: 0,
+                                        borderLeft: "26px solid transparent",
+                                        borderRight: "26px solid transparent",
+                                        borderBottom: `46px solid ${withAlphaHex(accent, 0.8)}`,
+                                        filter:
+                                          "drop-shadow(0 3px 8px rgba(0,0,0,0.28))",
+                                      }}
+                                    />
+                                    <Box
+                                      sx={{
+                                        position: "absolute",
+                                        left: 16,
+                                        top: 16,
+                                        color: text,
+                                      }}
+                                    >
+                                      <Typography
+                                        variant="h6"
+                                        sx={{
+                                          fontWeight: 900,
+                                          letterSpacing: 0.2,
+                                          textShadow:
+                                            text === "#ffffff"
+                                              ? "0 1px 2px rgba(0,0,0,0.25)"
+                                              : "0 1px 0 rgba(255,255,255,0.35)",
+                                        }}
+                                      >
+                                        Preview
+                                      </Typography>
+                                      <Typography
+                                        variant="body2"
+                                        sx={{ opacity: 0.92 }}
+                                      >
+                                        {toHex(c)}
+                                      </Typography>
+                                    </Box>
+                                  </Box>
+                                </Grid>
+                              );
+                            })}
+                          </Grid>
+                        </Box>
+                      ) : currentTab === 1 ? (
+                        <MemoHeroSection
+                          previewMode
+                          heroOverride={debouncedHeroOverride}
+                        />
+                      ) : currentTab === 2 ? (
+                        <MemoMissionSection
+                          previewMode
+                          missionOverride={debouncedMissionOverride as any}
+                        />
+                      ) : (
+                        <MemoHeroSection
+                          previewMode
+                          heroOverride={debouncedHeroOverride}
+                        />
+                      )}
+                    </Box>
+                  </PreviewFrame>
+                </CustomPaper>
+              </Box>
+            </Box>
+          </Grid>
 
-                <Grid container spacing={{ xs: 2, md: 3 }}>
-                  {/* Basics */}
-                  <Grid item xs={12} md={6}>
-                    <CustomTextField
-                      label="Hero Title"
-                      value={impactReportForm.hero.title}
-                      onChange={(e) =>
-                        handleSectionChange("hero", "title", e.target.value)
-                      }
-                      fullWidth
-                    />
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={(e) => {
-                        setColorPickerField("titleColor");
-                        setColorPickerAnchor(e.currentTarget as HTMLElement);
-                      }}
-                      sx={{
-                        mt: 1,
-                        borderColor: "rgba(255,255,255,0.3)",
-                        color: "rgba(255,255,255,0.9)",
-                      }}
-                    >
-                      <span
-                        style={{
-                          display: "inline-block",
-                          width: 16,
-                          height: 16,
-                          borderRadius: 3,
-                          background:
-                            impactReportForm.hero.titleColor || "#ffffff",
-                          border: "1px solid rgba(255,255,255,0.2)",
-                        }}
-                      />
-                      &nbsp;Text color
-                    </Button>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <CustomTextField
-                      label="Hero Subtitle"
-                      value={impactReportForm.hero.subtitle}
-                      onChange={(e) =>
-                        handleSectionChange("hero", "subtitle", e.target.value)
-                      }
-                      fullWidth
-                    />
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={(e) => {
-                        setColorPickerField("subtitleColor");
-                        setColorPickerAnchor(e.currentTarget as HTMLElement);
-                      }}
-                      sx={{
-                        mt: 1,
-                        borderColor: "rgba(255,255,255,0.3)",
-                        color: "rgba(255,255,255,0.9)",
-                      }}
-                    >
-                      <span
-                        style={{
-                          display: "inline-block",
-                          width: 16,
-                          height: 16,
-                          borderRadius: 3,
-                          background:
-                            impactReportForm.hero.subtitleColor || "#77ddab",
-                          border: "1px solid rgba(255,255,255,0.2)",
-                        }}
-                      />
-                      &nbsp;Text color
-                    </Button>
-                  </Grid>
-                  <Grid item xs={12} md={4}>
-                    <CustomTextField
-                      label="Year"
-                      value={impactReportForm.hero.year}
-                      onChange={(e) =>
-                        handleSectionChange("hero", "year", e.target.value)
-                      }
-                      fullWidth
-                    />
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={(e) => {
-                        setColorPickerField("yearColor");
-                        setColorPickerAnchor(e.currentTarget as HTMLElement);
-                      }}
-                      sx={{
-                        mt: 1,
-                        borderColor: "rgba(255,255,255,0.3)",
-                        color: "rgba(255,255,255,0.9)",
-                      }}
-                    >
-                      <span
-                        style={{
-                          display: "inline-block",
-                          width: 16,
-                          height: 16,
-                          borderRadius: 3,
-                          background:
-                            impactReportForm.hero.yearColor || "#e9bb4d",
-                          border: "1px solid rgba(255,255,255,0.2)",
-                        }}
-                      />
-                      &nbsp;Text color
-                    </Button>
-                  </Grid>
-                  <Grid item xs={12} md={8}>
-                    <CustomTextField
-                      label="Tagline"
-                      value={impactReportForm.hero.tagline}
-                      onChange={(e) =>
-                        handleSectionChange("hero", "tagline", e.target.value)
-                      }
-                      fullWidth
-                    />
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={(e) => {
-                        setColorPickerField("taglineColor");
-                        setColorPickerAnchor(e.currentTarget as HTMLElement);
-                      }}
-                      sx={{
-                        mt: 1,
-                        borderColor: "rgba(255,255,255,0.3)",
-                        color: "rgba(255,255,255,0.9)",
-                      }}
-                    >
-                      <span
-                        style={{
-                          display: "inline-block",
-                          width: 16,
-                          height: 16,
-                          borderRadius: 3,
-                          background:
-                            impactReportForm.hero.taglineColor ||
-                            COLORS.gogo_green,
-                          border: "1px solid rgba(255,255,255,0.2)",
-                        }}
-                      />
-                      &nbsp;Text color
-                    </Button>
-                  </Grid>
-                  <Grid item xs={12} md={12}>
-                    <CustomTextField
-                      label="Bubbles (comma separated)"
-                      value={impactReportForm.hero.bubblesCsv}
-                      onChange={(e) =>
-                        handleSectionChange(
-                          "hero",
-                          "bubblesCsv",
-                          e.target.value,
-                        )
-                      }
-                      fullWidth
-                    />
-                  </Grid>
-
-                  {/* CTAs */}
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle1" gutterBottom>
-                      Call To Action Buttons
+          {/* Right column: header + tabs + forms (independently scrollable) */}
+          <Grid
+            item
+            xs={12}
+            md={4}
+            ref={rightPaneRef}
+            sx={{
+              maxHeight: "calc(100vh - 24px)",
+              overflowY: "auto",
+              pl: { md: 1 },
+            }}
+          >
+            {/* Sticky group: actions box then tabs box */}
+            <Box
+              sx={{
+                position: "sticky",
+                top: 16,
+                zIndex: 5,
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+                mb: 2,
+              }}
+            >
+              <CustomPaper sx={{ p: { xs: 1.5, sm: 2 } }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 2,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1.5,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <Typography variant="subtitle2" sx={{ opacity: 0.8 }}>
+                      Editor
                     </Typography>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <CustomTextField
-                      label="Primary CTA Label"
-                      value={impactReportForm.hero.primaryCtaLabel}
-                      onChange={(e) =>
-                        handleSectionChange(
-                          "hero",
-                          "primaryCtaLabel",
-                          e.target.value,
-                        )
+                    {isDirty ? (
+                      <Typography variant="body2" color="warning.main">
+                        Unsaved changes
+                      </Typography>
+                    ) : (
+                      <Typography variant="body2" color="rgba(255,255,255,0.7)">
+                        {lastSavedAt
+                          ? `All changes saved · ${lastSavedAt.toLocaleTimeString()}`
+                          : "No recent changes"}
+                      </Typography>
+                    )}
+                  </Box>
+                  <Box sx={{ display: "flex", gap: 1 }}>
+                    <Tooltip
+                      title={
+                        heroUploadPct !== null || missionUploadPct !== null
+                          ? "Please wait for the upload to finish"
+                          : ""
                       }
-                      fullWidth
-                    />
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={(e) => {
-                        setColorPickerField("primaryCtaColor");
-                        setColorPickerAnchor(e.currentTarget as HTMLElement);
-                      }}
-                      sx={{
-                        mt: 1,
-                        borderColor: "rgba(255,255,255,0.3)",
-                        color: "rgba(255,255,255,0.9)",
-                      }}
+                      disableHoverListener={
+                        heroUploadPct === null && missionUploadPct === null
+                      }
                     >
-                      <span
-                        style={{
-                          display: "inline-block",
-                          width: 16,
-                          height: 16,
-                          borderRadius: 3,
-                          background:
-                            impactReportForm.hero.primaryCtaColor || "#ffffff",
-                          border: "1px solid rgba(255,255,255,0.2)",
-                        }}
-                      />
-                      &nbsp;Text color
-                    </Button>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <CustomTextField
-                      label="Primary CTA Link (URL)"
-                      value={impactReportForm.hero.primaryCtaHref}
-                      onChange={(e) =>
-                        handleSectionChange(
-                          "hero",
-                          "primaryCtaHref",
-                          e.target.value,
-                        )
-                      }
-                      fullWidth
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <CustomTextField
-                      label="Secondary CTA Label"
-                      value={impactReportForm.hero.secondaryCtaLabel}
-                      onChange={(e) =>
-                        handleSectionChange(
-                          "hero",
-                          "secondaryCtaLabel",
-                          e.target.value,
-                        )
-                      }
-                      fullWidth
-                    />
+                      <span>
+                        <Button
+                          variant="contained"
+                          startIcon={<SaveIcon />}
+                          onClick={handleSave}
+                          disabled={
+                            isSubmitting ||
+                            heroUploadPct !== null ||
+                            missionUploadPct !== null
+                          }
+                          sx={{
+                            bgcolor: COLORS.gogo_blue,
+                            "&:hover": { bgcolor: "#0066cc" },
+                          }}
+                        >
+                          {isSubmitting ? "Saving..." : "Save Changes"}
+                        </Button>
+                      </span>
+                    </Tooltip>
                     <Button
-                      size="small"
                       variant="outlined"
-                      onClick={(e) => {
-                        setColorPickerField("secondaryCtaColor");
-                        setColorPickerAnchor(e.currentTarget as HTMLElement);
-                      }}
-                      sx={{
-                        mt: 1,
-                        borderColor: "rgba(255,255,255,0.3)",
-                        color: "rgba(255,255,255,0.9)",
-                      }}
+                      color="inherit"
+                      onClick={handleDiscard}
+                      disabled={!isDirty}
                     >
-                      <span
-                        style={{
-                          display: "inline-block",
-                          width: 16,
-                          height: 16,
-                          borderRadius: 3,
-                          background:
-                            impactReportForm.hero.secondaryCtaColor ||
-                            "#ffffff",
-                          border: "1px solid rgba(255,255,255,0.2)",
-                        }}
-                      />
-                      &nbsp;Text color
+                      Discard Changes
                     </Button>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <CustomTextField
-                      label="Secondary CTA Link (URL)"
-                      value={impactReportForm.hero.secondaryCtaHref}
-                      onChange={(e) =>
-                        handleSectionChange(
-                          "hero",
-                          "secondaryCtaHref",
-                          e.target.value,
-                        )
-                      }
-                      fullWidth
+                  </Box>
+                </Box>
+              </CustomPaper>
+              <CustomPaper sx={{ p: 0 }}>
+                <Tabs
+                  value={currentTab}
+                  onChange={(_, newValue) => {
+                    if (isDirty) {
+                      enqueueSnackbar(
+                        "Save or discard changes before switching tabs",
+                        { variant: "info" },
+                      );
+                      return;
+                    }
+                    setCurrentTab(newValue);
+                  }}
+                  variant="scrollable"
+                  scrollButtons="auto"
+                  sx={{
+                    borderBottom: "1px solid rgba(255,255,255,0.1)",
+                    "& .MuiTab-root": {
+                      color: "rgba(255,255,255,0.7)",
+                      minWidth: { xs: "auto", sm: 120 },
+                      fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                      borderRadius: 1,
+                      textTransform: "none",
+                      "&.Mui-disabled": {
+                        opacity: 0.45,
+                        color: "rgba(255,255,255,0.35)",
+                      },
+                      "&.Mui-selected": {
+                        color: COLORS.gogo_blue,
+                        backgroundColor: "rgba(255,255,255,0.06)",
+                        WebkitBackdropFilter: "blur(6px) saturate(140%)",
+                        backdropFilter: "blur(6px) saturate(140%)",
+                      },
+                    },
+                    "& .MuiTabs-indicator": {
+                      backgroundColor: COLORS.gogo_blue,
+                    },
+                  }}
+                >
+                  {tabs.map((tab) => (
+                    <Tab
+                      key={tab.value}
+                      label={tab.label}
+                      value={tab.value}
+                      disabled={isDirty}
                     />
-                  </Grid>
+                  ))}
+                </Tabs>
+              </CustomPaper>
+            </Box>
 
-                  {/* Gradient */}
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle1" gutterBottom>
-                      Background Gradient
+            {/* Tab content */}
+            <CustomPaper
+              sx={{
+                p: { xs: 2, sm: 3 },
+                minHeight: { xs: 400, md: 600 },
+                overflow: "auto",
+              }}
+            >
+              {/* Defaults */}
+              {currentTab === 0 && (
+                <Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      mb: 3,
+                    }}
+                  >
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        fontFamily:
+                          "'Airwaves', 'Century Gothic', 'Arial', sans-serif",
+                      }}
+                    >
+                      Overall Defaults
                     </Typography>
+                  </Box>
+                  <Divider sx={{ mb: 3, bgcolor: "rgba(255,255,255,0.1)" }} />
+                  <Grid container spacing={{ xs: 2, md: 3 }}>
+                    <Grid item xs={12}>
+                      <Typography variant="subtitle1" gutterBottom>
+                        Default Swatch
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          gap: 1.5,
+                          flexWrap: "wrap",
+                          alignItems: "center",
+                        }}
+                      >
+                        {Array.from({ length: DEFAULT_SWATCH_SIZE }).map(
+                          (_, i) => {
+                            const c = (defaultSwatch ?? [])[i] ?? "#1946f5";
+                            return (
+                              <button
+                                key={`swatch-${i}`}
+                                type="button"
+                                style={{
+                                  width: 30,
+                                  height: 30,
+                                  borderRadius: 6,
+                                  background: c,
+                                  border: "1px solid rgba(255,255,255,0.25)",
+                                  cursor: "pointer",
+                                }}
+                                title={`${c} (slot ${i + 1})`}
+                                aria-label={`${c} (slot ${i + 1})`}
+                                onClick={(e) => {
+                                  setSelectedSwatchIndex(i);
+                                  setDefaultsPickerValue(c);
+                                  setDefaultsPickerAnchor(
+                                    e.currentTarget as HTMLElement,
+                                  );
+                                }}
+                              />
+                            );
+                          },
+                        )}
+                        <Button
+                          variant="text"
+                          onClick={() => {
+                            const brand = [
+                              COLORS.gogo_blue,
+                              COLORS.gogo_purple,
+                              COLORS.gogo_teal,
+                              COLORS.gogo_yellow,
+                              COLORS.gogo_pink,
+                              COLORS.gogo_green,
+                            ];
+                            const normalized = Array.from({
+                              length: DEFAULT_SWATCH_SIZE,
+                            }).map((_, i) => brand[i % brand.length]);
+                            setDefaultSwatch(normalized);
+                            setIsDirty(true);
+                          }}
+                        >
+                          Reset to Brand
+                        </Button>
+                      </Box>
+                      <ColorPickerPopover
+                        open={defaultsPickerOpen}
+                        anchorEl={defaultsPickerAnchor}
+                        onClose={() => {
+                          setDefaultsPickerAnchor(null);
+                          setSelectedSwatchIndex(null);
+                        }}
+                        value={defaultsPickerValue}
+                        onChange={(val) => {
+                          setDefaultsPickerValue(val);
+                          if (selectedSwatchIndex != null) {
+                            const base = (defaultSwatch ?? []).slice(
+                              0,
+                              DEFAULT_SWATCH_SIZE,
+                            );
+                            while (base.length < DEFAULT_SWATCH_SIZE)
+                              base.push("#1946f5");
+                            base[selectedSwatchIndex] = val;
+                            setDefaultSwatch(base);
+                            setIsDirty(true);
+                          }
+                        }}
+                        presets={defaultSwatch ?? undefined}
+                      />
+                      {/* Confirm update button */}
+                      {defaultsPickerOpen && selectedSwatchIndex != null && (
+                        <Box sx={{ mt: 1 }}>
+                          <Button
+                            size="small"
+                            variant="contained"
+                            onClick={() => {
+                              const base = (defaultSwatch ?? []).slice(
+                                0,
+                                DEFAULT_SWATCH_SIZE,
+                              );
+                              while (base.length < DEFAULT_SWATCH_SIZE)
+                                base.push("#1946f5");
+                              base[selectedSwatchIndex] = defaultsPickerValue;
+                              setDefaultSwatch(base);
+                              setDefaultsPickerAnchor(null);
+                              setSelectedSwatchIndex(null);
+                              setIsDirty(true);
+                            }}
+                          >
+                            Use This Color
+                          </Button>
+                        </Box>
+                      )}
+                    </Grid>
+                    {/* Swatch Preview moved to left viewport preview */}
                   </Grid>
-                  <Grid item xs={12}>
-                    <Grid container spacing={2} alignItems="center">
-                      <Grid item xs={12} md={4}>
+                </Box>
+              )}
+
+              {/* Hero Section */}
+              {currentTab === 1 && (
+                <Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      mb: 3,
+                    }}
+                  >
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        fontFamily:
+                          "'Airwaves', 'Century Gothic', 'Arial', sans-serif",
+                      }}
+                    >
+                      Hero Section
+                    </Typography>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={impactReportForm.hero.enabled}
+                          onChange={(e) =>
+                            handleSectionChange(
+                              "hero",
+                              "enabled",
+                              e.target.checked,
+                            )
+                          }
+                          sx={{
+                            "& .MuiSwitch-switchBase.Mui-checked": {
+                              color: COLORS.gogo_blue,
+                            },
+                            "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                              {
+                                backgroundColor: COLORS.gogo_blue,
+                              },
+                          }}
+                        />
+                      }
+                      label="Enable Section"
+                      sx={{ color: "white" }}
+                    />
+                  </Box>
+                  <Divider sx={{ mb: 3, bgcolor: "rgba(255,255,255,0.1)" }} />
+
+                  <Grid container spacing={{ xs: 2, md: 3 }}>
+                    {/* Basics */}
+                    <Grid item xs={12} md={6}>
+                      <CustomTextField
+                        label="Hero Title"
+                        value={impactReportForm.hero.title}
+                        onChange={(e) =>
+                          handleSectionChange("hero", "title", e.target.value)
+                        }
+                        fullWidth
+                      />
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={(e) => {
+                          setColorPickerField("titleColor");
+                          setColorPickerAnchor(e.currentTarget as HTMLElement);
+                        }}
+                        sx={{
+                          mt: 1,
+                          borderColor: "rgba(255,255,255,0.3)",
+                          color: "rgba(255,255,255,0.9)",
+                        }}
+                      >
+                        <span
+                          style={{
+                            display: "inline-block",
+                            width: 16,
+                            height: 16,
+                            borderRadius: 3,
+                            background:
+                              impactReportForm.hero.titleColor || "#ffffff",
+                            border: "1px solid rgba(255,255,255,0.2)",
+                          }}
+                        />
+                        &nbsp;Text color
+                      </Button>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <CustomTextField
+                        label="Hero Subtitle"
+                        value={impactReportForm.hero.subtitle}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "hero",
+                            "subtitle",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                      />
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={(e) => {
+                          setColorPickerField("subtitleColor");
+                          setColorPickerAnchor(e.currentTarget as HTMLElement);
+                        }}
+                        sx={{
+                          mt: 1,
+                          borderColor: "rgba(255,255,255,0.3)",
+                          color: "rgba(255,255,255,0.9)",
+                        }}
+                      >
+                        <span
+                          style={{
+                            display: "inline-block",
+                            width: 16,
+                            height: 16,
+                            borderRadius: 3,
+                            background:
+                              impactReportForm.hero.subtitleColor || "#77ddab",
+                            border: "1px solid rgba(255,255,255,0.2)",
+                          }}
+                        />
+                        &nbsp;Text color
+                      </Button>
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <CustomTextField
+                        label="Year"
+                        value={impactReportForm.hero.year}
+                        onChange={(e) =>
+                          handleSectionChange("hero", "year", e.target.value)
+                        }
+                        fullWidth
+                      />
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={(e) => {
+                          setColorPickerField("yearColor");
+                          setColorPickerAnchor(e.currentTarget as HTMLElement);
+                        }}
+                        sx={{
+                          mt: 1,
+                          borderColor: "rgba(255,255,255,0.3)",
+                          color: "rgba(255,255,255,0.9)",
+                        }}
+                      >
+                        <span
+                          style={{
+                            display: "inline-block",
+                            width: 16,
+                            height: 16,
+                            borderRadius: 3,
+                            background:
+                              impactReportForm.hero.yearColor || "#e9bb4d",
+                            border: "1px solid rgba(255,255,255,0.2)",
+                          }}
+                        />
+                        &nbsp;Text color
+                      </Button>
+                    </Grid>
+                    <Grid item xs={12} md={8}>
+                      <CustomTextField
+                        label="Tagline"
+                        value={impactReportForm.hero.tagline}
+                        onChange={(e) =>
+                          handleSectionChange("hero", "tagline", e.target.value)
+                        }
+                        fullWidth
+                      />
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={(e) => {
+                          setColorPickerField("taglineColor");
+                          setColorPickerAnchor(e.currentTarget as HTMLElement);
+                        }}
+                        sx={{
+                          mt: 1,
+                          borderColor: "rgba(255,255,255,0.3)",
+                          color: "rgba(255,255,255,0.9)",
+                        }}
+                      >
+                        <span
+                          style={{
+                            display: "inline-block",
+                            width: 16,
+                            height: 16,
+                            borderRadius: 3,
+                            background:
+                              impactReportForm.hero.taglineColor ||
+                              COLORS.gogo_green,
+                            border: "1px solid rgba(255,255,255,0.2)",
+                          }}
+                        />
+                        &nbsp;Text color
+                      </Button>
+                    </Grid>
+                    <Grid item xs={12} md={12}>
+                      <CustomTextField
+                        label="Bubbles (comma separated)"
+                        value={impactReportForm.hero.bubblesCsv}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "hero",
+                            "bubblesCsv",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+
+                    {/* CTAs */}
+                    <Grid item xs={12}>
+                      <Typography variant="subtitle1" gutterBottom>
+                        Call To Action Buttons
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <CustomTextField
+                        label="Primary CTA Label"
+                        value={impactReportForm.hero.primaryCtaLabel}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "hero",
+                            "primaryCtaLabel",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                      />
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={(e) => {
+                          setColorPickerField("primaryCtaColor");
+                          setColorPickerAnchor(e.currentTarget as HTMLElement);
+                        }}
+                        sx={{
+                          mt: 1,
+                          borderColor: "rgba(255,255,255,0.3)",
+                          color: "rgba(255,255,255,0.9)",
+                        }}
+                      >
+                        <span
+                          style={{
+                            display: "inline-block",
+                            width: 16,
+                            height: 16,
+                            borderRadius: 3,
+                            background:
+                              impactReportForm.hero.primaryCtaColor ||
+                              "#ffffff",
+                            border: "1px solid rgba(255,255,255,0.2)",
+                          }}
+                        />
+                        &nbsp;Text color
+                      </Button>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <CustomTextField
+                        label="Primary CTA Link (URL)"
+                        value={impactReportForm.hero.primaryCtaHref}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "hero",
+                            "primaryCtaHref",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <CustomTextField
+                        label="Secondary CTA Label"
+                        value={impactReportForm.hero.secondaryCtaLabel}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "hero",
+                            "secondaryCtaLabel",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                      />
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={(e) => {
+                          setColorPickerField("secondaryCtaColor");
+                          setColorPickerAnchor(e.currentTarget as HTMLElement);
+                        }}
+                        sx={{
+                          mt: 1,
+                          borderColor: "rgba(255,255,255,0.3)",
+                          color: "rgba(255,255,255,0.9)",
+                        }}
+                      >
+                        <span
+                          style={{
+                            display: "inline-block",
+                            width: 16,
+                            height: 16,
+                            borderRadius: 3,
+                            background:
+                              impactReportForm.hero.secondaryCtaColor ||
+                              "#ffffff",
+                            border: "1px solid rgba(255,255,255,0.2)",
+                          }}
+                        />
+                        &nbsp;Text color
+                      </Button>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <CustomTextField
+                        label="Secondary CTA Link (URL)"
+                        value={impactReportForm.hero.secondaryCtaHref}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "hero",
+                            "secondaryCtaHref",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+
+                    {/* Gradient */}
+                    <Grid item xs={12}>
+                      <Typography variant="subtitle1" gutterBottom>
+                        Background Gradient
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Grid container spacing={2} alignItems="center">
+                        <Grid item xs={12} md={4}>
+                          <Typography
+                            variant="caption"
+                            color="rgba(255,255,255,0.7)"
+                          >
+                            Degree
+                          </Typography>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                              gap: 1,
+                            }}
+                          >
+                            <Typography variant="body2">
+                              {impactReportForm.hero.degree}°
+                            </Typography>
+                            <DegreePicker
+                              value={impactReportForm.hero.degree}
+                              onChange={(deg) =>
+                                handleSectionChange(
+                                  "hero",
+                                  "degree",
+                                  Math.max(1, Math.min(360, deg || 180)),
+                                )
+                              }
+                              size={140}
+                            />
+                          </Box>
+                        </Grid>
+                        <Grid
+                          item
+                          xs={12}
+                          md={4}
+                          sx={{
+                            ml: { md: 1.5 },
+                            mr: { md: -0.5 },
+                            display: { md: "flex" },
+                            justifyContent: { md: "flex-start" },
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 2,
+                            }}
+                          >
+                            <Box>
+                              <Typography
+                                variant="caption"
+                                color="rgba(255,255,255,0.7)"
+                              >
+                                Color 1
+                              </Typography>
+                              <Button
+                                variant="outlined"
+                                onClick={(e) => {
+                                  setColorPickerField("color1");
+                                  setColorPickerAnchor(
+                                    e.currentTarget as HTMLElement,
+                                  );
+                                }}
+                                sx={{
+                                  mt: 0.5,
+                                  minWidth: 48,
+                                  px: 1,
+                                  borderColor: "rgba(255,255,255,0.3)",
+                                  color: "rgba(255,255,255,0.9)",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 1,
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    display: "inline-block",
+                                    width: 18,
+                                    height: 18,
+                                    borderRadius: 3,
+                                    background: impactReportForm.hero.color1,
+                                    border: "1px solid rgba(255,255,255,0.2)",
+                                  }}
+                                />
+                                Pick
+                              </Button>
+                            </Box>
+                            <Box>
+                              <Typography
+                                variant="caption"
+                                color="rgba(255,255,255,0.7)"
+                              >
+                                Color 2
+                              </Typography>
+                              <Button
+                                variant="outlined"
+                                onClick={(e) => {
+                                  setColorPickerField("color2");
+                                  setColorPickerAnchor(
+                                    e.currentTarget as HTMLElement,
+                                  );
+                                }}
+                                sx={{
+                                  mt: 0.5,
+                                  minWidth: 48,
+                                  px: 1,
+                                  borderColor: "rgba(255,255,255,0.3)",
+                                  color: "rgba(255,255,255,0.9)",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 1,
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    display: "inline-block",
+                                    width: 18,
+                                    height: 18,
+                                    borderRadius: 3,
+                                    background: impactReportForm.hero.color2,
+                                    border: "1px solid rgba(255,255,255,0.2)",
+                                  }}
+                                />
+                                Pick
+                              </Button>
+                            </Box>
+                          </Box>
+                        </Grid>
+                        <Grid item xs={12} md={4} sx={{ ml: { md: -2 } }}>
+                          <Box
+                            sx={{
+                              width: 140,
+                              height: 140,
+                              borderRadius: 1,
+                              border: "1px solid rgba(255,255,255,0.1)",
+                              background: composeGradient(
+                                impactReportForm.hero.degree,
+                                impactReportForm.hero.color1,
+                                impactReportForm.hero.color2,
+                                impactReportForm.hero.gradientOpacity,
+                              ),
+                            }}
+                          />
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                    <ColorPickerPopover
+                      open={openColorPicker}
+                      anchorEl={colorPickerAnchor}
+                      onClose={() => {
+                        setColorPickerAnchor(null);
+                        setColorPickerField(null);
+                      }}
+                      value={currentPickerColor}
+                      onChange={(val) => {
+                        if (!colorPickerField) return;
+                        handleSectionChange("hero", colorPickerField, val);
+                      }}
+                      presets={defaultSwatch ?? undefined}
+                    />
+                    <Grid item xs={12} md={9}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 2 }}
+                      >
                         <Typography
                           variant="caption"
                           color="rgba(255,255,255,0.7)"
                         >
-                          Degree
+                          Gradient Opacity
                         </Typography>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            gap: 1,
-                          }}
-                        >
-                          <Typography variant="body2">
-                            {impactReportForm.hero.degree}°
-                          </Typography>
-                          <DegreePicker
-                            value={impactReportForm.hero.degree}
-                            onChange={(deg) =>
-                              handleSectionChange(
-                                "hero",
-                                "degree",
-                                Math.max(1, Math.min(360, deg || 180)),
-                              )
-                            }
-                            size={140}
-                          />
-                        </Box>
-                      </Grid>
-                      <Grid
-                        item
-                        xs={12}
-                        md={4}
+                        <input
+                          type="range"
+                          min={0}
+                          max={1}
+                          step={0.05}
+                          value={impactReportForm.hero.gradientOpacity}
+                          onChange={(e) =>
+                            handleSectionChange(
+                              "hero",
+                              "gradientOpacity",
+                              Number(e.target.value),
+                            )
+                          }
+                        />
+                        <Typography variant="body2">
+                          {impactReportForm.hero.gradientOpacity.toFixed(2)}
+                        </Typography>
+                      </Box>
+                    </Grid>
+
+                    {/* Background Image */}
+                    <Grid item xs={12}>
+                      <Typography variant="subtitle1" gutterBottom>
+                        Background Image
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Box
                         sx={{
-                          ml: { md: 1.5 },
-                          mr: { md: -0.5 },
-                          display: { md: "flex" },
-                          justifyContent: { md: "flex-start" },
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 2,
+                          flexWrap: "wrap",
                         }}
                       >
-                        <Box
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp"
+                          onChange={handleHeroBackgroundUpload}
+                          style={{ display: "none" }}
+                          ref={(el) => (fileInputRefs.current["hero-bg"] = el)}
+                        />
+                        <Button
+                          variant="outlined"
+                          startIcon={<CloudUploadIcon />}
+                          onClick={() =>
+                            fileInputRefs.current["hero-bg"]?.click()
+                          }
+                          sx={{ minWidth: { xs: "100%", sm: "auto" } }}
+                        >
+                          Upload Background
+                        </Button>
+                        <Button
+                          variant="text"
+                          color="error"
+                          startIcon={<ClearIcon />}
+                          onClick={() => {
+                            setImpactReportForm((prev) => ({
+                              ...prev,
+                              hero: {
+                                ...prev.hero,
+                                backgroundImageUrl: null,
+                                backgroundImagePreview: null,
+                                backgroundImageFile: null,
+                              },
+                            }));
+                            setIsDirty(true);
+                            enqueueSnackbar("Background cleared", {
+                              variant: "info",
+                            });
+                          }}
+                          disabled={
+                            !impactReportForm.hero.backgroundImageUrl &&
+                            !impactReportForm.hero.backgroundImagePreview
+                          }
+                        >
+                          Clear Background
+                        </Button>
+                        {heroUploadPct !== null && (
+                          <Box sx={{ flex: 1, minWidth: 180 }}>
+                            <LinearProgress
+                              variant="determinate"
+                              value={heroUploadPct}
+                            />
+                            <Typography
+                              variant="caption"
+                              color="rgba(255,255,255,0.7)"
+                            >
+                              {heroUploadPct}%
+                            </Typography>
+                          </Box>
+                        )}
+                        {heroUploadPct === null &&
+                          impactReportForm.hero.backgroundImagePreview && (
+                            <Box
+                              sx={{
+                                width: { xs: "100%", sm: 120 },
+                                height: { xs: 140, sm: 70 },
+                                overflow: "hidden",
+                                borderRadius: 1,
+                                minWidth: { xs: "auto", sm: 120 },
+                              }}
+                            >
+                              <img
+                                src={
+                                  impactReportForm.hero.backgroundImagePreview
+                                }
+                                alt="Background preview"
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                  filter: impactReportForm.hero
+                                    .backgroundGrayscale
+                                    ? "grayscale(1)"
+                                    : undefined,
+                                }}
+                              />
+                            </Box>
+                          )}
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={
+                                impactReportForm.hero.backgroundGrayscale
+                              }
+                              onChange={(e) =>
+                                handleSectionChange(
+                                  "hero",
+                                  "backgroundGrayscale",
+                                  e.target.checked,
+                                )
+                              }
+                              sx={{
+                                "& .MuiSwitch-switchBase.Mui-checked": {
+                                  color: COLORS.gogo_blue,
+                                },
+                                "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                                  {
+                                    backgroundColor: COLORS.gogo_blue,
+                                  },
+                              }}
+                            />
+                          }
+                          label="Render background image in grayscale (gradient and text stay color)"
+                          sx={{ color: "white" }}
+                        />
+                        <Typography
+                          variant="caption"
                           sx={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 2,
+                            color: "rgba(255,255,255,0.7)",
+                            display: "block",
                           }}
                         >
-                          <Box>
-                            <Typography
-                              variant="caption"
-                              color="rgba(255,255,255,0.7)"
-                            >
-                              Color 1
-                            </Typography>
-                            <Button
-                              variant="outlined"
-                              onClick={(e) => {
-                                setColorPickerField("color1");
-                                setColorPickerAnchor(
-                                  e.currentTarget as HTMLElement,
-                                );
-                              }}
-                              sx={{
-                                mt: 0.5,
-                                minWidth: 48,
-                                px: 1,
-                                borderColor: "rgba(255,255,255,0.3)",
-                                color: "rgba(255,255,255,0.9)",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1,
-                              }}
-                            >
-                              <span
-                                style={{
-                                  display: "inline-block",
-                                  width: 18,
-                                  height: 18,
-                                  borderRadius: 3,
-                                  background: impactReportForm.hero.color1,
-                                  border: "1px solid rgba(255,255,255,0.2)",
-                                }}
-                              />
-                              Pick
-                            </Button>
-                          </Box>
-                          <Box>
-                            <Typography
-                              variant="caption"
-                              color="rgba(255,255,255,0.7)"
-                            >
-                              Color 2
-                            </Typography>
-                            <Button
-                              variant="outlined"
-                              onClick={(e) => {
-                                setColorPickerField("color2");
-                                setColorPickerAnchor(
-                                  e.currentTarget as HTMLElement,
-                                );
-                              }}
-                              sx={{
-                                mt: 0.5,
-                                minWidth: 48,
-                                px: 1,
-                                borderColor: "rgba(255,255,255,0.3)",
-                                color: "rgba(255,255,255,0.9)",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1,
-                              }}
-                            >
-                              <span
-                                style={{
-                                  display: "inline-block",
-                                  width: 18,
-                                  height: 18,
-                                  borderRadius: 3,
-                                  background: impactReportForm.hero.color2,
-                                  border: "1px solid rgba(255,255,255,0.2)",
-                                }}
-                              />
-                              Pick
-                            </Button>
-                          </Box>
-                        </Box>
-                      </Grid>
-                      <Grid item xs={12} md={4} sx={{ ml: { md: -2 } }}>
-                        <Box
+                          Note: The preview frame is approximate. The background
+                          image may not align exactly with other elements on the
+                          final page.
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    {/* Background image is always 100% opacity; no alt field */}
+
+                    {/* Accessibility */}
+                    <Grid item xs={12}>
+                      <Typography variant="subtitle1" gutterBottom>
+                        Accessibility
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <CustomTextField
+                        label="ARIA Label"
+                        value={impactReportForm.hero.ariaLabel}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "hero",
+                            "ariaLabel",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+
+                    {/* Preview removed from here; now permanently on the left */}
+                  </Grid>
+                </Box>
+              )}
+
+              {/* Mission Section */}
+              {currentTab === 2 && (
+                <Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      mb: 3,
+                    }}
+                  >
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        fontFamily:
+                          "'Airwaves', 'Century Gothic', 'Arial', sans-serif",
+                      }}
+                    >
+                      Mission Section
+                    </Typography>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={impactReportForm.mission.enabled}
+                          onChange={(e) =>
+                            handleSectionChange(
+                              "mission",
+                              "enabled",
+                              e.target.checked,
+                            )
+                          }
                           sx={{
-                            width: 140,
-                            height: 140,
-                            borderRadius: 1,
-                            border: "1px solid rgba(255,255,255,0.1)",
-                            background: composeGradient(
-                              impactReportForm.hero.degree,
-                              impactReportForm.hero.color1,
-                              impactReportForm.hero.color2,
-                              impactReportForm.hero.gradientOpacity,
-                            ),
+                            "& .MuiSwitch-switchBase.Mui-checked": {
+                              color: COLORS.gogo_blue,
+                            },
+                            "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                              {
+                                backgroundColor: COLORS.gogo_blue,
+                              },
                           }}
                         />
-                      </Grid>
+                      }
+                      label="Enable Section"
+                      sx={{ color: "white" }}
+                    />
+                  </Box>
+                  <Divider sx={{ mb: 3, bgcolor: "rgba(255,255,255,0.1)" }} />
+
+                  <Grid container spacing={{ xs: 2, md: 3 }}>
+                    {/* Basics */}
+                    <Grid item xs={12} md={6}>
+                      <CustomTextField
+                        label="Mission Title"
+                        value={impactReportForm.mission.title}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "mission",
+                            "title",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                      />
+                      <CustomTextField
+                        label="Badge Label"
+                        value={impactReportForm.mission.badgeLabel}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "mission",
+                            "badgeLabel",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                        sx={{ mt: 2 }}
+                      />
                     </Grid>
-                  </Grid>
-                  <ColorPickerPopover
-                    open={openColorPicker}
-                    anchorEl={colorPickerAnchor}
-                    onClose={() => {
-                      setColorPickerAnchor(null);
-                      setColorPickerField(null);
-                    }}
-                    value={currentPickerColor}
-                    onChange={(val) => {
-                      if (!colorPickerField) return;
-                      handleSectionChange("hero", colorPickerField, val);
-                    }}
-                  />
-                  <Grid item xs={12} md={9}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                      <Typography
-                        variant="caption"
-                        color="rgba(255,255,255,0.7)"
+                    <Grid item xs={12} md={6}>
+                      <CustomTextField
+                        label="Statement Title"
+                        value={impactReportForm.mission.statementTitle}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "mission",
+                            "statementTitle",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                      />
+                      <Box sx={{ mt: 1 }}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={(e) => {
+                            setMissionColorPickerField("statementTitleColor");
+                            setMissionColorPickerAnchor(
+                              e.currentTarget as HTMLElement,
+                            );
+                          }}
+                          sx={{
+                            mt: 1,
+                            borderColor: "rgba(255,255,255,0.3)",
+                            color: "rgba(255,255,255,0.9)",
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: "inline-block",
+                              width: 16,
+                              height: 16,
+                              borderRadius: 3,
+                              background:
+                                impactReportForm.mission.statementTitleColor ||
+                                "#ffffff",
+                              border: "1px solid rgba(255,255,255,0.2)",
+                            }}
+                          />
+                          &nbsp;Title color
+                        </Button>
+                      </Box>
+                    </Grid>
+
+                    {/* Statement and Meta */}
+                    <Grid item xs={12} md={6}>
+                      <CustomTextField
+                        label="Statement Text"
+                        value={impactReportForm.mission.statementText}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "mission",
+                            "statementText",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                        multiline
+                        minRows={5}
+                      />
+                      <Box sx={{ mt: 1 }}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={(e) => {
+                            setMissionColorPickerField("statementTextColor");
+                            setMissionColorPickerAnchor(
+                              e.currentTarget as HTMLElement,
+                            );
+                          }}
+                          sx={{
+                            mt: 1,
+                            borderColor: "rgba(255,255,255,0.3)",
+                            color: "rgba(255,255,255,0.9)",
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: "inline-block",
+                              width: 16,
+                              height: 16,
+                              borderRadius: 3,
+                              background:
+                                impactReportForm.mission.statementTextColor ||
+                                "#b8ffe9",
+                              border: "1px solid rgba(255,255,255,0.2)",
+                            }}
+                          />
+                          &nbsp;Text color
+                        </Button>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <CustomTextField
+                        label="Statement Meta"
+                        value={impactReportForm.mission.statementMeta}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "mission",
+                            "statementMeta",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                      />
+                      <Box sx={{ mt: 1 }}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={(e) => {
+                            setMissionColorPickerField("statementMetaColor");
+                            setMissionColorPickerAnchor(
+                              e.currentTarget as HTMLElement,
+                            );
+                          }}
+                          sx={{
+                            mt: 1,
+                            borderColor: "rgba(255,255,255,0.3)",
+                            color: "rgba(255,255,255,0.9)",
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: "inline-block",
+                              width: 16,
+                              height: 16,
+                              borderRadius: 3,
+                              background:
+                                impactReportForm.mission.statementMetaColor ||
+                                "rgba(255,255,255,0.75)",
+                              border: "1px solid rgba(255,255,255,0.2)",
+                            }}
+                          />
+                          &nbsp;Meta color
+                        </Button>
+                      </Box>
+                      <CustomTextField
+                        label="Serial"
+                        value={impactReportForm.mission.serial}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "mission",
+                            "serial",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                        sx={{ mt: 2 }}
+                      />
+                      <Box sx={{ mt: 1 }}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={(e) => {
+                            setMissionColorPickerField("serialColor");
+                            setMissionColorPickerAnchor(
+                              e.currentTarget as HTMLElement,
+                            );
+                          }}
+                          sx={{
+                            mt: 1,
+                            borderColor: "rgba(255,255,255,0.3)",
+                            color: "rgba(255,255,255,0.9)",
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: "inline-block",
+                              width: 16,
+                              height: 16,
+                              borderRadius: 3,
+                              background:
+                                impactReportForm.mission.serialColor ||
+                                "rgba(255,255,255,0.55)",
+                              border: "1px solid rgba(255,255,255,0.2)",
+                            }}
+                          />
+                          &nbsp;Serial color
+                        </Button>
+                      </Box>
+                    </Grid>
+
+                    {/* Background controls */}
+                    <Grid item xs={12}>
+                      <Divider
+                        sx={{ my: 1.5, bgcolor: "rgba(255,255,255,0.08)" }}
+                      />
+                      <Typography variant="h6" sx={{ mb: 1.5 }}>
+                        Background
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                        Gradient Angle: {impactReportForm.mission.degree}°
+                      </Typography>
+                      <input
+                        type="range"
+                        min={1}
+                        max={360}
+                        step={1}
+                        value={impactReportForm.mission.degree}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "mission",
+                            "degree",
+                            Number(e.target.value),
+                          )
+                        }
+                        style={{ width: "100%" }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                      <Typography variant="body2" sx={{ mb: 0.5 }}>
+                        Color Stop 1
+                      </Typography>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={(e) => {
+                          setColorPickerField("color1");
+                          setColorPickerAnchor(e.currentTarget as HTMLElement);
+                        }}
+                        sx={{
+                          borderColor: "rgba(255,255,255,0.3)",
+                          color: "rgba(255,255,255,0.9)",
+                        }}
                       >
-                        Gradient Opacity
+                        <span
+                          style={{
+                            display: "inline-block",
+                            width: 16,
+                            height: 16,
+                            borderRadius: 3,
+                            background: impactReportForm.mission.color1,
+                            border: "1px solid rgba(255,255,255,0.2)",
+                          }}
+                        />
+                        &nbsp;Pick color
+                      </Button>
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                      <Typography variant="body2" sx={{ mb: 0.5 }}>
+                        Color Stop 2
+                      </Typography>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={(e) => {
+                          setColorPickerField("color2");
+                          setColorPickerAnchor(e.currentTarget as HTMLElement);
+                        }}
+                        sx={{
+                          borderColor: "rgba(255,255,255,0.3)",
+                          color: "rgba(255,255,255,0.9)",
+                        }}
+                      >
+                        <span
+                          style={{
+                            display: "inline-block",
+                            width: 16,
+                            height: 16,
+                            borderRadius: 3,
+                            background: impactReportForm.mission.color2,
+                            border: "1px solid rgba(255,255,255,0.2)",
+                          }}
+                        />
+                        &nbsp;Pick color
+                      </Button>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                        Gradient Opacity:{" "}
+                        {impactReportForm.mission.gradientOpacity.toFixed(2)}
                       </Typography>
                       <input
                         type="range"
                         min={0}
                         max={1}
-                        step={0.05}
-                        value={impactReportForm.hero.gradientOpacity}
+                        step={0.01}
+                        value={impactReportForm.mission.gradientOpacity}
                         onChange={(e) =>
                           handleSectionChange(
-                            "hero",
+                            "mission",
                             "gradientOpacity",
                             Number(e.target.value),
                           )
                         }
+                        style={{ width: "100%" }}
                       />
-                      <Typography variant="body2">
-                        {impactReportForm.hero.gradientOpacity.toFixed(2)}
-                      </Typography>
-                    </Box>
-                  </Grid>
+                    </Grid>
 
-                  {/* Background Image */}
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle1" gutterBottom>
-                      Background Image
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 2,
-                        flexWrap: "wrap",
-                      }}
-                    >
+                    {/* Background image upload */}
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" sx={{ mb: 0.5 }}>
+                        Background Image
+                      </Typography>
                       <input
                         type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        onChange={handleHeroBackgroundUpload}
+                        accept="image/jpeg,image/png,image/webp"
                         style={{ display: "none" }}
-                        ref={(el) => (fileInputRefs.current["hero-bg"] = el)}
-                      />
-                      <Button
-                        variant="outlined"
-                        startIcon={<CloudUploadIcon />}
-                        onClick={() =>
-                          fileInputRefs.current["hero-bg"]?.click()
-                        }
-                        sx={{ minWidth: { xs: "100%", sm: "auto" } }}
-                      >
-                        Upload Background
-                      </Button>
-                      <Button
-                        variant="text"
-                        color="error"
-                        startIcon={<ClearIcon />}
-                        onClick={() => {
+                        ref={(el) => (fileInputRefs.current["mission-bg"] = el)}
+                        onChange={async (e) => {
+                          if (!e.target.files || !e.target.files[0]) return;
+                          const file = e.target.files[0];
+                          const allowedTypes = [
+                            "image/jpeg",
+                            "image/png",
+                            "image/webp",
+                          ];
+                          const isHeicLike =
+                            /heic|heif/i.test(file.type) ||
+                            /\.(heic|heif)$/i.test(file.name);
+                          if (!allowedTypes.includes(file.type)) {
+                            const message = isHeicLike
+                              ? "HEIC images are not widely supported in browsers. Please upload a JPG or PNG instead."
+                              : "Unsupported image format. Please upload a JPG, PNG, or WebP image.";
+                            setErrors((prev) => ({
+                              ...prev,
+                              general: message,
+                            }));
+                            enqueueSnackbar(message, { variant: "warning" });
+                            return;
+                          }
+                          const preview = URL.createObjectURL(file);
                           setImpactReportForm((prev) => ({
                             ...prev,
-                            hero: {
-                              ...prev.hero,
-                              backgroundImageUrl: null,
-                              backgroundImagePreview: null,
-                              backgroundImageFile: null,
+                            mission: {
+                              ...prev.mission,
+                              backgroundImagePreview: preview,
+                              backgroundImageFile: file,
                             },
                           }));
                           setIsDirty(true);
-                          enqueueSnackbar("Background cleared", {
-                            variant: "info",
-                          });
+                          setErrors((prev) => ({ ...prev, general: "" }));
                         }}
-                        disabled={
-                          !impactReportForm.hero.backgroundImageUrl &&
-                          !impactReportForm.hero.backgroundImagePreview
-                        }
-                      >
-                        Clear Background
-                      </Button>
-                      {heroUploadPct !== null && (
-                        <Box sx={{ flex: 1, minWidth: 180 }}>
+                      />
+                      <Box sx={{ display: "flex", gap: 1 }}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          startIcon={<CloudUploadIcon />}
+                          onClick={() =>
+                            fileInputRefs.current["mission-bg"]?.click()
+                          }
+                          disabled={isSubmitting || missionUploadPct !== null}
+                        >
+                          Select Image
+                        </Button>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={
+                                impactReportForm.mission.backgroundGrayscale
+                              }
+                              onChange={(e) =>
+                                handleSectionChange(
+                                  "mission",
+                                  "backgroundGrayscale",
+                                  e.target.checked,
+                                )
+                              }
+                            />
+                          }
+                          label="Grayscale image with gradient overlay"
+                          sx={{ color: "rgba(255,255,255,0.9)" }}
+                        />
+                      </Box>
+                      {missionUploadPct !== null && (
+                        <Box sx={{ mt: 1 }}>
                           <LinearProgress
                             variant="determinate"
-                            value={heroUploadPct}
+                            value={missionUploadPct}
                           />
-                          <Typography
-                            variant="caption"
-                            color="rgba(255,255,255,0.7)"
-                          >
-                            {heroUploadPct}%
-                          </Typography>
                         </Box>
                       )}
-                      {heroUploadPct === null &&
-                        impactReportForm.hero.backgroundImagePreview && (
-                          <Box
-                            sx={{
-                              width: { xs: "100%", sm: 120 },
-                              height: { xs: 140, sm: 70 },
-                              overflow: "hidden",
-                              borderRadius: 1,
-                              minWidth: { xs: "auto", sm: 120 },
-                            }}
-                          >
-                            <img
-                              src={impactReportForm.hero.backgroundImagePreview}
-                              alt="Background preview"
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "cover",
-                                filter: impactReportForm.hero
-                                  .backgroundGrayscale
-                                  ? "grayscale(1)"
-                                  : undefined,
-                              }}
-                            />
-                          </Box>
-                        )}
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={impactReportForm.hero.backgroundGrayscale}
-                            onChange={(e) =>
-                              handleSectionChange(
-                                "hero",
-                                "backgroundGrayscale",
-                                e.target.checked,
-                              )
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      {impactReportForm.mission.backgroundImagePreview ||
+                      impactReportForm.mission.backgroundImageUrl ? (
+                        <Box
+                          sx={{
+                            mt: { xs: 1, md: 0 },
+                            borderRadius: 1,
+                            overflow: "hidden",
+                            border: "1px solid rgba(255,255,255,0.08)",
+                          }}
+                        >
+                          <img
+                            src={
+                              impactReportForm.mission.backgroundImagePreview ||
+                              (impactReportForm.mission
+                                .backgroundImageUrl as string)
                             }
-                            sx={{
-                              "& .MuiSwitch-switchBase.Mui-checked": {
-                                color: COLORS.gogo_blue,
-                              },
-                              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                {
-                                  backgroundColor: COLORS.gogo_blue,
-                                },
+                            alt="Mission background preview"
+                            style={{
+                              width: "100%",
+                              height: 200,
+                              objectFit: "cover",
+                              filter: impactReportForm.mission
+                                .backgroundGrayscale
+                                ? "grayscale(1)"
+                                : "none",
                             }}
                           />
-                        }
-                        label="Render background image in grayscale (gradient and text stay color)"
-                        sx={{ color: "white" }}
+                        </Box>
+                      ) : (
+                        <Typography variant="body2" sx={{ opacity: 0.7 }}>
+                          No background image selected
+                        </Typography>
+                      )}
+                    </Grid>
+
+                    {/* Stats editor */}
+                    <Grid item xs={12}>
+                      <Divider
+                        sx={{ my: 1.5, bgcolor: "rgba(255,255,255,0.08)" }}
                       />
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: "rgba(255,255,255,0.7)",
-                          display: "block",
+                      <Typography variant="h6" sx={{ mb: 1.5 }}>
+                        At a Glance (Stats)
+                      </Typography>
+                    </Grid>
+                    {impactReportForm.mission.stats.map((s, idx) => (
+                      <Grid item xs={12} md={6} key={`mission-stat-${s.id}`}>
+                        <Card
+                          variant="outlined"
+                          sx={{ bgcolor: "transparent" }}
+                        >
+                          <CardContent>
+                            <Grid container spacing={2}>
+                              <Grid item xs={12} sm={4}>
+                                <CustomTextField
+                                  label="Label"
+                                  value={s.label}
+                                  onChange={(e) => {
+                                    const next = [
+                                      ...impactReportForm.mission.stats,
+                                    ];
+                                    next[idx] = { ...s, label: e.target.value };
+                                    handleSectionChange(
+                                      "mission",
+                                      "stats",
+                                      next,
+                                    );
+                                  }}
+                                  fullWidth
+                                />
+                              </Grid>
+                              <Grid item xs={12} sm={4}>
+                                <CustomTextField
+                                  label="Number"
+                                  value={String(s.number ?? "")}
+                                  onChange={(e) => {
+                                    const next = [
+                                      ...impactReportForm.mission.stats,
+                                    ];
+                                    next[idx] = {
+                                      ...s,
+                                      number: e.target.value,
+                                    };
+                                    handleSectionChange(
+                                      "mission",
+                                      "stats",
+                                      next,
+                                    );
+                                  }}
+                                  fullWidth
+                                />
+                              </Grid>
+                              <Grid item xs={12} sm={4}>
+                                <CustomTextField
+                                  label="Color"
+                                  value={s.color || ""}
+                                  onChange={(e) => {
+                                    const next = [
+                                      ...impactReportForm.mission.stats,
+                                    ];
+                                    next[idx] = { ...s, color: e.target.value };
+                                    handleSectionChange(
+                                      "mission",
+                                      "stats",
+                                      next,
+                                    );
+                                  }}
+                                  placeholder="#22C55E"
+                                  fullWidth
+                                />
+                              </Grid>
+                              <Grid item xs={12} sm={6}>
+                                <FormControlLabel
+                                  control={
+                                    <Switch
+                                      checked={s.action === "openModal"}
+                                      onChange={(e) => {
+                                        const next = [
+                                          ...impactReportForm.mission.stats,
+                                        ];
+                                        next[idx] = {
+                                          ...s,
+                                          action: e.target.checked
+                                            ? "openModal"
+                                            : "none",
+                                          modalId: e.target.checked
+                                            ? "disciplines"
+                                            : null,
+                                        };
+                                        handleSectionChange(
+                                          "mission",
+                                          "stats",
+                                          next,
+                                        );
+                                      }}
+                                    />
+                                  }
+                                  label="Opens Disciplines Modal"
+                                />
+                              </Grid>
+                              <Grid
+                                item
+                                xs={12}
+                                sm={6}
+                                sx={{
+                                  display: "flex",
+                                  justifyContent: "flex-end",
+                                }}
+                              >
+                                <IconButton
+                                  onClick={() => {
+                                    const next =
+                                      impactReportForm.mission.stats.filter(
+                                        (_, i) => i !== idx,
+                                      );
+                                    handleSectionChange(
+                                      "mission",
+                                      "stats",
+                                      next,
+                                    );
+                                  }}
+                                  color="error"
+                                >
+                                  <DeleteIcon />
+                                </IconButton>
+                              </Grid>
+                            </Grid>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                    <Grid item xs={12}>
+                      <Button
+                        startIcon={<AddIcon />}
+                        variant="outlined"
+                        onClick={() => {
+                          const next = [
+                            ...impactReportForm.mission.stats,
+                            {
+                              id: uuidv4(),
+                              number: "",
+                              label: "",
+                              color: "#22C55E",
+                              action: "none" as const,
+                              modalId: null,
+                            },
+                          ];
+                          handleSectionChange("mission", "stats", next);
                         }}
                       >
-                        Note: The preview frame is approximate. The background
-                        image may not align exactly with other elements on the
-                        final page.
+                        Add Stat
+                      </Button>
+                    </Grid>
+
+                    {/* Disciplines modal editor */}
+                    <Grid item xs={12}>
+                      <Divider
+                        sx={{ my: 1.5, bgcolor: "rgba(255,255,255,0.08)" }}
+                      />
+                      <Typography variant="h6" sx={{ mb: 1.5 }}>
+                        Disciplines Modal
                       </Typography>
-                    </Box>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <CustomTextField
+                        label="Modal Title"
+                        value={impactReportForm.mission.modalTitle || ""}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "mission",
+                            "modalTitle",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        Items
+                      </Typography>
+                      <Grid container spacing={1}>
+                        {impactReportForm.mission.disciplinesItems.map(
+                          (name, i) => (
+                            <Grid item xs={12} md={6} key={`disc-${i}`}>
+                              <Box sx={{ display: "flex", gap: 1 }}>
+                                <CustomTextField
+                                  label={`Item ${i + 1}`}
+                                  value={name}
+                                  onChange={(e) => {
+                                    const next = [
+                                      ...impactReportForm.mission
+                                        .disciplinesItems,
+                                    ];
+                                    next[i] = e.target.value;
+                                    handleSectionChange(
+                                      "mission",
+                                      "disciplinesItems",
+                                      next,
+                                    );
+                                  }}
+                                  fullWidth
+                                />
+                                <IconButton
+                                  onClick={() => {
+                                    const next =
+                                      impactReportForm.mission.disciplinesItems.filter(
+                                        (_, idx) => idx !== i,
+                                      );
+                                    handleSectionChange(
+                                      "mission",
+                                      "disciplinesItems",
+                                      next,
+                                    );
+                                  }}
+                                  color="error"
+                                >
+                                  <DeleteIcon />
+                                </IconButton>
+                              </Box>
+                            </Grid>
+                          ),
+                        )}
+                      </Grid>
+                      <Button
+                        startIcon={<AddIcon />}
+                        variant="outlined"
+                        sx={{ mt: 1.5 }}
+                        onClick={() => {
+                          const next = [
+                            ...impactReportForm.mission.disciplinesItems,
+                            "",
+                          ];
+                          handleSectionChange(
+                            "mission",
+                            "disciplinesItems",
+                            next,
+                          );
+                        }}
+                      >
+                        Add Item
+                      </Button>
+                    </Grid>
                   </Grid>
-                  {/* Background image is always 100% opacity; no alt field */}
 
-                  {/* Accessibility */}
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle1" gutterBottom>
-                      Accessibility
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <CustomTextField
-                      label="ARIA Label"
-                      value={impactReportForm.hero.ariaLabel}
-                      onChange={(e) =>
-                        handleSectionChange("hero", "ariaLabel", e.target.value)
-                      }
-                      fullWidth
-                    />
-                  </Grid>
+                  {/* Mission color picker popover */}
+                  <ColorPickerPopover
+                    open={missionPickerOpen}
+                    anchorEl={missionColorPickerAnchor}
+                    onClose={() => {
+                      setMissionColorPickerAnchor(null);
+                      setMissionColorPickerField(null);
+                    }}
+                    value={currentMissionPickerColor}
+                    onChange={(val) => {
+                      if (!missionColorPickerField) return;
+                      handleSectionChange(
+                        "mission",
+                        missionColorPickerField,
+                        val,
+                      );
+                    }}
+                    presets={defaultSwatch ?? undefined}
+                  />
+                </Box>
+              )}
 
-                  {/* Preview removed from here; now permanently on the left */}
-                </Grid>
-              </Box>
-            )}
+              {/* Impact Stats Section removed */}
 
-            {/* Mission Section removed */}
+              {/* Programs Section removed */}
 
-            {/* Impact Stats Section removed */}
+              {/* Locations Section removed */}
 
-            {/* Programs Section removed */}
-
-            {/* Locations Section removed */}
-
-            {/* Testimonials Section removed */}
-          </CustomPaper>
-        </Grid>
-
-        {/* General error */}
-        {errors.general && (
-          <Grid item xs={12}>
-            <Typography variant="body2" color="error" align="center">
-              {errors.general}
-            </Typography>
+              {/* Testimonials Section removed */}
+            </CustomPaper>
           </Grid>
-        )}
-      </Grid>
-    </ScreenGrid>
+
+          {/* General error */}
+          {errors.general && (
+            <Grid item xs={12}>
+              <Typography variant="body2" color="error" align="center">
+                {errors.general}
+              </Typography>
+            </Grid>
+          )}
+        </Grid>
+      </ScreenGrid>
+    </FrostedScope>
   );
 }
 

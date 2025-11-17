@@ -33,3 +33,4 @@ export async function saveMedia(payload: SaveMediaRequest): Promise<SaveMediaRes
   }
   return (await res.json()) as SaveMediaResponse;
 }
+

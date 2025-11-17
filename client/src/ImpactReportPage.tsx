@@ -27,6 +27,9 @@ import SpotifyEmbedsSection from './components/SpotifyEmbedsSection';
 import FinancialAnalysisSection from './components/FinancialAnalysisSection';
 // IntroOverlay temporarily disabled
 
+// Preflight API checks
+import { fetchHeroContent, fetchMissionContent } from './services/impact.api';
+
 // Styled components for Spotify-like footer
 const SpotifyFooter = styled.footer`
   background: #121212;
@@ -288,6 +291,24 @@ function ImpactReportPage() {
   // const futureRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
 
+  // Require backend content; redirect to 404 if missing
+  const [isReady, setIsReady] = useState<boolean>(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [hero, mission] = await Promise.all([fetchHeroContent(), fetchMissionContent()]);
+        if (!hero || !mission) {
+          window.location.replace('/404.html');
+          return;
+        }
+        setIsReady(true);
+      } catch {
+        window.location.replace('/404.html');
+      }
+    })();
+  }, []);
+
   // Music player state and initialization removed
 
   // Apply GOGO-like styles to body when component mounts
@@ -319,9 +340,10 @@ function ImpactReportPage() {
   }, []);
 
   // Intro overlay disabled
-
+  
   // Set up Intersection Observer for animations
   useEffect(() => {
+    if (!isReady) return;
     const prefersReduced =
       typeof window !== 'undefined' &&
       typeof window.matchMedia !== 'undefined' &&
@@ -484,7 +506,7 @@ function ImpactReportPage() {
 
     // Cleanup observer on unmount
     return () => observer.disconnect();
-  }, []);
+  }, [isReady]);
 
   // Music handlers removed with music player
 
@@ -492,6 +514,7 @@ function ImpactReportPage() {
 
   // Support hash-based deep links on initial load
   useEffect(() => {
+    if (!isReady) return;
     let timeoutId: number | undefined;
     const hash = window.location.hash?.replace('#', '');
     if (hash) {
@@ -503,8 +526,12 @@ function ImpactReportPage() {
     return () => {
       if (timeoutId !== undefined) clearTimeout(timeoutId);
     };
-  }, []);
+  }, [isReady]);
 
+  if (!isReady) {
+    return null;
+  }
+  
   return (
     <div className="impact-report">
       {/* IntroOverlay disabled */}

@@ -51,8 +51,10 @@ function ColorPickerPopover(props: ColorPickerPopoverProps) {
       transformOrigin={{ vertical: "top", horizontal: "left" }}
       PaperProps={{
         sx: {
-          bgcolor: "#151821",
-          border: "1px solid rgba(255,255,255,0.1)",
+          bgcolor: "rgba(21,24,33,0.6)",
+          border: "1px solid rgba(255,255,255,0.12)",
+          WebkitBackdropFilter: "blur(10px) saturate(140%)",
+          backdropFilter: "blur(10px) saturate(140%)",
           p: 2,
           width: { xs: 260, sm: 320 },
         },

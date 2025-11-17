@@ -382,12 +382,7 @@ const Ticket = styled.div`
     bottom: 0;
     left: 0;
     width: 6px;
-    background: linear-gradient(
-      180deg,
-      ${COLORS.gogo_blue},
-      ${COLORS.gogo_purple},
-      ${COLORS.gogo_teal}
-    );
+    background: var(--ticket-stripe-gradient, linear-gradient(180deg, ${COLORS.gogo_blue}, ${COLORS.gogo_purple}, ${COLORS.gogo_teal}));
   }
 
   &::after {
@@ -536,12 +531,40 @@ interface MissionStatementProps {
   topImages: string[];
   bottomImages: string[];
   statement: string;
+  statementTitle?: string | null;
+  statementTitleColor?: string | null;
+  statementTextColor?: string | null;
+  statementMeta?: string | null;
+  statementMetaColor?: string | null;
+  serial?: string | null;
+  serialColor?: string | null;
+  ticketStripeGradient?: string | null;
+  ticketBorderColor?: string | null;
+  ticketBackdropColor?: string | null;
+  ticketShowBarcode?: boolean | null;
+  backgroundLogoCfg?: {
+    opacity?: number | null;
+    rotationDeg?: number | null;
+    scale?: number | null;
+  } | null;
 }
 
 function MissionStatement({
   topImages,
   bottomImages,
   statement,
+  statementTitle,
+  statementTitleColor,
+  statementTextColor,
+  statementMeta,
+  statementMetaColor,
+  serial,
+  serialColor,
+  ticketStripeGradient,
+  ticketBorderColor,
+  ticketBackdropColor,
+  ticketShowBarcode = true,
+  backgroundLogoCfg,
 }: MissionStatementProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -584,9 +607,26 @@ function MissionStatement({
   return (
     <SectionContainer ref={containerRef}>
       <TicketContainer className="statement">
-        <Ticket>
+        <Ticket
+          style={{
+            ...(ticketBorderColor ? { borderColor: ticketBorderColor } : {}),
+            ...(ticketBackdropColor ? { background: ticketBackdropColor } : {}),
+            ...(ticketStripeGradient ? ({ ['--ticket-stripe-gradient' as any]: ticketStripeGradient } as React.CSSProperties) : {}),
+          }}
+        >
           <BgLogoWrap aria-hidden="true">
-            <BgLogoSvg viewBox={GOGO_LOGO_BK_VIEWBOX} role="img">
+            <BgLogoSvg
+              viewBox={GOGO_LOGO_BK_VIEWBOX}
+              role="img"
+              style={{
+                ...(backgroundLogoCfg?.opacity != null ? { opacity: backgroundLogoCfg.opacity } : {}),
+                ...(backgroundLogoCfg?.rotationDeg != null || backgroundLogoCfg?.scale != null
+                  ? {
+                      transform: `translate(-50%, -50%) rotate(${backgroundLogoCfg?.rotationDeg ?? 90}deg) scale(${backgroundLogoCfg?.scale ?? 0.82})`,
+                    }
+                  : {}),
+              }}
+            >
               {GOGO_LOGO_BK_PATHS.map(({ d, transform }) => (
                 <path
                   key={`${d}-${transform ?? ''}`}
@@ -601,16 +641,22 @@ function MissionStatement({
             <TicketLeft>
               <BadgeRow>
                 <Badge>TICKET</Badge>
-                <Serial>SN-GOGO-2025</Serial>
+                <Serial style={serialColor ? { color: serialColor } : undefined}>{serial ?? 'SN-GOGO-2025'}</Serial>
               </BadgeRow>
-              <Title>MISSION STATEMENT — ADMIT ALL</Title>
+              <Title style={statementTitleColor ? { color: statementTitleColor } : undefined}>
+                {statementTitle ?? 'MISSION STATEMENT — ADMIT ALL'}
+              </Title>
               <Statement>
-                <StatementText>{statement}</StatementText>
+                <StatementText style={statementTextColor ? { WebkitTextFillColor: 'unset', color: statementTextColor, background: 'none' } : undefined}>
+                  {statement}
+                </StatementText>
               </Statement>
-              <Meta>ISSUED 2025 • CHOOSE YOUR SOUND</Meta>
+              <Meta style={statementMetaColor ? { color: statementMetaColor } : undefined}>
+                {statementMeta ?? 'ISSUED 2025 • CHOOSE YOUR SOUND'}
+              </Meta>
             </TicketLeft>
             <TicketRight>
-              <Barcode />
+              {ticketShowBarcode ? <Barcode /> : null}
             </TicketRight>
           </TicketInner>
         </Ticket>

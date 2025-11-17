@@ -268,8 +268,9 @@ const Chip = styled.span`
     transform: translateY(-1px);
   }
 `;
-function HeroSection(props: { disableFetch?: boolean; heroOverride?: Partial<HeroContent>; disableAnimations?: boolean } = {}): JSX.Element {
-  const { disableFetch = false, heroOverride, disableAnimations = false } = props;
+function HeroSection(props: { previewMode?: boolean; heroOverride?: Partial<HeroContent> } = {}): JSX.Element {
+  const { previewMode = false, heroOverride } = props;
+  const disableAnimations = previewMode;
   const [hero, setHero] = useState<HeroContent | null>(null);
 
   // Create refs for animations
@@ -447,7 +448,7 @@ function HeroSection(props: { disableFetch?: boolean; heroOverride?: Partial<Her
   // Set up everything on mount and handle cleanup
   useEffect(() => {
     // Load hero content unless disabled (admin preview can pass data instead)
-    if (!disableFetch) {
+    if (!previewMode) {
       fetchHeroContent().then((data) => setHero(data));
     } else if (heroOverride) {
       setHero((prev) => ({ ...(prev ?? ({} as HeroContent)), ...(heroOverride as HeroContent) }));
@@ -620,7 +621,7 @@ function HeroSection(props: { disableFetch?: boolean; heroOverride?: Partial<Her
     handleMouseMove,
     mouseLeaveHandler,
     startAnimationLoop,
-    disableFetch,
+    previewMode,
     heroOverride,
   ]);
 
@@ -831,7 +832,13 @@ function HeroSection(props: { disableFetch?: boolean; heroOverride?: Partial<Her
                 rel="noopener noreferrer"
                 style={{ textDecoration: 'none' }}
               >
-                <PrimaryButton ref={primaryButtonRef} style={primaryCtaColor ? { color: primaryCtaColor } : undefined}>
+                <PrimaryButton
+                  ref={primaryButtonRef}
+                  style={{
+                    ...(disableAnimations ? { opacity: 1, transform: 'none' } : {}),
+                    ...(primaryCtaColor ? { color: primaryCtaColor } : {}),
+                  }}
+                >
                   <span>▶</span>
                   <span>{primaryCta.label}</span>
                 </PrimaryButton>
@@ -844,7 +851,13 @@ function HeroSection(props: { disableFetch?: boolean; heroOverride?: Partial<Her
                 rel="noopener noreferrer"
                 style={{ textDecoration: 'none' }}
               >
-                <SecondaryButton ref={secondaryButtonRef} style={secondaryCtaColor ? { color: secondaryCtaColor } : undefined}>
+                <SecondaryButton
+                  ref={secondaryButtonRef}
+                  style={{
+                    ...(disableAnimations ? { opacity: 1, transform: 'none' } : {}),
+                    ...(secondaryCtaColor ? { color: secondaryCtaColor } : {}),
+                  }}
+                >
                   <span>{secondaryCta.label}</span>
                 </SecondaryButton>
               </a>
