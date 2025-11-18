@@ -25,7 +25,7 @@ import Population from './components/Population';
 import gogoWideLogo from '../assets/GOGO_LOGO_WIDE_WH.png';
 import SpotifyEmbedsSection from './components/SpotifyEmbedsSection';
 import FinancialAnalysisSection from './components/FinancialAnalysisSection';
-// IntroOverlay temporarily disabled
+import IntroOverlay from "./components/IntroOverlay";
 
 // Styled components for Spotify-like footer
 const SpotifyFooter = styled.footer`
@@ -287,6 +287,7 @@ function ImpactReportPage() {
   const flexRef = useRef<HTMLDivElement>(null);
   // const futureRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
+  const [introComplete, setIntroComplete] = useState(false);
 
   // Music player state and initialization removed
 
@@ -299,12 +300,12 @@ function ImpactReportPage() {
     const originalOverflow = document.body.style.overflowX;
 
     // Apply GOGO-inspired styles
-    document.body.style.backgroundColor = 'var(--spotify-black, #171717)';
-    document.body.style.color = 'white';
+    document.body.style.backgroundColor = "var(--spotify-black, #171717)";
+    document.body.style.color = "white";
     document.body.style.fontFamily =
       'var(--font-body, "Century Gothic", "Arial", sans-serif)';
-    document.body.style.overflowX = 'hidden';
-    document.body.classList.add('has-spotify-header');
+    document.body.style.overflowX = "hidden";
+    document.body.classList.add("has-spotify-header");
 
     // No need to add Google Fonts for Montserrat, using GOGO fonts instead
 
@@ -314,41 +315,32 @@ function ImpactReportPage() {
       document.body.style.color = originalColor;
       document.body.style.fontFamily = originalFontFamily;
       document.body.style.overflowX = originalOverflow;
-      document.body.classList.remove('has-spotify-header');
+      document.body.classList.remove("has-spotify-header");
     };
   }, []);
+
+  // Initial animation for hero section, coordinated with intro overlay
+  useEffect(() => {
+    if (!heroRef.current) {
+      return;
+    }
+
+    const heroElement = heroRef.current;
+    // Ensure hero is always fully visible; the intro overlay will visually
+    // reveal it via the logo cutout instead of hiding it here.
+    heroElement.style.opacity = "1";
+    heroElement.style.transform = "none";
+    heroElement.style.willChange = "";
+  }, [introComplete]);
 
   // Intro overlay disabled
 
   // Set up Intersection Observer for animations
   useEffect(() => {
     const prefersReduced =
-      typeof window !== 'undefined' &&
-      typeof window.matchMedia !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    // Initial animation for hero section
-    if (heroRef.current) {
-      const heroElement = heroRef.current;
-      // Set initial state cheaply
-      heroElement.style.opacity = '0';
-      heroElement.style.transform = 'translateY(16px)';
-      heroElement.style.willChange = 'opacity, transform';
-      if (!prefersReduced) {
-        animate(heroElement, {
-          opacity: [0, 1],
-          translateY: [16, 0],
-          duration: 700,
-          easing: 'easeOutCubic',
-          complete: () => {
-            heroElement.style.willChange = '';
-          },
-        });
-      } else {
-        heroElement.style.opacity = '1';
-        heroElement.style.transform = 'none';
-      }
-    }
+      typeof window !== "undefined" &&
+      typeof window.matchMedia !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     // Observer for other sections
     const observer = new IntersectionObserver(
@@ -366,10 +358,10 @@ function ImpactReportPage() {
               // Verify target is still available
               if (document.body.contains(targetElement)) {
                 const isFinancial =
-                  (targetElement as HTMLElement).id === 'financial' ||
+                  (targetElement as HTMLElement).id === "financial" ||
                   targetElement === financialRef.current;
                 if (isFinancial) {
-                  console.log('[ImpactReport] Financial section intersecting', {
+                  console.log("[ImpactReport] Financial section intersecting", {
                     prefersReduced,
                     hasAnimate: typeof animate,
                     target: (targetElement as HTMLElement).id,
@@ -378,20 +370,20 @@ function ImpactReportPage() {
                 if (!prefersReduced) {
                   if (isFinancial) {
                     console.log(
-                      '[ImpactReport] Financial: starting section animation',
+                      "[ImpactReport] Financial: starting section animation",
                     );
                   }
                   animate(targetElement, {
                     opacity: [0, 1],
                     translateY: [16, 0],
                     duration: 600,
-                    easing: 'easeOutCubic',
+                    easing: "easeOutCubic",
                     complete: () => {
                       // drop will-change after animation completes
-                      (targetElement as HTMLElement).style.willChange = '';
+                      (targetElement as HTMLElement).style.willChange = "";
                       if (isFinancial) {
                         console.log(
-                          '[ImpactReport] Financial: section animation complete',
+                          "[ImpactReport] Financial: section animation complete",
                         );
                       }
                     },
@@ -399,11 +391,11 @@ function ImpactReportPage() {
 
                   // Animate child elements after the section appears (if marked)
                   const children =
-                    targetElement.querySelectorAll('.animate-child');
+                    targetElement.querySelectorAll(".animate-child");
                   if (children && children.length > 0) {
                     if (isFinancial) {
                       console.log(
-                        '[ImpactReport] Financial: animating children',
+                        "[ImpactReport] Financial: animating children",
                         {
                           count: children.length,
                         },
@@ -415,18 +407,18 @@ function ImpactReportPage() {
                       scale: [0.98, 1],
                       duration: 480,
                       delay: stagger(80),
-                      easing: 'easeOutCubic',
+                      easing: "easeOutCubic",
                     });
                   }
                 } else {
                   if (isFinancial) {
                     console.log(
-                      '[ImpactReport] Financial: prefers-reduced-motion, skipping animations',
+                      "[ImpactReport] Financial: prefers-reduced-motion, skipping animations",
                     );
                   }
                   targetElement.setAttribute(
-                    'style',
-                    'opacity: 1; transform: none;',
+                    "style",
+                    "opacity: 1; transform: none;",
                   );
                 }
               }
@@ -434,11 +426,11 @@ function ImpactReportPage() {
               // Unobserve after animation is triggered
               observer.unobserve(target);
               if (
-                (target as HTMLElement).id === 'financial' ||
+                (target as HTMLElement).id === "financial" ||
                 target === financialRef.current
               ) {
                 console.log(
-                  '[ImpactReport] Financial: unobserved after triggering',
+                  "[ImpactReport] Financial: unobserved after triggering",
                 );
               }
             }
@@ -448,7 +440,7 @@ function ImpactReportPage() {
       {
         threshold: 0,
         // Pre-trigger slightly before sections enter viewport
-        rootMargin: '200px 0px -10% 0px',
+        rootMargin: "200px 0px -10% 0px",
       },
     );
 
@@ -470,13 +462,13 @@ function ImpactReportPage() {
       if (node) {
         // Set initial styles to hint the compositor and reduce layout
         const el = node as HTMLElement;
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(16px)';
-        el.style.willChange = 'opacity, transform';
+        el.style.opacity = "0";
+        el.style.transform = "translateY(16px)";
+        el.style.willChange = "opacity, transform";
         observer.observe(node);
         if (node === financialRef.current) {
           console.log(
-            '[ImpactReport] Financial: observing with initial hidden styles',
+            "[ImpactReport] Financial: observing with initial hidden styles",
           );
         }
       }
@@ -493,11 +485,11 @@ function ImpactReportPage() {
   // Support hash-based deep links on initial load
   useEffect(() => {
     let timeoutId: number | undefined;
-    const hash = window.location.hash?.replace('#', '');
+    const hash = window.location.hash?.replace("#", "");
     if (hash) {
       timeoutId = window.setTimeout(() => {
         const el = document.getElementById(hash);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 300);
     }
     return () => {
@@ -507,11 +499,13 @@ function ImpactReportPage() {
 
   return (
     <div className="impact-report">
-      {/* IntroOverlay disabled */}
+      {!introComplete && (
+        <IntroOverlay onFinish={() => setIntroComplete(true)} />
+      )}
       <div className="spotify-gradient-background" />
       <Header />
-      <div className="main-content" style={{ paddingBottom: '120px' }}>
-        <div id="hero" ref={heroRef} style={{ opacity: 0 }}>
+      <div className="main-content" style={{ paddingBottom: "120px" }}>
+        <div id="hero" ref={heroRef}>
           <HeroSection />
         </div>
         <div id="mission" ref={missionRef}>

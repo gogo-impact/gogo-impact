@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import styled, { keyframes } from 'styled-components';
+import styled, { keyframes, css } from 'styled-components';
 import { animate, stagger } from 'animejs';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -23,6 +23,7 @@ import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import MissionStatement from '../components/MissionStatement';
 import COLORS from '../../assets/colors.ts';
+import { fetchMissionContent, type MissionContent } from '../services/impact.api';
 import photo1 from '../../assets/missionPhotos/Photo1.jpg';
 import photo2 from '../../assets/missionPhotos/Photo2.jpg';
 import photo3 from '../../assets/missionPhotos/Photo3.jpg';
@@ -38,6 +39,25 @@ import photo12 from '../../assets/missionPhotos/Photo12.jpg';
 import photo13 from '../../assets/missionPhotos/Photo13.jpg';
 import photo14 from '../../assets/missionPhotos/Photo14.jpg';
 
+const ICON_COMPONENTS: Record<string, React.ReactNode> = {
+  musicNote: <MusicNoteIcon />,
+  graphicEq: <GraphicEqIcon />,
+  mic: <MicIcon />,
+  piano: <PianoIcon />,
+  brush: <BrushIcon />,
+  theater: <TheaterComedyIcon />,
+  queueMusic: <QueueMusicIcon />,
+  libraryMusic: <LibraryMusicIcon />,
+  audiotrack: <AudiotrackIcon />,
+  equalizer: <EqualizerIcon />,
+  computer: <ComputerIcon />,
+  recordVoiceOver: <RecordVoiceOverIcon />,
+  directionsRun: <DirectionsRunIcon />,
+};
+
+const getIconByKey = (key?: string | null) =>
+  (key && ICON_COMPONENTS[key]) || null;
+
 // Animations
 const pulseEqualizer = keyframes`
   0% {
@@ -51,16 +71,17 @@ const pulseEqualizer = keyframes`
   }
 `;
 
-const SectionContainer = styled.section`
+const SectionContainer = styled.section<{ $textAlign?: 'left' | 'center' | 'right' }>`
   position: relative;
   padding: 4rem 0; /* inner content controls side spacing */
   background: linear-gradient(180deg, #121212 0%, #0a0a0a 100%);
   margin: 2rem 0;
   border-radius: 12px;
-  overflow: visible;
+  overflow: hidden;
   transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   width: 100%;
   max-width: 100%;
+  text-align: ${(p) => p.$textAlign ?? 'center'};
 
   &::before {
     content: '';
@@ -92,6 +113,8 @@ const Content = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 clamp(16px, 4vw, 32px);
+  position: relative;
+  z-index: 2;
 `;
 
 const SectionHeader = styled.div`
@@ -103,18 +126,25 @@ const SectionHeader = styled.div`
   z-index: 1;
 `;
 
-const SectionTitle = styled.h2`
+const SectionTitle = styled.h2<{
+  $useGradient?: boolean;
+  $titleGradient?: string | null;
+  $titleColor?: string | null;
+  $underlineGradient?: string | null;
+}>`
   font-size: 3rem;
   font-weight: 900;
-  background: linear-gradient(
-    to right,
-    rgb(126, 154, 255),
-    rgb(191, 175, 255),
-    rgb(178, 255, 241)
-  );
+  color: ${(p) =>
+    p.$useGradient ? 'transparent' : p.$titleColor ?? 'white'};
+  background: ${(p) =>
+    p.$useGradient
+      ? p.$titleGradient ??
+        'linear-gradient(to right, rgb(126, 154, 255), rgb(191, 175, 255), rgb(178, 255, 241))'
+      : 'none'};
   background-size: 100% 100%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  -webkit-background-clip: ${(p) => (p.$useGradient ? 'text' : 'initial')};
+  -webkit-text-fill-color: ${(p) =>
+    p.$useGradient ? 'transparent' : p.$titleColor ?? 'white'};
   margin: 0;
   position: relative;
   letter-spacing: 0.02em;
@@ -126,11 +156,9 @@ const SectionTitle = styled.h2`
     bottom: -10px;
     width: 60px;
     height: 4px;
-    background: linear-gradient(
-      to right,
-      #5fa8d3,
-      /* softer blue */ #7b7fd1 /* softer purple */
-    );
+    background: ${(p) =>
+      p.$underlineGradient ??
+      'linear-gradient(to right, #5fa8d3, #7b7fd1)'};
     transition: width 0.3s ease;
   }
 
@@ -139,25 +167,29 @@ const SectionTitle = styled.h2`
   }
 `;
 
-const SpotifyBadge = styled.div`
+const SpotifyBadge = styled.div<{
+  $bg?: string | null;
+  $border?: string | null;
+  $textColor?: string | null;
+}>`
   display: flex;
   align-items: center;
   padding: 0.6rem 1.2rem;
-  background: rgba(0, 0, 0, 0.4);
+  background: ${(p) => p.$bg ?? 'rgba(0, 0, 0, 0.4)'};
   border-radius: 50px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid ${(p) => p.$border ?? 'rgba(255, 255, 255, 0.1)'};
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 
   .badge-icon {
     margin-right: 0.8rem;
     font-size: 1.2rem;
-    color: #7b7fd1;
+    color: ${(p) => p.$textColor ?? '#7b7fd1'};
   }
 
   span {
     font-size: 0.9rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.8);
+    color: ${(p) => p.$textColor ?? 'rgba(255, 255, 255, 0.8)'};
   }
 `;
 
@@ -170,12 +202,12 @@ const StatsContainer = styled.div`
   z-index: 1;
 `;
 
-const AtGlanceLabel = styled.div`
+const AtGlanceLabel = styled.div<{ $color?: string | null }>`
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-weight: 800;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: ${(p) => p.$color ?? 'rgba(255, 255, 255, 0.7)'};
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
@@ -186,7 +218,10 @@ const AtGlanceLabel = styled.div`
     display: inline-block;
     height: 2px;
     width: 60px;
-    background: linear-gradient(90deg, ${COLORS.gogo_blue}, transparent);
+    background: ${(p) =>
+      p.$color
+        ? `linear-gradient(90deg, ${p.$color}, transparent)`
+        : `linear-gradient(90deg, ${COLORS.gogo_blue}, transparent)`};
     border-radius: 2px;
   }
 `;
@@ -287,11 +322,18 @@ const EqualizerBars = styled.div`
   padding-top: 1.5rem;
 `;
 
-const EqualizerBar = styled.div`
+const EqualizerBar = styled.div<{ $color?: string; $animate?: boolean }>`
   width: 6px;
-  background: ${(props) => props.color || COLORS.gogo_green};
+  background: ${(props) => props.$color || COLORS.gogo_green};
   border-radius: 3px;
-  animation: ${pulseEqualizer} ease-in-out infinite;
+  ${(p) =>
+    p.$animate === false
+      ? css`
+          animation: none;
+        `
+      : css`
+          animation: ${pulseEqualizer} ease-in-out infinite;
+        `};
 
   &:nth-child(1) {
     animation-duration: 1s;
@@ -447,11 +489,15 @@ const ShineOverlay = styled.div`
   }
 `;
 
-function MissionSection(): JSX.Element {
+function MissionSection(
+  props: { previewMode?: boolean; missionOverride?: Partial<MissionContent> } = {},
+): JSX.Element {
+  const { previewMode = false, missionOverride } = props;
   const [inView, setInView] = useState(true);
   const [showDisciplines, setShowDisciplines] = useState(false);
   const modalGridRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const [mission, setMission] = useState<MissionContent | null>(null);
 
   // Reveal immediately; no intersection gating for mission section
   // Kept for potential future hooks but does nothing now
@@ -459,40 +505,17 @@ function MissionSection(): JSX.Element {
     // no setup required currently
   }, []);
 
-  // Define the stats data outside the JSX for better organization
-  const statsData = [
-    {
-      id: 'students',
-      number: '1622',
-      label: 'Students',
-      delay: 0,
-      color: COLORS.gogo_green,
-    },
-    {
-      id: 'mentors',
-      number: '105',
-      label: 'Paid Mentors',
-      delay: 0.2,
-      color: COLORS.gogo_blue,
-    },
-    {
-      id: 'sites',
-      number: '59',
-      label: 'School & Community Sites',
-      delay: 0.4,
-      color: COLORS.gogo_purple,
-    },
-    {
-      id: 'disciplines',
-      number: '12',
-      label: 'Artistic Disciplines',
-      delay: 0.6,
-      color: COLORS.gogo_yellow,
-    },
-  ];
+  // Load mission content (or apply preview override)
+  useEffect(() => {
+    if (!previewMode) {
+      fetchMissionContent().then((data) => setMission(data));
+    } else if (missionOverride) {
+      setMission((prev) => ({ ...(prev ?? {}), ...(missionOverride as MissionContent) }));
+    }
+  }, [previewMode, missionOverride]);
 
   // Artistic disciplines mapped to vector icons
-  const disciplineIcons: Record<string, React.ReactNode> = {
+  const disciplineNameIcons: Record<string, React.ReactNode> = {
     'Music Production': <GraphicEqIcon />,
     Guitar: <MusicNoteIcon />,
     Drums: <AudiotrackIcon />,
@@ -512,8 +535,8 @@ function MissionSection(): JSX.Element {
     Strings: <MusicNoteIcon />,
   };
 
-  // Full disciplines dataset for modal (moved from section grid)
-  const disciplinesData = [
+  // Fallback disciplines dataset for modal (used if none provided)
+  const fallbackDisciplinesData = [
     { name: 'Music Production', students: 78, projects: 120 },
     { name: 'Guitar', students: 95, projects: 150 },
     { name: 'Drums', students: 65, projects: 85 },
@@ -532,6 +555,120 @@ function MissionSection(): JSX.Element {
     { name: 'Woodwind Instruments', students: 30, projects: 45 },
     { name: 'Strings', students: 25, projects: 40 },
   ];
+
+  const missionHidden =
+    mission &&
+    (((mission as any)?.visible === false) ||
+      ((mission as any)?.enabled === false));
+
+  const textAlign =
+    (mission?.textAlign as 'left' | 'center' | 'right') ?? 'center';
+  const layoutVariant =
+    mission?.layoutVariant === 'default' ? 'default' : 'ticket';
+  const animationsEnabled = mission?.animationsEnabled !== false;
+
+  // Compute composed background from gradient + image
+  const isValidGradient = (s?: string | null) =>
+    !!s && !/undefined/i.test(String(s)) && /linear-gradient\(/i.test(String(s));
+  const gradientOk = isValidGradient(mission?.backgroundColor);
+  const gradientBackground = gradientOk
+    ? (mission?.backgroundColor as string)
+    : undefined;
+  const sectionBackground = gradientBackground;
+
+  // Stats from API/override or default
+  const disciplinesModal =
+    (mission?.modals ?? undefined)?.find((m) => m?.id === 'disciplines') ?? null;
+  const statsSource =
+    mission?.stats && mission.stats.length > 0
+      ? mission.stats
+      : [
+          { id: 'students', number: '1622', label: 'Students', color: COLORS.gogo_green },
+          { id: 'mentors', number: '105', label: 'Paid Mentors', color: COLORS.gogo_blue },
+          { id: 'sites', number: '59', label: 'School & Community Sites', color: COLORS.gogo_purple },
+          {
+            id: 'disciplines',
+            number: fallbackDisciplinesData.length,
+            label: 'Artistic Disciplines',
+            color: COLORS.gogo_yellow,
+          },
+        ];
+  const computedStats = statsSource.map((s, idx) => {
+    const useModalCount = s.numberSource === 'modalItemsLength';
+    const displayNumber =
+      useModalCount && disciplinesModal?.items
+        ? disciplinesModal.items.length
+        : s.number ?? '';
+    return {
+      ...s,
+      delay: idx * 0.2,
+      displayNumber,
+    };
+  });
+
+  const statsEqualizerConfig =
+    mission?.statsEqualizer ?? { enabled: true, barCount: 4 };
+  const showEqualizer = statsEqualizerConfig.enabled !== false;
+  const equalizerBarCount = Math.max(
+    1,
+    Math.min(24, statsEqualizerConfig.barCount ?? 4),
+  );
+  const statsTitleText = mission?.statsTitle || 'At a Glance';
+  const statsTitleColor = mission?.statsTitleColor || 'rgba(255,255,255,0.7)';
+
+  const getStaticEqualizerHeight = (statIndex: number, barIndex: number) =>
+    40 + (((statIndex + barIndex) % 5) * 10);
+
+  const badgeIconNode = (() => {
+    if (mission?.badgeIcon?.type === 'iconKey') {
+      return (
+        getIconByKey(mission.badgeIcon.value) ??
+        mission.badgeIcon.value ??
+        '♫'
+      );
+    }
+    if (mission?.badgeIcon?.value) {
+      return mission.badgeIcon.value;
+    }
+    return '♫';
+  })();
+
+  const renderStatIcon = (stat: any) => {
+    const keyed = getIconByKey(stat.iconKey);
+    if (keyed) return keyed;
+    switch (stat.id) {
+      case 'students':
+        return (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 12c2.761 0 5-2.239 5-5S14.761 2 12 2 7 4.239 7 7s2.239 5 5 5zm0 2c-3.866 0-7 2.239-7 5v1h14v-1c0-2.761-3.134-5-7-5z" />
+          </svg>
+        );
+      case 'mentors':
+        return (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M16 11c2.209 0 4-1.791 4-4s-1.791-4-4-4-4 1.791-4 4 1.791 4 4 4zM8 12c2.209 0 4-1.791 4-4S10.209 4 8 4 4 5.791 4 8s1.791 4 4 4zm8 2c-2.673 0-8 1.336-8 4v2h16v-2c0-2.664-5.327-4-8-4zM8 14c-.688 0-1.347.062-1.971.175C3.659 14.66 2 15.867 2 17v3h4v-2c0-1.188.75-2.238 2-2.986-.62-.01-1.31-.014-2-.014z" />
+          </svg>
+        );
+      case 'sites':
+        return (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C8.14 2 5 5.14 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.86-3.14-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z" />
+          </svg>
+        );
+      case 'disciplines':
+        return (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3z" />
+          </svg>
+        );
+      default:
+        return <MusicNoteIcon />;
+    }
+  };
+
+  if (missionHidden) {
+    return <></>;
+  }
 
   // Animate modal cards in rows when dialog opens
   useEffect(() => {
@@ -585,13 +722,38 @@ function MissionSection(): JSX.Element {
   }, [showDisciplines]);
 
   return (
-    <SectionContainer className={`mission-section ${inView ? 'fade-in' : ''}`}>
-      <Content>
-        <SectionHeader>
-          <SectionTitle>Our Mission</SectionTitle>
-          <SpotifyBadge>
-            <div className="badge-icon">♫</div>
-            <span>Since 2008</span>
+    <SectionContainer
+      aria-label={mission?.ariaLabel || 'Mission section'}
+      $textAlign={textAlign}
+      data-variant={layoutVariant}
+      className={`mission-section${
+        animationsEnabled && inView ? ' fade-in' : ''
+      }`}
+      style={sectionBackground ? { background: sectionBackground } : undefined}
+    >
+      <Content style={{ textAlign }}>
+        <SectionHeader
+          style={{
+            flexDirection: textAlign === 'center' ? 'column' : 'row',
+            alignItems: textAlign === 'center' ? 'center' : 'flex-start',
+            gap: textAlign === 'center' ? '1rem' : '2rem',
+          }}
+        >
+          <SectionTitle
+            $useGradient={Boolean(mission?.titleGradient)}
+            $titleGradient={mission?.titleGradient}
+            $titleColor={mission?.titleColor}
+            $underlineGradient={mission?.titleUnderlineGradient}
+          >
+            {mission?.title || 'Our Mission'}
+          </SectionTitle>
+          <SpotifyBadge
+            $bg={mission?.badgeBgColor}
+            $border={mission?.badgeBorderColor}
+            $textColor={mission?.badgeTextColor}
+          >
+            <div className="badge-icon">{badgeIconNode}</div>
+            <span>{mission?.badgeLabel || 'Since 2008'}</span>
           </SpotifyBadge>
         </SectionHeader>
 
@@ -606,91 +768,97 @@ function MissionSection(): JSX.Element {
             photo13,
             photo14,
           ]}
-          statement="Our mission is to empower youth through music, art and mentorship. Guitars Over Guns offers students from our most vulnerable communities a combination of arts education and mentorship with paid, professional musician mentors to help them overcome hardship, find their voice and reach their potential as tomorrow's leaders. Since 2008, we have served nearly 12,000 students."
+          statement={
+            mission?.statementText ||
+            "Our mission is to empower youth through music, art and mentorship. Guitars Over Guns offers students from our most vulnerable communities a combination of arts education and mentorship with paid, professional musician mentors to help them overcome hardship, find their voice and reach their potential as tomorrow's leaders. Since 2008, we have served nearly 12,000 students."
+          }
+          statementTitle={mission?.statementTitle ?? null}
+          statementTitleColor={mission?.statementTitleColor ?? null}
+          statementTextColor={mission?.statementTextColor ?? null}
+          statementMeta={mission?.statementMeta ?? null}
+          statementMetaColor={mission?.statementMetaColor ?? null}
+          serial={mission?.serial ?? null}
+          serialColor={mission?.serialColor ?? null}
+          ticketStripeGradient={mission?.ticketStripeGradient ?? null}
+          ticketBorderColor={mission?.ticketBorderColor ?? null}
+          ticketBackdropColor={mission?.ticketBackdropColor ?? null}
+          ticketShowBarcode={mission?.ticketShowBarcode ?? null}
+          backgroundLogoCfg={
+            mission?.backgroundLogo &&
+            mission.backgroundLogo.enabled !== false
+              ? {
+                  opacity:
+                    mission.backgroundLogo.opacity != null
+                      ? mission.backgroundLogo.opacity
+                      : undefined,
+                  rotationDeg:
+                    mission.backgroundLogo.rotationDeg != null
+                      ? mission.backgroundLogo.rotationDeg
+                      : undefined,
+                  scale:
+                    mission.backgroundLogo.scale != null
+                      ? mission.backgroundLogo.scale
+                      : undefined,
+                }
+              : null
+          }
         />
 
-        <AtGlanceLabel>At a Glance</AtGlanceLabel>
+        <AtGlanceLabel $color={mission?.statsTitleColor}>
+          {statsTitleText}
+        </AtGlanceLabel>
 
         <StatsContainer>
-          {statsData.map((stat) => (
+          {computedStats.map((stat: any, idx) => (
             <StatItem
-              key={stat.id}
-              className={`${inView ? 'slide-up' : ''}`}
+              key={`${stat.id}-${idx}`}
+              className={
+                animationsEnabled && inView ? 'slide-up' : undefined
+              }
               style={{
-                animationDelay: `${stat.delay}s`,
-                transitionDelay: `${stat.delay}s`,
-                cursor: stat.id === 'disciplines' ? 'pointer' : undefined,
+                animationDelay: animationsEnabled ? `${stat.delay}s` : undefined,
+                transitionDelay: animationsEnabled
+                  ? `${stat.delay}s`
+                  : undefined,
+                cursor:
+                  stat.id === 'disciplines' || stat.action === 'openModal'
+                    ? 'pointer'
+                    : undefined,
               }}
               onClick={
-                stat.id === 'disciplines'
+                stat.id === 'disciplines' || stat.action === 'openModal'
                   ? () => setShowDisciplines(true)
                   : undefined
               }
             >
               <StatContent>
-                <StatIcon>
-                  {stat.id === 'students' && (
-                    <svg
-                      width="22"
-                      height="22"
-                      viewBox="0 0 24 24"
-                      fill={stat.color}
-                    >
-                      <path d="M12 12c2.761 0 5-2.239 5-5S14.761 2 12 2 7 4.239 7 7s2.239 5 5 5zm0 2c-3.866 0-7 2.239-7 5v1h14v-1c0-2.761-3.134-5-7-5z" />
-                    </svg>
-                  )}
-                  {stat.id === 'mentors' && (
-                    <svg
-                      width="22"
-                      height="22"
-                      viewBox="0 0 24 24"
-                      fill={stat.color}
-                    >
-                      <path d="M16 11c2.209 0 4-1.791 4-4s-1.791-4-4-4-4 1.791-4 4 1.791 4 4 4zM8 12c2.209 0 4-1.791 4-4S10.209 4 8 4 4 5.791 4 8s1.791 4 4 4zm8 2c-2.673 0-8 1.336-8 4v2h16v-2c0-2.664-5.327-4-8-4zM8 14c-.688 0-1.347.062-1.971.175C3.659 14.66 2 15.867 2 17v3h4v-2c0-1.188.75-2.238 2-2.986-.62-.01-1.31-.014-2-.014z" />
-                    </svg>
-                  )}
-                  {stat.id === 'sites' && (
-                    <svg
-                      width="22"
-                      height="22"
-                      viewBox="0 0 24 24"
-                      fill={stat.color}
-                    >
-                      <path d="M12 2C8.14 2 5 5.14 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.86-3.14-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z" />
-                    </svg>
-                  )}
-                  {stat.id === 'disciplines' && (
-                    <svg
-                      width="22"
-                      height="22"
-                      viewBox="0 0 24 24"
-                      fill={stat.color}
-                    >
-                      <path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3z" />
-                    </svg>
-                  )}
+                <StatIcon style={{ color: stat.color }}>
+                  {renderStatIcon(stat)}
                 </StatIcon>
                 <StatNumber color={stat.color}>
-                  {stat.id === 'disciplines'
-                    ? String(disciplinesData.length)
-                    : stat.number}
+                  {stat.displayNumber ?? stat.number ?? ''}
                 </StatNumber>
                 <StatLabel>{stat.label}</StatLabel>
               </StatContent>
-              <EqualizerBars>
-                {['bass', 'mid-low', 'mid-high', 'treble'].map(
-                  (freqRange, i) => (
+              {showEqualizer && (
+                <EqualizerBars>
+                  {Array.from({ length: equalizerBarCount }).map((_, barIdx) => (
                     <EqualizerBar
-                      key={`${stat.id}-${freqRange}`}
-                      color={stat.color}
+                      key={`${stat.id}-bar-${barIdx}`}
+                      $color={stat.color}
+                      $animate={animationsEnabled}
                       style={{
-                        animationDuration: `${0.8 + i * 0.2}s`,
-                        height: `${Math.random() * 60 + 40}%`,
+                        animationDuration: animationsEnabled
+                          ? `${0.8 + (barIdx % 4) * 0.2}s`
+                          : undefined,
+                        height: animationsEnabled
+                          ? undefined
+                          : `${getStaticEqualizerHeight(idx, barIdx)}%`,
                       }}
                     />
-                  ),
-                )}
-              </EqualizerBars>
+                  ))}
+                </EqualizerBars>
+              )}
             </StatItem>
           ))}
         </StatsContainer>
@@ -721,7 +889,9 @@ function MissionSection(): JSX.Element {
         }}
       >
         <DialogTitle sx={{ m: 0, p: 2 }}>
-          Artistic Disciplines
+          {disciplinesModal?.title ||
+            mission?.modalTitle ||
+            'Artistic Disciplines'}
           <IconButton
             aria-label="close"
             onClick={() => setShowDisciplines(false)}
@@ -761,17 +931,24 @@ function MissionSection(): JSX.Element {
             </ModalSubtitle>
           </ModalHeader>
           <ModalGrid ref={modalGridRef}>
-            {disciplinesData.map((d) => (
-              <ModalCard
-                key={`discipline-card-${d.name.replace(/\s+/g, '-')}`}
-                data-disc-card="true"
-              >
-                <ModalIcon>
-                  {disciplineIcons[d.name] || <MusicNoteIcon />}
-                </ModalIcon>
-                <ModalName>{d.name}</ModalName>
-              </ModalCard>
-            ))}
+            {(disciplinesModal?.items?.length
+              ? disciplinesModal.items
+              : fallbackDisciplinesData
+            ).map((d: any) => {
+              const modalIcon =
+                getIconByKey(d?.iconKey) ||
+                disciplineNameIcons[d.name] ||
+                <MusicNoteIcon />;
+              return (
+                <ModalCard
+                  key={`discipline-card-${d.name.replace(/\s+/g, '-')}`}
+                  data-disc-card="true"
+                >
+                  <ModalIcon>{modalIcon}</ModalIcon>
+                  <ModalName>{d.name}</ModalName>
+                </ModalCard>
+              );
+            })}
           </ModalGrid>
         </DialogContent>
         <ShineOverlay aria-hidden />

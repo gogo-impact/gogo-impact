@@ -133,6 +133,15 @@ function composeGradient(
   return `linear-gradient(${degree}deg, ${c1} 0%, ${c2} 100%)`;
 }
 
+function composeSimpleGradient(
+  degree: number,
+  color1: string,
+  color2: string,
+): string {
+  const safeDegree = Number.isFinite(degree) ? degree : 0;
+  return `linear-gradient(${safeDegree}deg, ${color1}, ${color2})`;
+}
+
 function isValidColorStop(color: string | null | undefined): boolean {
   if (!color) return false;
   if (/undefined/i.test(color)) return false;
@@ -414,12 +423,64 @@ interface HeroSection {
   enabled: boolean;
 }
 
+type MissionLayoutVariant = "ticket" | "default";
+type MissionTextAlign = "left" | "center" | "right";
+type MissionStatAction = "none" | "openModal";
+type MissionStatNumberSource = "explicit" | "modalItemsLength";
+
+interface MissionBadgeIcon {
+  type: "glyph" | "iconKey";
+  value: string;
+}
+
+interface MissionStat {
+  id: string;
+  number: string | number;
+  label: string;
+  color?: string;
+  action?: MissionStatAction;
+  modalId?: string | null;
+  iconKey?: string | null;
+  numberSource?: MissionStatNumberSource;
+}
+
+interface MissionDisciplineItem {
+  name: string;
+  iconKey?: string | null;
+}
+
+interface MissionStatsEqualizer {
+  enabled: boolean;
+  barCount: number;
+}
+
+interface MissionBackgroundLogo {
+  enabled: boolean;
+  svgKey?: string;
+  opacity?: number;
+  rotationDeg?: number;
+  scale?: number;
+}
+
 interface MissionSection {
   // enable/visibility
   enabled: boolean;
+  ariaLabel: string;
+  layoutVariant: MissionLayoutVariant;
+  textAlign: MissionTextAlign;
+  animationsEnabled: boolean;
   // basic copy
   title: string;
+  titleColor?: string | null;
+  titleGradientDegree: number;
+  titleGradientColor1: string;
+  titleGradientColor2: string;
+  titleGradientOpacity: number;
   badgeLabel: string;
+  badgeIcon?: MissionBadgeIcon | null;
+  badgeTextColor?: string | null;
+  badgeBgColor?: string | null;
+  badgeBorderColor?: string | null;
   statementTitle: string;
   statementText: string;
   statementMeta: string;
@@ -431,26 +492,23 @@ interface MissionSection {
   serialColor?: string | null;
   // title gradient override (optional text style)
   titleGradient?: string | null;
+  titleUnderlineGradientDegree: number;
+  titleUnderlineGradientColor1: string;
+  titleUnderlineGradientColor2: string;
+  titleUnderlineGradient?: string | null;
   // background controls (parity with hero)
   degree: number;
   color1: string;
   color2: string;
   gradientOpacity: number;
-  backgroundImageUrl: string | null;
-  backgroundImagePreview: string | null;
-  backgroundImageFile?: File | null;
-  backgroundGrayscale: boolean;
   // stats and modal editing
-  stats: Array<{
-    id: string;
-    number: string | number;
-    label: string;
-    color?: string;
-    action?: "none" | "openModal";
-    modalId?: string | null;
-  }>;
+  statsTitle?: string;
+  statsTitleColor?: string | null;
+  statsEqualizer: MissionStatsEqualizer;
+  stats: MissionStat[];
   modalTitle?: string;
-  disciplinesItems: string[]; // list of discipline names
+  disciplinesItems: MissionDisciplineItem[];
+  backgroundLogo: MissionBackgroundLogo;
 }
 
 interface ImpactSection {
@@ -508,6 +566,34 @@ interface ImpactReportForm {
   testimonials: TestimonialSection;
 }
 
+const DEFAULT_SWATCH_SIZE = 6;
+
+const MISSION_TEXT_ALIGN_OPTIONS: MissionTextAlign[] = [
+  "left",
+  "center",
+  "right",
+];
+
+const MISSION_LAYOUT_VARIANTS: MissionLayoutVariant[] = ["ticket", "default"];
+
+const MISSION_ICON_LIBRARY = [
+  { key: "musicNote", label: "Music Note" },
+  { key: "graphicEq", label: "Graphic EQ" },
+  { key: "mic", label: "Microphone" },
+  { key: "piano", label: "Piano" },
+  { key: "brush", label: "Brush" },
+  { key: "theater", label: "Theater Masks" },
+  { key: "queueMusic", label: "Queue Music" },
+  { key: "libraryMusic", label: "Sheet Music" },
+  { key: "audiotrack", label: "Audio Track" },
+  { key: "computer", label: "Computer" },
+  { key: "recordVoiceOver", label: "Voice Over" },
+  { key: "directionsRun", label: "Movement" },
+  { key: "equalizer", label: "Equalizer" },
+];
+
+const BACKGROUND_LOGO_OPTIONS = [{ key: "gogoLogoBK", label: "GOGO Logo" }];
+
 /**
  * A page for customizing the entire impact report
  */
@@ -559,8 +645,21 @@ function ImpactReportCustomizationPage() {
     },
     mission: {
       enabled: true,
+      ariaLabel: "Mission section",
+      layoutVariant: "ticket",
+      textAlign: "center",
+      animationsEnabled: true,
       title: "Our Mission",
+      titleColor: null,
+      titleGradientDegree: 90,
+      titleGradientColor1: "#7e9aff",
+      titleGradientColor2: "#bfb1ff",
+      titleGradientOpacity: 1,
       badgeLabel: "Since 2008",
+      badgeIcon: { type: "glyph", value: "♫" },
+      badgeTextColor: "rgba(255,255,255,0.8)",
+      badgeBgColor: "rgba(0,0,0,0.4)",
+      badgeBorderColor: "rgba(255,255,255,0.1)",
       statementTitle: "MISSION STATEMENT — ADMIT ALL",
       statementText:
         "Our mission is to empower youth through music, art and mentorship. Guitars Over Guns offers students from our most vulnerable communities a combination of arts education and mentorship with paid, professional musician mentors to help them overcome hardship, find their voice and reach their potential as tomorrow's leaders. Since 2008, we have served nearly 12,000 students.",
@@ -572,14 +671,20 @@ function ImpactReportCustomizationPage() {
       serialColor: null,
       titleGradient:
         "linear-gradient(to right, rgb(126,154,255), rgb(191,175,255), rgb(178,255,241))",
+      titleUnderlineGradientDegree: 0,
+      titleUnderlineGradientColor1: "#5fa8d3",
+      titleUnderlineGradientColor2: "#7b7fd1",
+      titleUnderlineGradient: "linear-gradient(to right, #5fa8d3, #7b7fd1)",
       degree: 180,
       color1: "#5038a0",
       color2: "#121242",
       gradientOpacity: 0,
-      backgroundImageUrl: null,
-      backgroundImagePreview: null,
-      backgroundImageFile: null,
-      backgroundGrayscale: false,
+      statsTitle: "At a Glance",
+      statsTitleColor: "rgba(255,255,255,0.7)",
+      statsEqualizer: {
+        enabled: true,
+        barCount: 4,
+      },
       stats: [
         {
           id: "students",
@@ -588,6 +693,8 @@ function ImpactReportCustomizationPage() {
           color: "#22C55E",
           action: "none",
           modalId: null,
+          iconKey: null,
+          numberSource: "explicit",
         },
         {
           id: "mentors",
@@ -596,6 +703,8 @@ function ImpactReportCustomizationPage() {
           color: "#3B82F6",
           action: "none",
           modalId: null,
+          iconKey: null,
+          numberSource: "explicit",
         },
         {
           id: "sites",
@@ -604,6 +713,8 @@ function ImpactReportCustomizationPage() {
           color: "#8B5CF6",
           action: "none",
           modalId: null,
+          iconKey: null,
+          numberSource: "explicit",
         },
         {
           id: "disciplines",
@@ -612,28 +723,37 @@ function ImpactReportCustomizationPage() {
           color: "#FDE047",
           action: "openModal",
           modalId: "disciplines",
+          iconKey: null,
+          numberSource: "explicit",
         },
       ],
       modalTitle: "Artistic Disciplines",
       disciplinesItems: [
-        "Music Production",
-        "Guitar",
-        "Drums",
-        "Piano",
-        "Vocals",
-        "Bass",
-        "DJing",
-        "Songwriting",
-        "Dance",
-        "Visual Art",
-        "Digital Art",
-        "Spoken Word",
-        "Theater",
-        "Sound Engineering",
-        "Brass Instruments",
-        "Woodwind Instruments",
-        "Strings",
+        { name: "Music Production", iconKey: null },
+        { name: "Guitar", iconKey: null },
+        { name: "Drums", iconKey: null },
+        { name: "Piano", iconKey: null },
+        { name: "Vocals", iconKey: null },
+        { name: "Bass", iconKey: null },
+        { name: "DJing", iconKey: null },
+        { name: "Songwriting", iconKey: null },
+        { name: "Dance", iconKey: null },
+        { name: "Visual Art", iconKey: null },
+        { name: "Digital Art", iconKey: null },
+        { name: "Spoken Word", iconKey: null },
+        { name: "Theater", iconKey: null },
+        { name: "Sound Engineering", iconKey: null },
+        { name: "Brass Instruments", iconKey: null },
+        { name: "Woodwind Instruments", iconKey: null },
+        { name: "Strings", iconKey: null },
       ],
+      backgroundLogo: {
+        enabled: true,
+        svgKey: "gogoLogoBK",
+        opacity: 0.08,
+        rotationDeg: 90,
+        scale: 0.82,
+      },
     },
     impact: {
       title: "Our Impact",
@@ -699,6 +819,22 @@ function ImpactReportCustomizationPage() {
       enabled: true,
     },
   });
+
+  const badgeIconConfig =
+    impactReportForm.mission.badgeIcon ??
+    ({
+      type: "glyph",
+      value: "♫",
+    } as MissionBadgeIcon);
+  const badgeIconType = badgeIconConfig.type ?? "glyph";
+  const badgeIconValue = badgeIconConfig.value ?? "♫";
+  const backgroundLogoState = impactReportForm.mission.backgroundLogo ?? {
+    enabled: false,
+    svgKey: BACKGROUND_LOGO_OPTIONS[0]?.key ?? "gogoLogoBK",
+    opacity: 0.08,
+    rotationDeg: 90,
+    scale: 0.82,
+  };
 
   // Error states
   const [errors, setErrors] = useState<{
@@ -792,6 +928,15 @@ function ImpactReportCustomizationPage() {
     | "statementTextColor"
     | "statementMetaColor"
     | "serialColor"
+    | "titleColor"
+    | "badgeTextColor"
+    | "badgeBgColor"
+    | "badgeBorderColor"
+    | "statsTitleColor"
+    | "titleGradientColor1"
+    | "titleGradientColor2"
+    | "titleUnderlineGradientColor1"
+    | "titleUnderlineGradientColor2"
     | null
   >(null);
   const missionPickerOpen = Boolean(missionColorPickerAnchor);
@@ -803,12 +948,38 @@ function ImpactReportCustomizationPage() {
         : missionColorPickerField === "statementMetaColor"
           ? impactReportForm.mission.statementMetaColor ||
             "rgba(255,255,255,0.75)"
-          : impactReportForm.mission.serialColor || "rgba(255,255,255,0.55)"
+          : missionColorPickerField === "serialColor"
+            ? impactReportForm.mission.serialColor || "rgba(255,255,255,0.55)"
+            : missionColorPickerField === "titleColor"
+              ? impactReportForm.mission.titleColor || "#ffffff"
+              : missionColorPickerField === "badgeTextColor"
+                ? impactReportForm.mission.badgeTextColor ||
+                  "rgba(255,255,255,0.8)"
+                : missionColorPickerField === "badgeBgColor"
+                  ? impactReportForm.mission.badgeBgColor || "rgba(0,0,0,0.4)"
+                  : missionColorPickerField === "badgeBorderColor"
+                    ? impactReportForm.mission.badgeBorderColor ||
+                      "rgba(255,255,255,0.1)"
+                    : missionColorPickerField === "statsTitleColor"
+                      ? impactReportForm.mission.statsTitleColor ||
+                        "rgba(255,255,255,0.7)"
+                      : missionColorPickerField === "titleGradientColor1"
+                        ? impactReportForm.mission.titleGradientColor1
+                        : missionColorPickerField === "titleGradientColor2"
+                          ? impactReportForm.mission.titleGradientColor2
+                          : missionColorPickerField ===
+                              "titleUnderlineGradientColor1"
+                            ? impactReportForm.mission
+                                .titleUnderlineGradientColor1
+                            : missionColorPickerField ===
+                                "titleUnderlineGradientColor2"
+                              ? impactReportForm.mission
+                                  .titleUnderlineGradientColor2
+                              : "#000000"
     : "#000000";
 
   // Refs for file inputs
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
-  const [missionUploadPct, setMissionUploadPct] = useState<number | null>(null);
   // Defaults swatch editor state
   const [defaultSwatch, setDefaultSwatch] = useState<string[] | null>(null);
   const [defaultsPickerAnchor, setDefaultsPickerAnchor] =
@@ -819,42 +990,6 @@ function ImpactReportCustomizationPage() {
   const [selectedSwatchIndex, setSelectedSwatchIndex] = useState<number | null>(
     null,
   );
-  const DEFAULT_SWATCH_SIZE = 6;
-
-  // Generic image upload handler (currently used for mission image)
-  const handleImageUpload = (
-    section: string,
-    field: string,
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-    const isHeicLike =
-      /heic|heif/i.test(file.type) || /\.(heic|heif)$/i.test(file.name);
-    if (!allowedTypes.includes(file.type)) {
-      const message = isHeicLike
-        ? "HEIC images are not widely supported in browsers. Please upload a JPG or PNG instead."
-        : "Unsupported image format. Please upload a JPG, PNG, or WebP image.";
-      setErrors((prev) => ({ ...prev, general: message }));
-      enqueueSnackbar(message, { variant: "warning" });
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (readerEvent) => {
-      if (section === "mission" && field === "image") {
-        setImpactReportForm((prev) => ({
-          ...prev,
-          mission: {
-            ...prev.mission,
-            image: file,
-            imagePreview: (readerEvent.target?.result as string) || null,
-          },
-        }));
-      }
-    };
-    reader.readAsDataURL(file);
-  };
 
   // Handle section changes
   const handleSectionChange = (
@@ -874,6 +1009,70 @@ function ImpactReportCustomizationPage() {
       setFlashPreviewHero(true);
       window.setTimeout(() => setFlashPreviewHero(false), 800);
     }
+  };
+
+  const updateMissionTitleGradient = (
+    partial: Partial<
+      Pick<
+        MissionSection,
+        | "titleGradientDegree"
+        | "titleGradientColor1"
+        | "titleGradientColor2"
+        | "titleGradientOpacity"
+      >
+    >,
+  ) => {
+    setImpactReportForm((prev) => {
+      const mission = {
+        ...prev.mission,
+        ...partial,
+      };
+      const gradient = composeGradient(
+        mission.titleGradientDegree,
+        mission.titleGradientColor1,
+        mission.titleGradientColor2,
+        mission.titleGradientOpacity ?? 1,
+      );
+      return {
+        ...prev,
+        mission: {
+          ...mission,
+          titleGradient: gradient,
+        },
+      };
+    });
+    setIsDirty(true);
+  };
+
+  const updateMissionUnderlineGradient = (
+    partial: Partial<
+      Pick<
+        MissionSection,
+        | "titleUnderlineGradientDegree"
+        | "titleUnderlineGradientColor1"
+        | "titleUnderlineGradientColor2"
+      >
+    >,
+  ) => {
+    setImpactReportForm((prev) => {
+      const mission = {
+        ...prev.mission,
+        ...partial,
+      };
+      const gradient = composeSimpleGradient(
+        mission.titleUnderlineGradientDegree,
+        mission.titleUnderlineGradientColor1,
+        mission.titleUnderlineGradientColor2,
+      );
+      return {
+        ...prev,
+        mission: {
+          ...mission,
+          titleUnderlineGradient: gradient,
+        },
+      };
+    });
+    setIsDirty(true);
   };
 
   // Handle hero background image selection (validate + local preview only)
@@ -1150,21 +1349,168 @@ function ImpactReportCustomizationPage() {
       const mission = await fetchMissionContent();
       if (!mission) return;
       const g = parseGradient(mission.backgroundColor as string | null);
+      const titleGradientParsed = parseGradient(
+        ((mission as any)?.titleGradient as string) ?? null,
+      );
+      const titleUnderlineParsed = parseGradient(
+        ((mission as any)?.titleUnderlineGradient as string) ?? null,
+      );
       const alphaMatch = (mission.backgroundColor as string | "").match(
         /rgba\([^,]+,[^,]+,[^,]+,\s*(\d*\.?\d+)\)/i,
       );
       const parsedAlpha = alphaMatch
         ? Math.max(0, Math.min(1, parseFloat(alphaMatch[1] || "1")))
         : undefined;
+      const titleAlphaMatch = (
+        (mission as any)?.titleGradient as string | ""
+      ).match(/rgba\([^,]+,[^,]+,[^,]+,\s*(\d*\.?\d+)\)/i);
+      const parsedTitleAlpha = titleAlphaMatch
+        ? Math.max(0, Math.min(1, parseFloat(titleAlphaMatch[1] || "1")))
+        : undefined;
+      const disciplinesModal = ((mission as any)?.modals ?? []).find(
+        (m: any) => m?.id === "disciplines",
+      );
+      const sanitizedDisciplines =
+        disciplinesModal?.items
+          ?.map((it: any) => {
+            const name = typeof it?.name === "string" ? it.name : "";
+            if (!name) return null;
+            return {
+              name,
+              iconKey:
+                typeof it?.iconKey === "string" && it.iconKey.length > 0
+                  ? it.iconKey
+                  : null,
+            };
+          })
+          .filter(Boolean) ?? null;
+      const sanitizedStats: MissionStat[] | null = Array.isArray(
+        (mission as any)?.stats,
+      )
+        ? ((mission as any)?.stats as any[]).map((s, idx) => ({
+            id: String(s?.id ?? idx),
+            number: s?.number ?? "",
+            label: s?.label ?? "",
+            color: s?.color ?? undefined,
+            action:
+              s?.action === "openModal"
+                ? ("openModal" as MissionStatAction)
+                : ("none" as MissionStatAction),
+            modalId: s?.modalId ?? null,
+            iconKey:
+              typeof s?.iconKey === "string" && s.iconKey.length > 0
+                ? s.iconKey
+                : null,
+            numberSource:
+              s?.numberSource === "modalItemsLength"
+                ? "modalItemsLength"
+                : "explicit",
+          }))
+        : null;
+      const statsEqualizerConfig = (() => {
+        const eq = (mission as any)?.statsEqualizer ?? {};
+        const enabled = eq?.enabled === false ? false : true;
+        const eqBarCountRaw = Number(eq?.barCount);
+        const barCount =
+          Number.isFinite(eqBarCountRaw) && eqBarCountRaw > 0
+            ? Math.min(24, Math.max(1, Math.round(eqBarCountRaw)))
+            : null;
+        return { enabled, barCount };
+      })();
       setImpactReportForm((prev) => {
+        const nextTitleGradientDegree =
+          titleGradientParsed?.degree ?? prev.mission.titleGradientDegree;
+        const nextTitleGradientColor1 = titleGradientParsed?.color1
+          ? toHex(titleGradientParsed.color1)
+          : prev.mission.titleGradientColor1;
+        const nextTitleGradientColor2 = titleGradientParsed?.color2
+          ? toHex(titleGradientParsed.color2)
+          : prev.mission.titleGradientColor2;
+        const nextTitleGradientOpacity =
+          typeof parsedTitleAlpha === "number"
+            ? parsedTitleAlpha
+            : (prev.mission.titleGradientOpacity ?? 1);
+        const composedTitleGradient = composeGradient(
+          nextTitleGradientDegree,
+          nextTitleGradientColor1,
+          nextTitleGradientColor2,
+          nextTitleGradientOpacity,
+        );
+
+        const nextUnderlineDegree =
+          titleUnderlineParsed?.degree ??
+          prev.mission.titleUnderlineGradientDegree;
+        const nextUnderlineColor1 = titleUnderlineParsed?.color1
+          ? toHex(titleUnderlineParsed.color1)
+          : prev.mission.titleUnderlineGradientColor1;
+        const nextUnderlineColor2 = titleUnderlineParsed?.color2
+          ? toHex(titleUnderlineParsed.color2)
+          : prev.mission.titleUnderlineGradientColor2;
+        const composedUnderlineGradient = composeSimpleGradient(
+          nextUnderlineDegree,
+          nextUnderlineColor1,
+          nextUnderlineColor2,
+        );
+
+        const prevEqualizer = prev.mission.statsEqualizer;
+        const prevBackgroundLogo = prev.mission.backgroundLogo;
         const next: ImpactReportForm = {
           ...prev,
           mission: {
             ...prev.mission,
+            enabled: (mission as any)?.visible === false ? false : true,
+            ariaLabel:
+              typeof (mission as any)?.ariaLabel === "string"
+                ? (mission as any)?.ariaLabel
+                : prev.mission.ariaLabel,
+            layoutVariant:
+              (mission as any)?.layoutVariant === "default"
+                ? "default"
+                : "ticket",
+            textAlign: ["left", "center", "right"].includes(
+              (mission as any)?.textAlign,
+            )
+              ? ((mission as any)?.textAlign as MissionTextAlign)
+              : prev.mission.textAlign,
+            animationsEnabled:
+              (mission as any)?.animationsEnabled === false ? false : true,
             title: mission.title ?? prev.mission.title,
-            titleGradient:
-              (mission as any)?.titleGradient ?? prev.mission.titleGradient,
+            titleColor:
+              (mission as any)?.titleColor ?? prev.mission.titleColor ?? null,
+            titleGradient: composedTitleGradient,
+            titleGradientDegree: nextTitleGradientDegree,
+            titleGradientColor1: nextTitleGradientColor1,
+            titleGradientColor2: nextTitleGradientColor2,
+            titleGradientOpacity: nextTitleGradientOpacity,
+            titleUnderlineGradient:
+              (mission as any)?.titleUnderlineGradient ??
+              composedUnderlineGradient,
+            titleUnderlineGradientDegree: nextUnderlineDegree,
+            titleUnderlineGradientColor1: nextUnderlineColor1,
+            titleUnderlineGradientColor2: nextUnderlineColor2,
             badgeLabel: (mission as any)?.badgeLabel ?? prev.mission.badgeLabel,
+            badgeIcon:
+              typeof (mission as any)?.badgeIcon?.value === "string"
+                ? {
+                    type:
+                      (mission as any)?.badgeIcon?.type === "iconKey"
+                        ? "iconKey"
+                        : "glyph",
+                    value: (mission as any)?.badgeIcon?.value,
+                  }
+                : prev.mission.badgeIcon,
+            badgeTextColor:
+              (mission as any)?.badgeTextColor ??
+              prev.mission.badgeTextColor ??
+              null,
+            badgeBgColor:
+              (mission as any)?.badgeBgColor ??
+              prev.mission.badgeBgColor ??
+              null,
+            badgeBorderColor:
+              (mission as any)?.badgeBorderColor ??
+              prev.mission.badgeBorderColor ??
+              null,
             statementTitle:
               (mission as any)?.statementTitle ?? prev.mission.statementTitle,
             statementText:
@@ -1193,32 +1539,45 @@ function ImpactReportCustomizationPage() {
               typeof parsedAlpha === "number"
                 ? parsedAlpha
                 : prev.mission.gradientOpacity,
-            backgroundImageUrl: (mission as any)?.backgroundImage ?? null,
-            backgroundImagePreview: null,
-            backgroundImageFile: null,
-            backgroundGrayscale:
-              (mission as any)?.backgroundImageGrayscale === true
-                ? true
-                : false,
-            stats: Array.isArray((mission as any)?.stats)
-              ? ((mission as any)?.stats as any[]).map((s, idx) => ({
-                  id: String(s?.id ?? idx),
-                  number: s?.number ?? "",
-                  label: s?.label ?? "",
-                  color: s?.color ?? undefined,
-                  action: s?.action ?? "none",
-                  modalId: s?.modalId ?? null,
-                }))
-              : prev.mission.stats,
-            modalTitle:
-              ((mission as any)?.modals ?? []).find(
-                (m: any) => m?.id === "disciplines",
-              )?.title ?? prev.mission.modalTitle,
+            statsTitle:
+              (mission as any)?.statsTitle ?? prev.mission.statsTitle ?? "",
+            statsTitleColor:
+              (mission as any)?.statsTitleColor ??
+              prev.mission.statsTitleColor ??
+              null,
+            statsEqualizer: {
+              enabled: statsEqualizerConfig.enabled,
+              barCount:
+                statsEqualizerConfig.barCount ??
+                prevEqualizer?.barCount ??
+                prev.mission.statsEqualizer.barCount,
+            },
+            stats: sanitizedStats ?? prev.mission.stats,
+            modalTitle: disciplinesModal?.title ?? prev.mission.modalTitle,
             disciplinesItems:
-              ((mission as any)?.modals ?? [])
-                .find((m: any) => m?.id === "disciplines")
-                ?.items?.map((it: any) => it?.name)
-                .filter(Boolean) ?? prev.mission.disciplinesItems,
+              sanitizedDisciplines ?? prev.mission.disciplinesItems,
+            backgroundLogo: {
+              enabled:
+                (mission as any)?.backgroundLogo?.enabled === false
+                  ? false
+                  : true,
+              svgKey:
+                (mission as any)?.backgroundLogo?.svgKey ??
+                prevBackgroundLogo?.svgKey,
+              opacity:
+                typeof (mission as any)?.backgroundLogo?.opacity === "number"
+                  ? (mission as any)?.backgroundLogo?.opacity
+                  : prevBackgroundLogo?.opacity,
+              rotationDeg:
+                typeof (mission as any)?.backgroundLogo?.rotationDeg ===
+                "number"
+                  ? (mission as any)?.backgroundLogo?.rotationDeg
+                  : prevBackgroundLogo?.rotationDeg,
+              scale:
+                typeof (mission as any)?.backgroundLogo?.scale === "number"
+                  ? (mission as any)?.backgroundLogo?.scale
+                  : prevBackgroundLogo?.scale,
+            },
           },
         };
         setSavedSnapshot(next);
@@ -1393,67 +1752,35 @@ function ImpactReportCustomizationPage() {
         mSafeAlpha,
       );
 
-      // Upload mission background image if pending
-      let missionBackgroundImagePayload =
-        impactReportForm.mission.backgroundImageUrl ?? null;
-      if (impactReportForm.mission.backgroundImageFile) {
-        const file = impactReportForm.mission.backgroundImageFile as File;
-        const ext = (file.name.split(".").pop() || "bin").toLowerCase();
-        const signed = await signUpload({
-          contentType: file.type,
-          extension: ext,
-          key: `mission/background.${ext}`,
-        });
-        setMissionUploadPct(0);
-        await new Promise<void>((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhr.open("PUT", signed.uploadUrl);
-          if (file.type) xhr.setRequestHeader("Content-Type", file.type);
-          xhr.upload.onprogress = (evt) => {
-            if (evt.lengthComputable) {
-              const pct = Math.round((evt.loaded / evt.total) * 100);
-              setMissionUploadPct(pct);
-            }
-          };
-          xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) resolve();
-            else reject(new Error(`Upload failed: ${xhr.status}`));
-          };
-          xhr.onerror = () => reject(new Error("Network error during upload"));
-          xhr.send(file);
-        });
-        try {
-          await saveMedia({
-            key: signed.key,
-            publicUrl: signed.publicUrl,
-            contentType: file.type,
-            bytes: file.size,
-            tag: "mission-background",
-          });
-        } catch {
-          // non-fatal
-        }
-        missionBackgroundImagePayload = signed.publicUrl;
-        setImpactReportForm((prev) => ({
-          ...prev,
-          mission: {
-            ...prev.mission,
-            backgroundImageUrl: signed.publicUrl,
-            backgroundImageFile: null,
-          },
-        }));
-        setMissionUploadPct(null);
-      }
+      const composedMissionTitleGradient = composeGradient(
+        impactReportForm.mission.titleGradientDegree,
+        impactReportForm.mission.titleGradientColor1,
+        impactReportForm.mission.titleGradientColor2,
+        impactReportForm.mission.titleGradientOpacity ?? 1,
+      );
+      const composedMissionUnderlineGradient = composeSimpleGradient(
+        impactReportForm.mission.titleUnderlineGradientDegree,
+        impactReportForm.mission.titleUnderlineGradientColor1,
+        impactReportForm.mission.titleUnderlineGradientColor2,
+      );
 
       const missionPayload: Record<string, unknown> = {
+        visible: impactReportForm.mission.enabled,
+        ariaLabel: impactReportForm.mission.ariaLabel || undefined,
+        layoutVariant: impactReportForm.mission.layoutVariant,
+        textAlign: impactReportForm.mission.textAlign,
+        animationsEnabled: impactReportForm.mission.animationsEnabled,
         backgroundColor: missionBackgroundColor,
-        backgroundImage: missionBackgroundImagePayload,
-        backgroundImageGrayscale:
-          impactReportForm.mission.backgroundGrayscale || undefined,
-        // layout / a11y are not exposed here; can be added later
         title: impactReportForm.mission.title,
-        titleGradient: impactReportForm.mission.titleGradient || undefined,
+        titleColor: impactReportForm.mission.titleColor || undefined,
+        titleGradient: composedMissionTitleGradient || undefined,
+        titleUnderlineGradient: composedMissionUnderlineGradient || undefined,
         badgeLabel: impactReportForm.mission.badgeLabel,
+        badgeIcon: impactReportForm.mission.badgeIcon || undefined,
+        badgeTextColor: impactReportForm.mission.badgeTextColor || undefined,
+        badgeBgColor: impactReportForm.mission.badgeBgColor || undefined,
+        badgeBorderColor:
+          impactReportForm.mission.badgeBorderColor || undefined,
         statementTitle: impactReportForm.mission.statementTitle,
         statementTitleColor:
           impactReportForm.mission.statementTitleColor || undefined,
@@ -1465,6 +1792,10 @@ function ImpactReportCustomizationPage() {
           impactReportForm.mission.statementMetaColor || undefined,
         serial: impactReportForm.mission.serial,
         serialColor: impactReportForm.mission.serialColor || undefined,
+        statsTitle: impactReportForm.mission.statsTitle || undefined,
+        statsTitleColor: impactReportForm.mission.statsTitleColor || undefined,
+        statsEqualizer: impactReportForm.mission.statsEqualizer,
+        backgroundLogo: impactReportForm.mission.backgroundLogo,
         // stats
         stats: impactReportForm.mission.stats.map((s) => ({
           id: s.id,
@@ -1472,7 +1803,9 @@ function ImpactReportCustomizationPage() {
           label: s.label,
           color: s.color || undefined,
           action: s.action || "none",
-          modalId: s.modalId || null,
+          modalId: s.modalId ?? null,
+          iconKey: s.iconKey || undefined,
+          numberSource: s.numberSource || "explicit",
         })),
         // modals: single "disciplines"
         modals: [
@@ -1481,8 +1814,11 @@ function ImpactReportCustomizationPage() {
             title:
               impactReportForm.mission.modalTitle || "Artistic Disciplines",
             items: impactReportForm.mission.disciplinesItems
-              .filter(Boolean)
-              .map((name) => ({ name })),
+              .filter((item) => item.name?.trim().length > 0)
+              .map((item) => ({
+                name: item.name,
+                iconKey: item.iconKey || undefined,
+              })),
           },
         ],
       };
@@ -1600,11 +1936,33 @@ function ImpactReportCustomizationPage() {
   const debouncedHeroOverride = useDebouncedValue(liveHeroOverride, 300);
 
   // Build and debounce the preview mission override
-  const liveMissionOverride = useMemo(
-    () => ({
+  const liveMissionOverride = useMemo(() => {
+    const missionTitleGradient = composeGradient(
+      impactReportForm.mission.titleGradientDegree,
+      impactReportForm.mission.titleGradientColor1,
+      impactReportForm.mission.titleGradientColor2,
+      impactReportForm.mission.titleGradientOpacity ?? 1,
+    );
+    const missionTitleUnderlineGradient = composeSimpleGradient(
+      impactReportForm.mission.titleUnderlineGradientDegree,
+      impactReportForm.mission.titleUnderlineGradientColor1,
+      impactReportForm.mission.titleUnderlineGradientColor2,
+    );
+    return {
+      enabled: impactReportForm.mission.enabled,
+      ariaLabel: impactReportForm.mission.ariaLabel,
+      layoutVariant: impactReportForm.mission.layoutVariant,
+      textAlign: impactReportForm.mission.textAlign,
+      animationsEnabled: impactReportForm.mission.animationsEnabled,
       title: impactReportForm.mission.title,
-      titleGradient: impactReportForm.mission.titleGradient || undefined,
+      titleColor: impactReportForm.mission.titleColor || undefined,
+      titleGradient: missionTitleGradient,
+      titleUnderlineGradient: missionTitleUnderlineGradient,
       badgeLabel: impactReportForm.mission.badgeLabel,
+      badgeIcon: impactReportForm.mission.badgeIcon,
+      badgeTextColor: impactReportForm.mission.badgeTextColor || undefined,
+      badgeBgColor: impactReportForm.mission.badgeBgColor || undefined,
+      badgeBorderColor: impactReportForm.mission.badgeBorderColor || undefined,
       statementTitle: impactReportForm.mission.statementTitle,
       statementTitleColor:
         impactReportForm.mission.statementTitleColor || undefined,
@@ -1616,17 +1974,15 @@ function ImpactReportCustomizationPage() {
         impactReportForm.mission.statementMetaColor || undefined,
       serial: impactReportForm.mission.serial,
       serialColor: impactReportForm.mission.serialColor || undefined,
+      statsTitle: impactReportForm.mission.statsTitle || undefined,
+      statsTitleColor: impactReportForm.mission.statsTitleColor || undefined,
+      statsEqualizer: impactReportForm.mission.statsEqualizer,
       backgroundColor: composeGradient(
         impactReportForm.mission.degree,
         impactReportForm.mission.color1,
         impactReportForm.mission.color2,
         impactReportForm.mission.gradientOpacity,
       ),
-      backgroundImage:
-        impactReportForm.mission.backgroundImagePreview ||
-        impactReportForm.mission.backgroundImageUrl ||
-        null,
-      backgroundImageGrayscale: impactReportForm.mission.backgroundGrayscale,
       stats: impactReportForm.mission.stats.map((s) => ({
         id: s.id,
         number: s.number,
@@ -1634,20 +1990,24 @@ function ImpactReportCustomizationPage() {
         color: s.color,
         action: s.action,
         modalId: s.modalId ?? null,
+        iconKey: s.iconKey || undefined,
+        numberSource: s.numberSource || "explicit",
       })),
-      statsTitle: "At a Glance",
+      backgroundLogo: impactReportForm.mission.backgroundLogo,
       modals: [
         {
           id: "disciplines",
           title: impactReportForm.mission.modalTitle || "Artistic Disciplines",
           items: impactReportForm.mission.disciplinesItems
-            .filter(Boolean)
-            .map((name) => ({ name })),
+            .filter((item) => item.name?.trim().length > 0)
+            .map((item) => ({
+              name: item.name,
+              iconKey: item.iconKey || undefined,
+            })),
         },
       ],
-    }),
-    [impactReportForm.mission],
-  );
+    };
+  }, [impactReportForm.mission]);
   const debouncedMissionOverride = useDebouncedValue(liveMissionOverride, 300);
 
   // Viewport simulator (desktop/tablet/mobile artboard)
@@ -2005,24 +2365,18 @@ function ImpactReportCustomizationPage() {
                   <Box sx={{ display: "flex", gap: 1 }}>
                     <Tooltip
                       title={
-                        heroUploadPct !== null || missionUploadPct !== null
+                        heroUploadPct !== null
                           ? "Please wait for the upload to finish"
                           : ""
                       }
-                      disableHoverListener={
-                        heroUploadPct === null && missionUploadPct === null
-                      }
+                      disableHoverListener={heroUploadPct === null}
                     >
                       <span>
                         <Button
                           variant="contained"
                           startIcon={<SaveIcon />}
                           onClick={handleSave}
-                          disabled={
-                            isSubmitting ||
-                            heroUploadPct !== null ||
-                            missionUploadPct !== null
-                          }
+                          disabled={isSubmitting || heroUploadPct !== null}
                           sx={{
                             bgcolor: COLORS.gogo_blue,
                             "&:hover": { bgcolor: "#0066cc" },
@@ -2289,6 +2643,91 @@ function ImpactReportCustomizationPage() {
                   <Divider sx={{ mb: 3, bgcolor: "rgba(255,255,255,0.1)" }} />
 
                   <Grid container spacing={{ xs: 2, md: 3 }}>
+                    {/* Structure & accessibility */}
+                    <Grid item xs={12} md={6}>
+                      <CustomTextField
+                        label="ARIA Label"
+                        value={impactReportForm.mission.ariaLabel}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "mission",
+                            "ariaLabel",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                      <CustomTextField
+                        select
+                        label="Text Alignment"
+                        value={impactReportForm.mission.textAlign}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "mission",
+                            "textAlign",
+                            e.target.value as MissionTextAlign,
+                          )
+                        }
+                        fullWidth
+                      >
+                        {MISSION_TEXT_ALIGN_OPTIONS.map((option) => (
+                          <MenuItem key={option} value={option}>
+                            {option.charAt(0).toUpperCase() + option.slice(1)}
+                          </MenuItem>
+                        ))}
+                      </CustomTextField>
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                      <CustomTextField
+                        select
+                        label="Layout Variant"
+                        value={impactReportForm.mission.layoutVariant}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "mission",
+                            "layoutVariant",
+                            e.target.value as MissionLayoutVariant,
+                          )
+                        }
+                        fullWidth
+                      >
+                        {MISSION_LAYOUT_VARIANTS.map((option) => (
+                          <MenuItem key={option} value={option}>
+                            {option === "ticket" ? "Ticket" : "Default"}
+                          </MenuItem>
+                        ))}
+                      </CustomTextField>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={impactReportForm.mission.animationsEnabled}
+                            onChange={(e) =>
+                              handleSectionChange(
+                                "mission",
+                                "animationsEnabled",
+                                e.target.checked,
+                              )
+                            }
+                            sx={{
+                              "& .MuiSwitch-switchBase.Mui-checked": {
+                                color: COLORS.gogo_blue,
+                              },
+                              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                                {
+                                  backgroundColor: COLORS.gogo_blue,
+                                },
+                            }}
+                          />
+                        }
+                        label="Enable Animations"
+                        sx={{ color: "white" }}
+                      />
+                    </Grid>
+
                     {/* Basics */}
                     <Grid item xs={12} md={6}>
                       <CustomTextField
@@ -3001,6 +3440,263 @@ function ImpactReportCustomizationPage() {
                         }
                         fullWidth
                       />
+                      <Box sx={{ mt: 1 }}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={(e) => {
+                            setMissionColorPickerField("titleColor");
+                            setMissionColorPickerAnchor(
+                              e.currentTarget as HTMLElement,
+                            );
+                          }}
+                          sx={{
+                            mt: 1,
+                            borderColor: "rgba(255,255,255,0.3)",
+                            color: "rgba(255,255,255,0.9)",
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: "inline-block",
+                              width: 16,
+                              height: 16,
+                              borderRadius: 3,
+                              background:
+                                impactReportForm.mission.titleColor ||
+                                "#ffffff",
+                              border: "1px solid rgba(255,255,255,0.2)",
+                            }}
+                          />
+                          &nbsp;Title text color
+                        </Button>
+                      </Box>
+                      <Typography variant="subtitle2" sx={{ mt: 2 }}>
+                        Title Gradient
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 2,
+                          mt: 1,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                          Angle: {impactReportForm.mission.titleGradientDegree}°
+                        </Typography>
+                        <input
+                          type="range"
+                          min={0}
+                          max={360}
+                          value={impactReportForm.mission.titleGradientDegree}
+                          onChange={(e) =>
+                            updateMissionTitleGradient({
+                              titleGradientDegree: Number(e.target.value),
+                            })
+                          }
+                          style={{ flex: 1, minWidth: 160 }}
+                        />
+                      </Box>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          gap: 1,
+                          flexWrap: "wrap",
+                          mt: 1,
+                        }}
+                      >
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={(e) => {
+                            setMissionColorPickerField("titleGradientColor1");
+                            setMissionColorPickerAnchor(
+                              e.currentTarget as HTMLElement,
+                            );
+                          }}
+                          sx={{
+                            borderColor: "rgba(255,255,255,0.3)",
+                            color: "rgba(255,255,255,0.9)",
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: "inline-block",
+                              width: 16,
+                              height: 16,
+                              borderRadius: 3,
+                              background:
+                                impactReportForm.mission.titleGradientColor1,
+                              border: "1px solid rgba(255,255,255,0.2)",
+                            }}
+                          />
+                          &nbsp;Color A
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={(e) => {
+                            setMissionColorPickerField("titleGradientColor2");
+                            setMissionColorPickerAnchor(
+                              e.currentTarget as HTMLElement,
+                            );
+                          }}
+                          sx={{
+                            borderColor: "rgba(255,255,255,0.3)",
+                            color: "rgba(255,255,255,0.9)",
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: "inline-block",
+                              width: 16,
+                              height: 16,
+                              borderRadius: 3,
+                              background:
+                                impactReportForm.mission.titleGradientColor2,
+                              border: "1px solid rgba(255,255,255,0.2)",
+                            }}
+                          />
+                          &nbsp;Color B
+                        </Button>
+                      </Box>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 2,
+                          mt: 1,
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                          Opacity:{" "}
+                          {impactReportForm.mission.titleGradientOpacity.toFixed(
+                            2,
+                          )}
+                        </Typography>
+                        <input
+                          type="range"
+                          min={0}
+                          max={1}
+                          step={0.01}
+                          value={impactReportForm.mission.titleGradientOpacity}
+                          onChange={(e) =>
+                            updateMissionTitleGradient({
+                              titleGradientOpacity: Number(e.target.value),
+                            })
+                          }
+                          style={{ flex: 1, minWidth: 160 }}
+                        />
+                      </Box>
+                      <Typography variant="subtitle2" sx={{ mt: 3 }}>
+                        Title Underline Gradient
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 2,
+                          mt: 1,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                          Angle:{" "}
+                          {
+                            impactReportForm.mission
+                              .titleUnderlineGradientDegree
+                          }
+                          °
+                        </Typography>
+                        <input
+                          type="range"
+                          min={0}
+                          max={360}
+                          value={
+                            impactReportForm.mission
+                              .titleUnderlineGradientDegree
+                          }
+                          onChange={(e) =>
+                            updateMissionUnderlineGradient({
+                              titleUnderlineGradientDegree: Number(
+                                e.target.value,
+                              ),
+                            })
+                          }
+                          style={{ flex: 1, minWidth: 160 }}
+                        />
+                      </Box>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          gap: 1,
+                          flexWrap: "wrap",
+                          mt: 1,
+                        }}
+                      >
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={(e) => {
+                            setMissionColorPickerField(
+                              "titleUnderlineGradientColor1",
+                            );
+                            setMissionColorPickerAnchor(
+                              e.currentTarget as HTMLElement,
+                            );
+                          }}
+                          sx={{
+                            borderColor: "rgba(255,255,255,0.3)",
+                            color: "rgba(255,255,255,0.9)",
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: "inline-block",
+                              width: 16,
+                              height: 16,
+                              borderRadius: 3,
+                              background:
+                                impactReportForm.mission
+                                  .titleUnderlineGradientColor1,
+                              border: "1px solid rgba(255,255,255,0.2)",
+                            }}
+                          />
+                          &nbsp;Underline A
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={(e) => {
+                            setMissionColorPickerField(
+                              "titleUnderlineGradientColor2",
+                            );
+                            setMissionColorPickerAnchor(
+                              e.currentTarget as HTMLElement,
+                            );
+                          }}
+                          sx={{
+                            borderColor: "rgba(255,255,255,0.3)",
+                            color: "rgba(255,255,255,0.9)",
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: "inline-block",
+                              width: 16,
+                              height: 16,
+                              borderRadius: 3,
+                              background:
+                                impactReportForm.mission
+                                  .titleUnderlineGradientColor2,
+                              border: "1px solid rgba(255,255,255,0.2)",
+                            }}
+                          />
+                          &nbsp;Underline B
+                        </Button>
+                      </Box>
                       <CustomTextField
                         label="Badge Label"
                         value={impactReportForm.mission.badgeLabel}
@@ -3014,6 +3710,160 @@ function ImpactReportCustomizationPage() {
                         fullWidth
                         sx={{ mt: 2 }}
                       />
+                      <CustomTextField
+                        select
+                        label="Badge Icon Type"
+                        value={badgeIconType}
+                        onChange={(e) => {
+                          const nextType = e.target
+                            .value as MissionBadgeIcon["type"];
+                          const fallbackValue =
+                            nextType === "glyph"
+                              ? badgeIconType === "glyph"
+                                ? badgeIconValue
+                                : "♫"
+                              : badgeIconType === "iconKey" && badgeIconValue
+                                ? badgeIconValue
+                                : (MISSION_ICON_LIBRARY[0]?.key ?? "");
+                          handleSectionChange("mission", "badgeIcon", {
+                            type: nextType,
+                            value: fallbackValue,
+                          });
+                        }}
+                        fullWidth
+                        sx={{ mt: 2 }}
+                      >
+                        <MenuItem value="glyph">Glyph</MenuItem>
+                        <MenuItem value="iconKey">Icon</MenuItem>
+                      </CustomTextField>
+                      {badgeIconType === "glyph" ? (
+                        <CustomTextField
+                          label="Badge Glyph"
+                          value={badgeIconValue}
+                          onChange={(e) =>
+                            handleSectionChange("mission", "badgeIcon", {
+                              type: "glyph",
+                              value: e.target.value,
+                            })
+                          }
+                          fullWidth
+                          sx={{ mt: 2 }}
+                          placeholder="e.g. ♫"
+                        />
+                      ) : (
+                        <CustomTextField
+                          select
+                          label="Badge Icon"
+                          value={badgeIconValue || ""}
+                          onChange={(e) =>
+                            handleSectionChange("mission", "badgeIcon", {
+                              type: "iconKey",
+                              value: e.target.value,
+                            })
+                          }
+                          fullWidth
+                          sx={{ mt: 2 }}
+                        >
+                          {MISSION_ICON_LIBRARY.map((icon) => (
+                            <MenuItem key={icon.key} value={icon.key}>
+                              {icon.label}
+                            </MenuItem>
+                          ))}
+                        </CustomTextField>
+                      )}
+                      <Box
+                        sx={{
+                          mt: 2,
+                          display: "flex",
+                          gap: 1,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={(e) => {
+                            setMissionColorPickerField("badgeTextColor");
+                            setMissionColorPickerAnchor(
+                              e.currentTarget as HTMLElement,
+                            );
+                          }}
+                          sx={{
+                            borderColor: "rgba(255,255,255,0.3)",
+                            color: "rgba(255,255,255,0.9)",
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: "inline-block",
+                              width: 16,
+                              height: 16,
+                              borderRadius: 3,
+                              background:
+                                impactReportForm.mission.badgeTextColor ||
+                                "rgba(255,255,255,0.8)",
+                              border: "1px solid rgba(255,255,255,0.2)",
+                            }}
+                          />
+                          &nbsp;Badge text
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={(e) => {
+                            setMissionColorPickerField("badgeBgColor");
+                            setMissionColorPickerAnchor(
+                              e.currentTarget as HTMLElement,
+                            );
+                          }}
+                          sx={{
+                            borderColor: "rgba(255,255,255,0.3)",
+                            color: "rgba(255,255,255,0.9)",
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: "inline-block",
+                              width: 16,
+                              height: 16,
+                              borderRadius: 3,
+                              background:
+                                impactReportForm.mission.badgeBgColor ||
+                                "rgba(0,0,0,0.4)",
+                              border: "1px solid rgba(255,255,255,0.2)",
+                            }}
+                          />
+                          &nbsp;Badge background
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={(e) => {
+                            setMissionColorPickerField("badgeBorderColor");
+                            setMissionColorPickerAnchor(
+                              e.currentTarget as HTMLElement,
+                            );
+                          }}
+                          sx={{
+                            borderColor: "rgba(255,255,255,0.3)",
+                            color: "rgba(255,255,255,0.9)",
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: "inline-block",
+                              width: 16,
+                              height: 16,
+                              borderRadius: 3,
+                              background:
+                                impactReportForm.mission.badgeBorderColor ||
+                                "rgba(255,255,255,0.1)",
+                              border: "1px solid rgba(255,255,255,0.2)",
+                            }}
+                          />
+                          &nbsp;Badge border
+                        </Button>
+                      </Box>
                     </Grid>
                     <Grid item xs={12} md={6}>
                       <CustomTextField
@@ -3308,125 +4158,111 @@ function ImpactReportCustomizationPage() {
                       />
                     </Grid>
 
-                    {/* Background image upload */}
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="body2" sx={{ mb: 0.5 }}>
-                        Background Image
-                      </Typography>
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        style={{ display: "none" }}
-                        ref={(el) => (fileInputRefs.current["mission-bg"] = el)}
-                        onChange={async (e) => {
-                          if (!e.target.files || !e.target.files[0]) return;
-                          const file = e.target.files[0];
-                          const allowedTypes = [
-                            "image/jpeg",
-                            "image/png",
-                            "image/webp",
-                          ];
-                          const isHeicLike =
-                            /heic|heif/i.test(file.type) ||
-                            /\.(heic|heif)$/i.test(file.name);
-                          if (!allowedTypes.includes(file.type)) {
-                            const message = isHeicLike
-                              ? "HEIC images are not widely supported in browsers. Please upload a JPG or PNG instead."
-                              : "Unsupported image format. Please upload a JPG, PNG, or WebP image.";
-                            setErrors((prev) => ({
-                              ...prev,
-                              general: message,
-                            }));
-                            enqueueSnackbar(message, { variant: "warning" });
-                            return;
-                          }
-                          const preview = URL.createObjectURL(file);
-                          setImpactReportForm((prev) => ({
-                            ...prev,
-                            mission: {
-                              ...prev.mission,
-                              backgroundImagePreview: preview,
-                              backgroundImageFile: file,
-                            },
-                          }));
-                          setIsDirty(true);
-                          setErrors((prev) => ({ ...prev, general: "" }));
-                        }}
+                    {/* Background logo */}
+                    <Grid item xs={12}>
+                      <Divider
+                        sx={{ my: 1.5, bgcolor: "rgba(255,255,255,0.08)" }}
                       />
-                      <Box sx={{ display: "flex", gap: 1 }}>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          startIcon={<CloudUploadIcon />}
-                          onClick={() =>
-                            fileInputRefs.current["mission-bg"]?.click()
-                          }
-                          disabled={isSubmitting || missionUploadPct !== null}
-                        >
-                          Select Image
-                        </Button>
-                        <FormControlLabel
-                          control={
-                            <Switch
-                              checked={
-                                impactReportForm.mission.backgroundGrayscale
-                              }
-                              onChange={(e) =>
-                                handleSectionChange(
-                                  "mission",
-                                  "backgroundGrayscale",
-                                  e.target.checked,
-                                )
-                              }
-                            />
-                          }
-                          label="Grayscale image with gradient overlay"
-                          sx={{ color: "rgba(255,255,255,0.9)" }}
-                        />
-                      </Box>
-                      {missionUploadPct !== null && (
-                        <Box sx={{ mt: 1 }}>
-                          <LinearProgress
-                            variant="determinate"
-                            value={missionUploadPct}
-                          />
-                        </Box>
-                      )}
+                      <Typography variant="h6" sx={{ mb: 1.5 }}>
+                        Background Logo
+                      </Typography>
                     </Grid>
                     <Grid item xs={12} md={6}>
-                      {impactReportForm.mission.backgroundImagePreview ||
-                      impactReportForm.mission.backgroundImageUrl ? (
-                        <Box
-                          sx={{
-                            mt: { xs: 1, md: 0 },
-                            borderRadius: 1,
-                            overflow: "hidden",
-                            border: "1px solid rgba(255,255,255,0.08)",
-                          }}
-                        >
-                          <img
-                            src={
-                              impactReportForm.mission.backgroundImagePreview ||
-                              (impactReportForm.mission
-                                .backgroundImageUrl as string)
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={backgroundLogoState.enabled}
+                            onChange={(e) =>
+                              handleSectionChange("mission", "backgroundLogo", {
+                                ...backgroundLogoState,
+                                enabled: e.target.checked,
+                              })
                             }
-                            alt="Mission background preview"
-                            style={{
-                              width: "100%",
-                              height: 200,
-                              objectFit: "cover",
-                              filter: impactReportForm.mission
-                                .backgroundGrayscale
-                                ? "grayscale(1)"
-                                : "none",
-                            }}
                           />
-                        </Box>
-                      ) : (
-                        <Typography variant="body2" sx={{ opacity: 0.7 }}>
-                          No background image selected
-                        </Typography>
-                      )}
+                        }
+                        label="Show background logo"
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <CustomTextField
+                        select
+                        label="Logo"
+                        value={backgroundLogoState.svgKey || ""}
+                        onChange={(e) =>
+                          handleSectionChange("mission", "backgroundLogo", {
+                            ...backgroundLogoState,
+                            svgKey: e.target.value,
+                          })
+                        }
+                        fullWidth
+                        disabled={!backgroundLogoState.enabled}
+                      >
+                        {BACKGROUND_LOGO_OPTIONS.map((opt) => (
+                          <MenuItem key={opt.key} value={opt.key}>
+                            {opt.label}
+                          </MenuItem>
+                        ))}
+                      </CustomTextField>
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                        Logo opacity:{" "}
+                        {(backgroundLogoState.opacity ?? 0.08).toFixed(2)}
+                      </Typography>
+                      <input
+                        type="range"
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        value={backgroundLogoState.opacity ?? 0.08}
+                        onChange={(e) =>
+                          handleSectionChange("mission", "backgroundLogo", {
+                            ...backgroundLogoState,
+                            opacity: Number(e.target.value),
+                          })
+                        }
+                        style={{ width: "100%" }}
+                        disabled={!backgroundLogoState.enabled}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                        Rotation: {backgroundLogoState.rotationDeg ?? 90}°
+                      </Typography>
+                      <input
+                        type="range"
+                        min={-180}
+                        max={180}
+                        value={backgroundLogoState.rotationDeg ?? 90}
+                        onChange={(e) =>
+                          handleSectionChange("mission", "backgroundLogo", {
+                            ...backgroundLogoState,
+                            rotationDeg: Number(e.target.value),
+                          })
+                        }
+                        style={{ width: "100%" }}
+                        disabled={!backgroundLogoState.enabled}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                        Scale: {(backgroundLogoState.scale ?? 0.82).toFixed(2)}
+                      </Typography>
+                      <input
+                        type="range"
+                        min={0.2}
+                        max={2}
+                        step={0.01}
+                        value={backgroundLogoState.scale ?? 0.82}
+                        onChange={(e) =>
+                          handleSectionChange("mission", "backgroundLogo", {
+                            ...backgroundLogoState,
+                            scale: Number(e.target.value),
+                          })
+                        }
+                        style={{ width: "100%" }}
+                        disabled={!backgroundLogoState.enabled}
+                      />
                     </Grid>
 
                     {/* Stats editor */}
@@ -3437,6 +4273,91 @@ function ImpactReportCustomizationPage() {
                       <Typography variant="h6" sx={{ mb: 1.5 }}>
                         At a Glance (Stats)
                       </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <CustomTextField
+                        label="Stats Title"
+                        value={impactReportForm.mission.statsTitle || ""}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "mission",
+                            "statsTitle",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                        placeholder="At a Glance"
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={(e) => {
+                          setMissionColorPickerField("statsTitleColor");
+                          setMissionColorPickerAnchor(
+                            e.currentTarget as HTMLElement,
+                          );
+                        }}
+                        sx={{
+                          borderColor: "rgba(255,255,255,0.3)",
+                          color: "rgba(255,255,255,0.9)",
+                        }}
+                      >
+                        <span
+                          style={{
+                            display: "inline-block",
+                            width: 16,
+                            height: 16,
+                            borderRadius: 3,
+                            background:
+                              impactReportForm.mission.statsTitleColor ||
+                              "rgba(255,255,255,0.7)",
+                            border: "1px solid rgba(255,255,255,0.2)",
+                          }}
+                        />
+                        &nbsp;Stats title color
+                      </Button>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={
+                              impactReportForm.mission.statsEqualizer.enabled
+                            }
+                            onChange={(e) =>
+                              handleSectionChange("mission", "statsEqualizer", {
+                                ...impactReportForm.mission.statsEqualizer,
+                                enabled: e.target.checked,
+                              })
+                            }
+                          />
+                        }
+                        label="Show equalizer bars"
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                        Equalizer Bars:{" "}
+                        {impactReportForm.mission.statsEqualizer.barCount}
+                      </Typography>
+                      <input
+                        type="range"
+                        min={1}
+                        max={24}
+                        value={impactReportForm.mission.statsEqualizer.barCount}
+                        onChange={(e) =>
+                          handleSectionChange("mission", "statsEqualizer", {
+                            ...impactReportForm.mission.statsEqualizer,
+                            barCount: Number(e.target.value),
+                          })
+                        }
+                        style={{ width: "100%" }}
+                        disabled={
+                          !impactReportForm.mission.statsEqualizer.enabled
+                        }
+                      />
                     </Grid>
                     {impactReportForm.mission.stats.map((s, idx) => (
                       <Grid item xs={12} md={6} key={`mission-stat-${s.id}`}>
@@ -3503,6 +4424,65 @@ function ImpactReportCustomizationPage() {
                                   placeholder="#22C55E"
                                   fullWidth
                                 />
+                              </Grid>
+                              <Grid item xs={12} sm={6}>
+                                <CustomTextField
+                                  select
+                                  label="Number Source"
+                                  value={s.numberSource || "explicit"}
+                                  onChange={(e) => {
+                                    const next = [
+                                      ...impactReportForm.mission.stats,
+                                    ];
+                                    next[idx] = {
+                                      ...s,
+                                      numberSource: e.target
+                                        .value as MissionStatNumberSource,
+                                    };
+                                    handleSectionChange(
+                                      "mission",
+                                      "stats",
+                                      next,
+                                    );
+                                  }}
+                                  fullWidth
+                                >
+                                  <MenuItem value="explicit">
+                                    Manual value
+                                  </MenuItem>
+                                  <MenuItem value="modalItemsLength">
+                                    Disciplines count
+                                  </MenuItem>
+                                </CustomTextField>
+                              </Grid>
+                              <Grid item xs={12} sm={6}>
+                                <CustomTextField
+                                  select
+                                  label="Icon"
+                                  value={s.iconKey || ""}
+                                  onChange={(e) => {
+                                    const next = [
+                                      ...impactReportForm.mission.stats,
+                                    ];
+                                    next[idx] = {
+                                      ...s,
+                                      iconKey: e.target.value || null,
+                                    };
+                                    handleSectionChange(
+                                      "mission",
+                                      "stats",
+                                      next,
+                                    );
+                                  }}
+                                  fullWidth
+                                >
+                                  <MenuItem value="">Default</MenuItem>
+                                  {MISSION_ICON_LIBRARY.map((icon) => (
+                                    <MenuItem key={icon.key} value={icon.key}>
+                                      {icon.label}
+                                    </MenuItem>
+                                  ))}
+                                </CustomTextField>
                               </Grid>
                               <Grid item xs={12} sm={6}>
                                 <FormControlLabel
@@ -3578,6 +4558,9 @@ function ImpactReportCustomizationPage() {
                               color: "#22C55E",
                               action: "none" as const,
                               modalId: null,
+                              iconKey: null,
+                              numberSource:
+                                "explicit" as MissionStatNumberSource,
                             },
                           ];
                           handleSectionChange("mission", "stats", next);
@@ -3616,18 +4599,25 @@ function ImpactReportCustomizationPage() {
                       </Typography>
                       <Grid container spacing={1}>
                         {impactReportForm.mission.disciplinesItems.map(
-                          (name, i) => (
+                          (item, i) => (
                             <Grid item xs={12} md={6} key={`disc-${i}`}>
-                              <Box sx={{ display: "flex", gap: 1 }}>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  gap: 1,
+                                  flexWrap: "wrap",
+                                  alignItems: "center",
+                                }}
+                              >
                                 <CustomTextField
                                   label={`Item ${i + 1}`}
-                                  value={name}
+                                  value={item.name}
                                   onChange={(e) => {
                                     const next = [
                                       ...impactReportForm.mission
                                         .disciplinesItems,
                                     ];
-                                    next[i] = e.target.value;
+                                    next[i] = { ...item, name: e.target.value };
                                     handleSectionChange(
                                       "mission",
                                       "disciplinesItems",
@@ -3636,6 +4626,34 @@ function ImpactReportCustomizationPage() {
                                   }}
                                   fullWidth
                                 />
+                                <CustomTextField
+                                  select
+                                  label="Icon"
+                                  value={item.iconKey || ""}
+                                  onChange={(e) => {
+                                    const next = [
+                                      ...impactReportForm.mission
+                                        .disciplinesItems,
+                                    ];
+                                    next[i] = {
+                                      ...item,
+                                      iconKey: e.target.value || null,
+                                    };
+                                    handleSectionChange(
+                                      "mission",
+                                      "disciplinesItems",
+                                      next,
+                                    );
+                                  }}
+                                  sx={{ minWidth: 140 }}
+                                >
+                                  <MenuItem value="">Default</MenuItem>
+                                  {MISSION_ICON_LIBRARY.map((icon) => (
+                                    <MenuItem key={icon.key} value={icon.key}>
+                                      {icon.label}
+                                    </MenuItem>
+                                  ))}
+                                </CustomTextField>
                                 <IconButton
                                   onClick={() => {
                                     const next =
@@ -3664,7 +4682,7 @@ function ImpactReportCustomizationPage() {
                         onClick={() => {
                           const next = [
                             ...impactReportForm.mission.disciplinesItems,
-                            "",
+                            { name: "", iconKey: null },
                           ];
                           handleSectionChange(
                             "mission",
@@ -3689,6 +4707,36 @@ function ImpactReportCustomizationPage() {
                     value={currentMissionPickerColor}
                     onChange={(val) => {
                       if (!missionColorPickerField) return;
+                      if (missionColorPickerField === "titleGradientColor1") {
+                        updateMissionTitleGradient({
+                          titleGradientColor1: val,
+                        });
+                        return;
+                      }
+                      if (missionColorPickerField === "titleGradientColor2") {
+                        updateMissionTitleGradient({
+                          titleGradientColor2: val,
+                        });
+                        return;
+                      }
+                      if (
+                        missionColorPickerField ===
+                        "titleUnderlineGradientColor1"
+                      ) {
+                        updateMissionUnderlineGradient({
+                          titleUnderlineGradientColor1: val,
+                        });
+                        return;
+                      }
+                      if (
+                        missionColorPickerField ===
+                        "titleUnderlineGradientColor2"
+                      ) {
+                        updateMissionUnderlineGradient({
+                          titleUnderlineGradientColor2: val,
+                        });
+                        return;
+                      }
                       handleSectionChange(
                         "mission",
                         missionColorPickerField,
