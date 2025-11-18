@@ -12,11 +12,10 @@ import heroBackdrop from '../../assets/images/image.png';
 import { fetchHeroContent, type HeroContent } from '../services/impact.api';
 import kickSample from '../assets/audio/heroPads/kick.wav';
 import snareSample from '../assets/audio/heroPads/snare.wav';
-import bassSample from '../assets/audio/heroPads/bass.wav';
 import clapSample from '../assets/audio/heroPads/clap.wav';
 import hatSample from '../assets/audio/heroPads/hat.wav';
 
-const PAD_IDS = ['kick', 'snare', 'bass', 'clap', 'hat'] as const;
+const PAD_IDS = ['kick', 'snare', 'clap', 'hat'] as const;
 
 type PadId = (typeof PAD_IDS)[number];
 
@@ -128,14 +127,6 @@ const PAD_CONFIG: PadConfig[] = [
     sample: snareSample,
     spread: 0.3,
     intensity: 0.4,
-  },
-  {
-    id: 'bass',
-    label: 'Bass',
-    color: 'hsl(191, 32%, 52%)',
-    sample: bassSample,
-    spread: 0.35,
-    intensity: 0.45,
   },
   {
     id: 'clap',
@@ -1109,8 +1100,7 @@ function HeroSection(props: { previewMode?: boolean; heroOverride?: Partial<Hero
     [],
   );
 
-  const triggerSynthVoice = useCallback(
-    (kind: 'melody' | 'bass', midi: number) => {
+  const triggerSynthVoice = useCallback((kind: 'melody' | 'bass', midi: number) => {
       const ctx = audioContextRef.current;
       if (!ctx) return;
       if (ctx.state === 'suspended') {
@@ -1121,7 +1111,7 @@ function HeroSection(props: { previewMode?: boolean; heroOverride?: Partial<Hero
       const frequency = midiToFrequency(midi);
       const now = ctx.currentTime;
       const duration = kind === 'melody' ? 0.25 : 0.6;
-      const peak = kind === 'melody' ? 0.18 : 0.28;
+      const peak = kind === 'melody' ? 0.18 : 0.32;
 
       const mainOsc = ctx.createOscillator();
       mainOsc.type = kind === 'melody' ? 'triangle' : 'sine';
@@ -1147,8 +1137,8 @@ function HeroSection(props: { previewMode?: boolean; heroOverride?: Partial<Hero
       if (kind === 'melody') {
         filter.frequency.setValueAtTime(1800, now);
       } else {
-        filter.frequency?.setValueAtTime(120, now);
-        filter.gain?.setValueAtTime(3, now);
+        filter.frequency?.setValueAtTime(150, now);
+        filter.gain?.setValueAtTime(5, now);
         filter.Q?.setValueAtTime(0.7, now);
       }
 
@@ -1423,7 +1413,10 @@ function HeroSection(props: { previewMode?: boolean; heroOverride?: Partial<Hero
             triggerSynthVoice('melody', melodyNote);
           }
           const bassNote = BASS_SEQUENCE[playheadRef.current];
-          if (bassEnabledRef.current && typeof bassNote === 'number') {
+          if (
+            bassEnabledRef.current &&
+            typeof bassNote === 'number'
+          ) {
             triggerSynthVoice('bass', bassNote);
           }
         }
