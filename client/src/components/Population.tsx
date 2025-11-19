@@ -68,15 +68,12 @@ const Subtitle = styled.h2`
 
 const GraphsContainer = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 2rem;
-  margin: 2.5rem 0 2rem 0;
-  padding: 2rem 1.5rem;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-  transition: transform 0.2s ease;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.2fr);
+  grid-auto-rows: minmax(0, auto);
+  gap: 2rem 1.75rem;
+  margin: 3rem 0 2rem 0;
+  padding: 0;
+  align-items: stretch;
 
   @media (max-width: 1100px) {
     grid-template-columns: 1fr;
@@ -84,22 +81,74 @@ const GraphsContainer = styled.div`
 `;
 
 const GraphCard = styled.div`
-  background: rgba(255, 255, 255, 0.045);
-  border-radius: 18px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  background: radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.08), transparent 55%),
+    rgba(10, 10, 10, 0.96);
+  border-radius: 22px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 2.5rem 1.5rem;
   min-width: 0;
+  overflow: hidden;
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    background 0.22s ease,
+    border-color 0.22s ease;
+
+  &:first-child {
+    grid-row: 1 / span 2;
+    align-items: stretch;
+    transform: translateY(-4px);
+    box-shadow:
+      0 18px 50px rgba(0, 0, 0, 0.65),
+      0 0 0 1px rgba(255, 255, 255, 0.06);
+    border-color: ${COLORS.gogo_teal}66;
+    background: radial-gradient(circle at 0% 0%, ${COLORS.gogo_teal}14, transparent 60%),
+      rgba(8, 8, 8, 0.96);
+  }
+
+  &:nth-child(2) {
+    align-self: flex-end;
+  }
+
+  &:nth-child(3) {
+    align-self: flex-start;
+  }
+
+  &:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow:
+      0 20px 46px rgba(0, 0, 0, 0.65),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
+    background: radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.12), transparent 60%),
+      rgba(14, 14, 14, 0.98);
+    border-color: rgba(255, 255, 255, 0.24);
+  }
+
+  @media (max-width: 1100px) {
+    &:first-child {
+      grid-row: auto;
+      transform: none;
+    }
+  }
 `;
 
 const PieChartWrapper = styled.div`
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: center;
+  gap: 1.75rem;
+
+  @media (max-width: 900px) {
+    flex-direction: column;
+    align-items: center;
+  }
 `;
 
 const PieCaption = styled.div`
@@ -111,24 +160,63 @@ const PieCaption = styled.div`
 
 const PieContainer = styled.div`
   width: 100%;
-  height: 220px;
+  height: 240px;
 `;
 
-const PercentCircle = styled.div`
-  width: 140px;
-  height: 140px;
+const PercentCircle = styled.div<{ $percent: number; $accent: string }>`
+  width: 150px;
+  height: 150px;
   border-radius: 50%;
-  background: radial-gradient(
-    circle at 30% 30%,
-    ${COLORS.gogo_teal}26,
-    transparent 60%
-  );
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 1.25rem;
-  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.08);
   position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 0.06),
+    0 16px 40px rgba(0, 0, 0, 0.6);
+  background:
+    conic-gradient(
+      ${(p) => p.$accent} 0deg,
+      ${(p) => p.$accent} ${(p) => p.$percent * 3.6}deg,
+      rgba(255, 255, 255, 0.08) ${(p) => p.$percent * 3.6}deg,
+      rgba(255, 255, 255, 0.02) 360deg
+    );
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    background 0.22s ease;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 18px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.12), transparent 60%),
+      rgba(6, 6, 6, 0.96);
+    box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.9);
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 10% 0%, rgba(255, 255, 255, 0.16), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.22s ease;
+  }
+
+  &:hover {
+    transform: translateY(-3px) scale(1.04);
+    box-shadow:
+      0 0 0 4px rgba(255, 255, 255, 0.1),
+      0 22px 52px rgba(0, 0, 0, 0.8);
+  }
+
+  &:hover::after {
+    opacity: 0.4;
+  }
 `;
 
 const PercentText = styled.span`
@@ -139,6 +227,8 @@ const PercentText = styled.span`
   -webkit-text-fill-color: transparent;
   background-clip: text;
   color: transparent;
+  position: relative;
+  z-index: 2;
 `;
 
 const CardLabel = styled.div`
@@ -182,22 +272,45 @@ const SimplePercentsContainer = styled.div`
 
 const SimplePercentCard = styled.div`
   flex: 1;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 14px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.08), transparent 60%),
+    rgba(8, 8, 8, 0.96);
+  border-radius: 18px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 1.6rem 0.75rem 1.1rem 0.75rem;
   min-width: 0;
+  overflow: hidden;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
+
+  &:nth-child(2) {
+    margin-top: -6px;
+  }
+
+  &:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow:
+      0 16px 34px rgba(0, 0, 0, 0.6),
+      0 0 0 1px rgba(255, 255, 255, 0.08);
+    background: radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.12), transparent 60%),
+      rgba(12, 12, 12, 0.98);
+    border-color: rgba(255, 255, 255, 0.24);
+  }
 `;
 
 const SimplePercentValue = styled.div`
   font-size: 2rem;
   font-weight: 800;
-  background: linear-gradient(90deg, #ffffff, ${COLORS.gogo_teal});
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: linear-gradient(120deg, #ffffff, ${COLORS.gogo_teal});
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -217,20 +330,44 @@ const ImageGallery = styled.div`
   overflow-x: auto;
   margin: 2.5rem 0 0 0;
   padding-bottom: 1rem;
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black 40px,
+    black calc(100% - 40px),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black 40px,
+    black calc(100% - 40px),
+    transparent 100%
+  );
 `;
 
 const GalleryImage = styled.img`
   width: 160px;
   height: 110px;
   object-fit: cover;
-  border-radius: 12px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
   background: #222;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  transform: rotate(-1.5deg);
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+
+  &:nth-child(even) {
+    transform: rotate(1.5deg);
+  }
 
   &:hover {
-    transform: translateY(-2px);
-    transition: transform 0.2s ease;
+    transform: translateY(-4px) rotate(0deg);
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.6);
+    border-color: rgba(255, 255, 255, 0.22);
   }
 `;
 
@@ -341,14 +478,35 @@ const GlowBlob = styled.div<{
   bottom: ${(p) => p.$bottom ?? 'auto'};
   left: ${(p) => p.$left ?? 'auto'};
   right: ${(p) => p.$right ?? 'auto'};
+
+  @keyframes slowDrift {
+    from {
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      transform: translate3d(10px, -6px, 0);
+    }
+  }
+
+  animation: slowDrift 26s ease-in-out infinite alternate;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 `;
 
 const LegendRow = styled.div`
   display: flex;
+  flex-direction: column;
   gap: 0.6rem;
-  margin-top: 0.75rem;
-  flex-wrap: wrap;
-  justify-content: center;
+  margin-top: 0.5rem;
+  align-self: center;
+
+  @media (max-width: 900px) {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
 `;
 
 const LegendChip = styled.span`
@@ -362,6 +520,19 @@ const LegendChip = styled.span`
   color: rgba(255, 255, 255, 0.9);
   font-size: 0.95rem;
   font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+
+  &:hover {
+    transform: translateY(-1px) scale(1.02);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.22);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4);
+  }
 `;
 
 const LegendDot = styled.span<{ $color: string }>`
@@ -386,6 +557,7 @@ interface PopulationProps {
 }
 
 function PopulationComponent({ inline = false }: PopulationProps) {
+  const [activeSliceId, setActiveSliceId] = useState<string | null>(null);
   const [open, setOpen] = useState(true);
   const navigate = useNavigate();
 
@@ -474,21 +646,46 @@ function PopulationComponent({ inline = false }: PopulationProps) {
                 ]}
                 innerRadius={0.6}
                 theme={pieTheme}
-                colors={{ datum: 'data.color' }}
+                colors={
+                  ((
+                    datum: {
+                      data: { id: string; color: string };
+                    },
+                  ) =>
+                    activeSliceId && datum.data.id !== activeSliceId
+                      ? `${datum.data.color}66`
+                      : datum.data.color) as any
+                }
                 enableArcLabels={false}
                 enableArcLinkLabels={false}
                 margin={{ top: 10, right: 10, bottom: 10, left: 10 }}
+                onMouseEnter={(datum: { data: { id: string } }) => {
+                  setActiveSliceId(datum.data.id);
+                }}
+                onMouseMove={(datum: { data: { id: string } }) => {
+                  setActiveSliceId(datum.data.id);
+                }}
+                onMouseLeave={() => setActiveSliceId(null)}
               />
             </PieContainer>
             <LegendRow>
-              <LegendChip>
+              <LegendChip
+                onMouseEnter={() => setActiveSliceId('Hispanic/Latinx')}
+                onMouseLeave={() => setActiveSliceId(null)}
+              >
                 <LegendDot $color={COLORS.gogo_teal} /> 46% Hispanic/Latinx
               </LegendChip>
-              <LegendChip>
+              <LegendChip
+                onMouseEnter={() => setActiveSliceId('Black/African American')}
+                onMouseLeave={() => setActiveSliceId(null)}
+              >
                 <LegendDot $color={COLORS.gogo_blue} /> 44% Black/African
                 American
               </LegendChip>
-              <LegendChip>
+              <LegendChip
+                onMouseEnter={() => setActiveSliceId('Other')}
+                onMouseLeave={() => setActiveSliceId(null)}
+              >
                 <LegendDot $color={COLORS.gogo_purple} /> 10% Other
               </LegendChip>
             </LegendRow>
@@ -498,7 +695,7 @@ function PopulationComponent({ inline = false }: PopulationProps) {
           </PieChartWrapper>
         </GraphCard>
         <GraphCard>
-          <PercentCircle>
+          <PercentCircle $percent={94} $accent={COLORS.gogo_teal}>
             <PercentText>94%</PercentText>
           </PercentCircle>
           <CardLabel>
@@ -507,7 +704,7 @@ function PopulationComponent({ inline = false }: PopulationProps) {
           </CardLabel>
         </GraphCard>
         <GraphCard>
-          <PercentCircle>
+          <PercentCircle $percent={95} $accent={COLORS.gogo_pink}>
             <PercentText>95%</PercentText>
           </PercentCircle>
           <CardLabel>

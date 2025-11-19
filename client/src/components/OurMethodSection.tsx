@@ -1,5 +1,11 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
+import HandshakeOutlinedIcon from '@mui/icons-material/HandshakeOutlined';
+import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
+import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import MicNoneOutlinedIcon from '@mui/icons-material/MicNoneOutlined';
+import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined';
 import COLORS from '../../assets/colors';
 
 const float = keyframes`
@@ -133,81 +139,23 @@ const NarrativeInner = styled.div`
   font-size: 1rem;
 `;
 
-function HandshakeIcon() {
-  return (
-    // Use a clearer users icon to represent trusting relationships
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path d="M17 21v-2a4 4 0 0 0-4-4h-2a4 4 0 0 0-4 4v2" />
-      <circle cx="12" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M5 15.13A4 4 0 0 0 2 19v2" />
-      <path d="M19 7a4 4 0 0 1-1.17 2.83" />
-      <path d="M7 9.83A4 4 0 0 1 5.83 7" />
-    </svg>
-  );
-}
-
-function EducationIcon() {
-  return (
-    // Open book icon for a clearer education metaphor
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path d="M3 5h6a4 4 0 0 1 4 4v10a4 4 0 0 0-4-4H3z" />
-      <path d="M21 5h-6a4 4 0 0 0-4 4v10a4 4 0 0 1 4-4h6z" />
-    </svg>
-  );
-}
-
-function LightbulbIcon() {
-  return (
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12c.6.6 1 1.3 1 2h6c0-.7.4-1.4 1-2A7 7 0 0012 2z" />
-    </svg>
-  );
-}
-
-function CogIcon() {
-  return (
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
-      <path d="M19.4 15a7.97 7.97 0 00.1-2l2-1-2-3-2 1a8.1 8.1 0 00-1.7-1l-.3-2.3h-4l-.3 2.3a8.1 8.1 0 00-1.7 1l-2-1-2 3 2 1a7.97 7.97 0 000 2l-2 1 2 3 2-1a8.1 8.1 0 001.7 1l.3 2.3h4l.3-2.3a8.1 8.1 0 001.7-1l2 1 2-3-2-1z" />
-    </svg>
-  );
-}
-
-function MicIcon() {
-  return (
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <rect x="9" y="2" width="6" height="11" rx="3" />
-      <path d="M5 10v1a7 7 0 0014 0v-1M12 21v-3" />
-    </svg>
-  );
-}
-
-function HeartIcon() {
-  return (
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z" />
-    </svg>
-  );
-}
-
 function OurMethodSection(): JSX.Element {
   const items = [
     {
-      icon: <HandshakeIcon />,
+      icon: <HandshakeOutlinedIcon fontSize="small" />,
       text: 'Trusting relationships with caring adults',
     },
     {
-      icon: <EducationIcon />,
+      icon: <MenuBookOutlinedIcon fontSize="small" />,
       text: 'High-quality, no-cost arts education during typically unsupervised hours',
     },
     {
-      icon: <LightbulbIcon />,
+      icon: <LightbulbOutlinedIcon fontSize="small" />,
       text: 'Enriching, safe activities that foster self-esteem & creative self-expression',
     },
-    { icon: <CogIcon />, text: 'Skill Development' },
-    { icon: <MicIcon />, text: 'Performance' },
-    { icon: <HeartIcon />, text: 'Trauma-informed mental health support' },
+    { icon: <SettingsOutlinedIcon fontSize="small" />, text: 'Skill Development' },
+    { icon: <MicNoneOutlinedIcon fontSize="small" />, text: 'Performance' },
+    { icon: <FavoriteBorderOutlinedIcon fontSize="small" />, text: 'Trauma-informed mental health support' },
   ];
 
   return (

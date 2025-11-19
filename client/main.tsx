@@ -17,7 +17,9 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<ImpactReportPage />} />
+          {/* Admin customization page with optional tab segment for deep-linking */}
           <Route path="/admin" element={<ImpactReportCustomizationPage />} />
+          <Route path="/admin/:tab" element={<ImpactReportCustomizationPage />} />
         </Routes>
       </BrowserRouter>
     </SnackbarProvider>

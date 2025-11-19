@@ -11,6 +11,9 @@ export interface HeroContent {
   backgroundColor?: string;
   backgroundImage?: string | null;
   backgroundImageGrayscale?: boolean;
+  textAlign?: 'left' | 'center' | 'right';
+  layoutVariant?: 'ticket' | 'default';
+  ariaLabel?: string;
   titleColor?: string;
   subtitleColor?: string;
   yearColor?: string;
@@ -24,6 +27,7 @@ export interface HeroContent {
   bubbles?: string[];
   primaryCta?: HeroCta;
   secondaryCta?: HeroCta;
+  slug?: string;
 }
 
 // =========================

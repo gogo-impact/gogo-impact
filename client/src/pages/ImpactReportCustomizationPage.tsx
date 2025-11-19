@@ -23,6 +23,10 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import SaveIcon from "@mui/icons-material/Save";
 import ClearIcon from "@mui/icons-material/Clear";
+import IconSelector, {
+  IMPACT_ICON_LIBRARY,
+  ImpactIconKey,
+} from "../components/IconSelector";
 import { v4 as uuidv4 } from "uuid";
 import ScreenGrid from "../components/ScreenGrid.tsx";
 import COLORS from "../../assets/colors.ts";
@@ -42,9 +46,19 @@ import {
 import "../../assets/fonts/fonts.css";
 import { useSnackbar } from "notistack";
 import ColorPickerPopover from "../components/ColorPickerPopover";
+import { useNavigate, useParams } from "react-router-dom";
 
 const MemoHeroSection = React.memo(HeroSection);
 const MemoMissionSection = React.memo(MissionSection);
+
+const ADMIN_TABS = [
+  { label: "Defaults", value: 0, routeKey: "defaults" as const },
+  { label: "Hero Section", value: 1, routeKey: "hero" as const },
+  { label: "Mission Section", value: 2, routeKey: "mission" as const },
+] as const;
+
+type AdminTabRouteKey = (typeof ADMIN_TABS)[number]["routeKey"];
+const LAST_ADMIN_TAB_STORAGE_KEY = "gogo_admin_impact_tab";
 
 function useDebouncedValue<T>(value: T, delayMs: number): T {
   const [debounced, setDebounced] = React.useState(value);
@@ -393,12 +407,178 @@ function DegreePicker({
   );
 }
 
+// Reusable gradient editor block (label + degree + colors + optional opacity)
+interface GradientEditorProps {
+  label: string;
+  degree: number;
+  color1: string;
+  color2: string;
+  opacity?: number;
+  showOpacity?: boolean;
+  onChangeDegree: (deg: number) => void;
+  onPickColor1: (anchorEl: HTMLElement) => void;
+  onPickColor2: (anchorEl: HTMLElement) => void;
+  onChangeOpacity?: (value: number) => void;
+  previewBackground: string;
+}
+
+function GradientEditor({
+  label,
+  degree,
+  color1,
+  color2,
+  opacity,
+  showOpacity = true,
+  onChangeDegree,
+  onPickColor1,
+  onPickColor2,
+  onChangeOpacity,
+  previewBackground,
+}: GradientEditorProps) {
+  return (
+    <>
+      <Grid item xs={12}>
+        <Typography variant="subtitle1" gutterBottom>
+          {label}
+        </Typography>
+      </Grid>
+      <Grid item xs={12}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} md={4}>
+            <Typography variant="caption" color="rgba(255,255,255,0.7)">
+              Degree
+            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 1,
+              }}
+            >
+              <Typography variant="body2">{degree}°</Typography>
+              <DegreePicker
+                value={degree}
+                onChange={onChangeDegree}
+                size={140}
+              />
+            </Box>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+              }}
+            >
+              <Box>
+                <Typography variant="caption" color="rgba(255,255,255,0.7)">
+                  Color 1
+                </Typography>
+                <Button
+                  variant="outlined"
+                  onClick={(e) => onPickColor1(e.currentTarget as HTMLElement)}
+                  sx={{
+                    mt: 0.5,
+                    minWidth: 48,
+                    px: 1,
+                    borderColor: "rgba(255,255,255,0.3)",
+                    color: "rgba(255,255,255,0.9)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                >
+                  <span
+                    style={{
+                      display: "inline-block",
+                      width: 18,
+                      height: 18,
+                      borderRadius: 3,
+                      background: color1,
+                      border: "1px solid rgba(255,255,255,0.2)",
+                    }}
+                  />
+                  Pick
+                </Button>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="rgba(255,255,255,0.7)">
+                  Color 2
+                </Typography>
+                <Button
+                  variant="outlined"
+                  onClick={(e) => onPickColor2(e.currentTarget as HTMLElement)}
+                  sx={{
+                    mt: 0.5,
+                    minWidth: 48,
+                    px: 1,
+                    borderColor: "rgba(255,255,255,0.3)",
+                    color: "rgba(255,255,255,0.9)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                >
+                  <span
+                    style={{
+                      display: "inline-block",
+                      width: 18,
+                      height: 18,
+                      borderRadius: 3,
+                      background: color2,
+                      border: "1px solid rgba(255,255,255,0.2)",
+                    }}
+                  />
+                  Pick
+                </Button>
+              </Box>
+            </Box>
+          </Grid>
+          <Grid item xs={12} md={4} sx={{ ml: { md: -2 } }}>
+            <Box
+              sx={{
+                width: 140,
+                height: 140,
+                borderRadius: 1,
+                border: "1px solid rgba(255,255,255,0.1)",
+                background: previewBackground,
+              }}
+            />
+          </Grid>
+        </Grid>
+      </Grid>
+      {showOpacity && onChangeOpacity && (
+        <Grid item xs={12}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Typography variant="caption" color="rgba(255,255,255,0.7)">
+              Gradient Opacity
+            </Typography>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              value={opacity ?? 0}
+              onChange={(e) => onChangeOpacity(Number(e.target.value))}
+            />
+            <Typography variant="body2">{(opacity ?? 0).toFixed(2)}</Typography>
+          </Box>
+        </Grid>
+      )}
+    </>
+  );
+}
+
 // Impact Report Section Types
 interface HeroSection {
   title: string;
   subtitle: string;
   year: string;
   tagline: string;
+  textAlign: MissionTextAlign;
+  layoutVariant: MissionLayoutVariant;
   titleColor?: string;
   subtitleColor?: string;
   yearColor?: string;
@@ -420,12 +600,17 @@ interface HeroSection {
   primaryCtaHref: string;
   secondaryCtaLabel: string;
   secondaryCtaHref: string;
-  enabled: boolean;
 }
 
 type MissionLayoutVariant = "ticket" | "default";
 type MissionTextAlign = "left" | "center" | "right";
-type MissionStatAction = "none" | "openModal";
+type MissionStatAction =
+  | "none"
+  | "openModal" // legacy
+  | "openDisciplinesModal"
+  | "openStudentMusicModal"
+  | "openMentorMusicModal"
+  | "scrollToMap";
 type MissionStatNumberSource = "explicit" | "modalItemsLength";
 
 interface MissionBadgeIcon {
@@ -576,22 +761,6 @@ const MISSION_TEXT_ALIGN_OPTIONS: MissionTextAlign[] = [
 
 const MISSION_LAYOUT_VARIANTS: MissionLayoutVariant[] = ["ticket", "default"];
 
-const MISSION_ICON_LIBRARY = [
-  { key: "musicNote", label: "Music Note" },
-  { key: "graphicEq", label: "Graphic EQ" },
-  { key: "mic", label: "Microphone" },
-  { key: "piano", label: "Piano" },
-  { key: "brush", label: "Brush" },
-  { key: "theater", label: "Theater Masks" },
-  { key: "queueMusic", label: "Queue Music" },
-  { key: "libraryMusic", label: "Sheet Music" },
-  { key: "audiotrack", label: "Audio Track" },
-  { key: "computer", label: "Computer" },
-  { key: "recordVoiceOver", label: "Voice Over" },
-  { key: "directionsRun", label: "Movement" },
-  { key: "equalizer", label: "Equalizer" },
-];
-
 const BACKGROUND_LOGO_OPTIONS = [{ key: "gogoLogoBK", label: "GOGO Logo" }];
 
 /**
@@ -599,6 +768,8 @@ const BACKGROUND_LOGO_OPTIONS = [{ key: "gogoLogoBK", label: "GOGO Logo" }];
  */
 function ImpactReportCustomizationPage() {
   const { enqueueSnackbar } = useSnackbar();
+  const navigate = useNavigate();
+  const { tab } = useParams<{ tab?: AdminTabRouteKey }>();
   // Disable outermost page scroll while this page is mounted
   useEffect(() => {
     // Always jump to the top of the page on mount
@@ -616,8 +787,51 @@ function ImpactReportCustomizationPage() {
       document.body.style.overflow = prevBodyOverflow;
     };
   }, []);
-  // Current tab state
+  // Current tab state (synced with URL + localStorage)
   const [currentTab, setCurrentTab] = useState(0);
+
+  // Keep tab selection in sync with URL segment and remember last used tab.
+  useEffect(() => {
+    // Determine desired tab from URL, localStorage, or default
+    const fromUrl =
+      tab && ADMIN_TABS.find((t) => t.routeKey === (tab as AdminTabRouteKey));
+
+    let fromStorage: (typeof ADMIN_TABS)[number] | undefined;
+    if (!fromUrl) {
+      try {
+        const storedKey = window.localStorage.getItem(
+          LAST_ADMIN_TAB_STORAGE_KEY,
+        ) as AdminTabRouteKey | null;
+        if (storedKey) {
+          fromStorage = ADMIN_TABS.find((t) => t.routeKey === storedKey);
+        }
+      } catch {
+        // ignore storage errors
+      }
+    }
+
+    const fallback = fromUrl ?? fromStorage ?? ADMIN_TABS[0];
+
+    // Update state if needed
+    if (currentTab !== fallback.value) {
+      setCurrentTab(fallback.value);
+    }
+
+    // Persist last tab
+    try {
+      window.localStorage.setItem(
+        LAST_ADMIN_TAB_STORAGE_KEY,
+        fallback.routeKey,
+      );
+    } catch {
+      // ignore storage errors
+    }
+
+    // Ensure URL reflects the chosen tab
+    if (tab !== fallback.routeKey) {
+      navigate(`/admin/${fallback.routeKey}`, { replace: true });
+    }
+  }, [tab, navigate, currentTab]);
 
   // Impact report form state with default values
   const [impactReportForm, setImpactReportForm] = useState<ImpactReportForm>({
@@ -626,6 +840,8 @@ function ImpactReportCustomizationPage() {
       subtitle: "",
       year: "",
       tagline: "",
+      textAlign: "center",
+      layoutVariant: "default",
       bubblesCsv: "",
       degree: 180,
       color1: "#000000",
@@ -641,7 +857,6 @@ function ImpactReportCustomizationPage() {
       secondaryCtaLabel: "Support Our Mission",
       secondaryCtaHref:
         "https://www.classy.org/give/352794/#!/donation/checkout",
-      enabled: true,
     },
     mission: {
       enabled: true,
@@ -933,6 +1148,8 @@ function ImpactReportCustomizationPage() {
     | "badgeBgColor"
     | "badgeBorderColor"
     | "statsTitleColor"
+    | "color1"
+    | "color2"
     | "titleGradientColor1"
     | "titleGradientColor2"
     | "titleUnderlineGradientColor1"
@@ -963,19 +1180,23 @@ function ImpactReportCustomizationPage() {
                     : missionColorPickerField === "statsTitleColor"
                       ? impactReportForm.mission.statsTitleColor ||
                         "rgba(255,255,255,0.7)"
-                      : missionColorPickerField === "titleGradientColor1"
-                        ? impactReportForm.mission.titleGradientColor1
-                        : missionColorPickerField === "titleGradientColor2"
-                          ? impactReportForm.mission.titleGradientColor2
-                          : missionColorPickerField ===
-                              "titleUnderlineGradientColor1"
-                            ? impactReportForm.mission
-                                .titleUnderlineGradientColor1
-                            : missionColorPickerField ===
-                                "titleUnderlineGradientColor2"
-                              ? impactReportForm.mission
-                                  .titleUnderlineGradientColor2
-                              : "#000000"
+                      : missionColorPickerField === "color1"
+                        ? impactReportForm.mission.color1
+                        : missionColorPickerField === "color2"
+                          ? impactReportForm.mission.color2
+                          : missionColorPickerField === "titleGradientColor1"
+                            ? impactReportForm.mission.titleGradientColor1
+                            : missionColorPickerField === "titleGradientColor2"
+                              ? impactReportForm.mission.titleGradientColor2
+                              : missionColorPickerField ===
+                                  "titleUnderlineGradientColor1"
+                                ? impactReportForm.mission
+                                    .titleUnderlineGradientColor1
+                                : missionColorPickerField ===
+                                    "titleUnderlineGradientColor2"
+                                  ? impactReportForm.mission
+                                      .titleUnderlineGradientColor2
+                                  : "#000000"
     : "#000000";
 
   // Refs for file inputs
@@ -1305,6 +1526,20 @@ function ImpactReportCustomizationPage() {
             subtitle: hero.subtitle ?? prev.hero.subtitle,
             year: hero.year ?? prev.hero.year,
             tagline: hero.tagline ?? prev.hero.tagline,
+            ariaLabel:
+              typeof hero.ariaLabel === "string"
+                ? hero.ariaLabel
+                : prev.hero.ariaLabel,
+            textAlign:
+              hero.textAlign &&
+              (["left", "center", "right"] as string[]).includes(hero.textAlign)
+                ? (hero.textAlign as MissionTextAlign)
+                : prev.hero.textAlign,
+            layoutVariant:
+              hero.layoutVariant === "ticket" ||
+              hero.layoutVariant === "default"
+                ? hero.layoutVariant
+                : prev.hero.layoutVariant,
             titleColor: (hero as any)?.titleColor ?? prev.hero.titleColor,
             subtitleColor:
               (hero as any)?.subtitleColor ?? prev.hero.subtitleColor,
@@ -1387,25 +1622,40 @@ function ImpactReportCustomizationPage() {
       const sanitizedStats: MissionStat[] | null = Array.isArray(
         (mission as any)?.stats,
       )
-        ? ((mission as any)?.stats as any[]).map((s, idx) => ({
-            id: String(s?.id ?? idx),
-            number: s?.number ?? "",
-            label: s?.label ?? "",
-            color: s?.color ?? undefined,
-            action:
-              s?.action === "openModal"
-                ? ("openModal" as MissionStatAction)
-                : ("none" as MissionStatAction),
-            modalId: s?.modalId ?? null,
-            iconKey:
-              typeof s?.iconKey === "string" && s.iconKey.length > 0
-                ? s.iconKey
-                : null,
-            numberSource:
-              s?.numberSource === "modalItemsLength"
-                ? "modalItemsLength"
-                : "explicit",
-          }))
+        ? ((mission as any)?.stats as any[]).map((s, idx) => {
+            const rawAction = (s?.action as string | undefined) || "none";
+            let action: MissionStatAction = "none";
+            if (
+              rawAction === "openDisciplinesModal" ||
+              rawAction === "openStudentMusicModal" ||
+              rawAction === "openMentorMusicModal" ||
+              rawAction === "scrollToMap"
+            ) {
+              action = rawAction as MissionStatAction;
+            } else if (rawAction === "openModal") {
+              // Legacy: treat openModal as disciplines modal when modalId is disciplines
+              action =
+                s?.modalId === "disciplines"
+                  ? ("openDisciplinesModal" as MissionStatAction)
+                  : "none";
+            }
+            return {
+              id: String(s?.id ?? idx),
+              number: s?.number ?? "",
+              label: s?.label ?? "",
+              color: s?.color ?? undefined,
+              action,
+              modalId: s?.modalId ?? null,
+              iconKey:
+                typeof s?.iconKey === "string" && s.iconKey.length > 0
+                  ? s.iconKey
+                  : null,
+              numberSource:
+                s?.numberSource === "modalItemsLength"
+                  ? "modalItemsLength"
+                  : "explicit",
+            };
+          })
         : null;
       const statsEqualizerConfig = (() => {
         const eq = (mission as any)?.statsEqualizer ?? {};
@@ -1702,6 +1952,8 @@ function ImpactReportCustomizationPage() {
         // image is always full opacity; do not send backgroundOpacity
         backgroundImageGrayscale:
           impactReportForm.hero.backgroundGrayscale || undefined,
+        textAlign: impactReportForm.hero.textAlign,
+        layoutVariant: impactReportForm.hero.layoutVariant,
         titleColor: impactReportForm.hero.titleColor || undefined,
         subtitleColor: impactReportForm.hero.subtitleColor || undefined,
         yearColor: impactReportForm.hero.yearColor || undefined,
@@ -1887,11 +2139,7 @@ function ImpactReportCustomizationPage() {
   // No preview toggle; preview is always visible on the left
 
   // Tab configuration
-  const tabs = [
-    { label: "Defaults", value: 0 },
-    { label: "Hero Section", value: 1 },
-    { label: "Mission Section", value: 2 },
-  ];
+  const tabs = ADMIN_TABS;
 
   // Build and debounce the preview hero override
   const liveHeroOverride = useMemo(
@@ -1900,6 +2148,8 @@ function ImpactReportCustomizationPage() {
       subtitle: impactReportForm.hero.subtitle,
       year: impactReportForm.hero.year,
       tagline: impactReportForm.hero.tagline,
+      textAlign: impactReportForm.hero.textAlign,
+      layoutVariant: impactReportForm.hero.layoutVariant,
       titleColor: impactReportForm.hero.titleColor,
       subtitleColor: impactReportForm.hero.subtitleColor,
       yearColor: impactReportForm.hero.yearColor,
@@ -1929,6 +2179,7 @@ function ImpactReportCustomizationPage() {
         impactReportForm.hero.backgroundImageUrl ||
         null,
       backgroundImageGrayscale: impactReportForm.hero.backgroundGrayscale,
+      ariaLabel: impactReportForm.hero.ariaLabel,
     }),
     [impactReportForm.hero],
   );
@@ -2409,6 +2660,21 @@ function ImpactReportCustomizationPage() {
                       return;
                     }
                     setCurrentTab(newValue);
+
+                    const nextTab =
+                      ADMIN_TABS.find((t) => t.value === newValue) ??
+                      ADMIN_TABS[0];
+
+                    try {
+                      window.localStorage.setItem(
+                        LAST_ADMIN_TAB_STORAGE_KEY,
+                        nextTab.routeKey,
+                      );
+                    } catch {
+                      // ignore storage errors
+                    }
+
+                    navigate(`/admin/${nextTab.routeKey}`);
                   }}
                   variant="scrollable"
                   scrollButtons="auto"
@@ -2447,8 +2713,7 @@ function ImpactReportCustomizationPage() {
                 </Tabs>
               </CustomPaper>
             </Box>
-
-            {/* Tab content */}
+            ;{/* Tab content */}
             <CustomPaper
               sx={{
                 p: { xs: 2, sm: 3 },
@@ -2614,122 +2879,12 @@ function ImpactReportCustomizationPage() {
                     >
                       Hero Section
                     </Typography>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={impactReportForm.hero.enabled}
-                          onChange={(e) =>
-                            handleSectionChange(
-                              "hero",
-                              "enabled",
-                              e.target.checked,
-                            )
-                          }
-                          sx={{
-                            "& .MuiSwitch-switchBase.Mui-checked": {
-                              color: COLORS.gogo_blue,
-                            },
-                            "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                              {
-                                backgroundColor: COLORS.gogo_blue,
-                              },
-                          }}
-                        />
-                      }
-                      label="Enable Section"
-                      sx={{ color: "white" }}
-                    />
                   </Box>
                   <Divider sx={{ mb: 3, bgcolor: "rgba(255,255,255,0.1)" }} />
 
                   <Grid container spacing={{ xs: 2, md: 3 }}>
-                    {/* Structure & accessibility */}
-                    <Grid item xs={12} md={6}>
-                      <CustomTextField
-                        label="ARIA Label"
-                        value={impactReportForm.mission.ariaLabel}
-                        onChange={(e) =>
-                          handleSectionChange(
-                            "mission",
-                            "ariaLabel",
-                            e.target.value,
-                          )
-                        }
-                        fullWidth
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={3}>
-                      <CustomTextField
-                        select
-                        label="Text Alignment"
-                        value={impactReportForm.mission.textAlign}
-                        onChange={(e) =>
-                          handleSectionChange(
-                            "mission",
-                            "textAlign",
-                            e.target.value as MissionTextAlign,
-                          )
-                        }
-                        fullWidth
-                      >
-                        {MISSION_TEXT_ALIGN_OPTIONS.map((option) => (
-                          <MenuItem key={option} value={option}>
-                            {option.charAt(0).toUpperCase() + option.slice(1)}
-                          </MenuItem>
-                        ))}
-                      </CustomTextField>
-                    </Grid>
-                    <Grid item xs={12} md={3}>
-                      <CustomTextField
-                        select
-                        label="Layout Variant"
-                        value={impactReportForm.mission.layoutVariant}
-                        onChange={(e) =>
-                          handleSectionChange(
-                            "mission",
-                            "layoutVariant",
-                            e.target.value as MissionLayoutVariant,
-                          )
-                        }
-                        fullWidth
-                      >
-                        {MISSION_LAYOUT_VARIANTS.map((option) => (
-                          <MenuItem key={option} value={option}>
-                            {option === "ticket" ? "Ticket" : "Default"}
-                          </MenuItem>
-                        ))}
-                      </CustomTextField>
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={impactReportForm.mission.animationsEnabled}
-                            onChange={(e) =>
-                              handleSectionChange(
-                                "mission",
-                                "animationsEnabled",
-                                e.target.checked,
-                              )
-                            }
-                            sx={{
-                              "& .MuiSwitch-switchBase.Mui-checked": {
-                                color: COLORS.gogo_blue,
-                              },
-                              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                {
-                                  backgroundColor: COLORS.gogo_blue,
-                                },
-                            }}
-                          />
-                        }
-                        label="Enable Animations"
-                        sx={{ color: "white" }}
-                      />
-                    </Grid>
-
                     {/* Basics */}
-                    <Grid item xs={12} md={6}>
+                    <Grid item xs={12}>
                       <CustomTextField
                         label="Hero Title"
                         value={impactReportForm.hero.title}
@@ -2765,7 +2920,7 @@ function ImpactReportCustomizationPage() {
                         &nbsp;Text color
                       </Button>
                     </Grid>
-                    <Grid item xs={12} md={6}>
+                    <Grid item xs={12}>
                       <CustomTextField
                         label="Hero Subtitle"
                         value={impactReportForm.hero.subtitle}
@@ -2899,7 +3054,7 @@ function ImpactReportCustomizationPage() {
                         Call To Action Buttons
                       </Typography>
                     </Grid>
-                    <Grid item xs={12} md={6}>
+                    <Grid item xs={12}>
                       <CustomTextField
                         label="Primary CTA Label"
                         value={impactReportForm.hero.primaryCtaLabel}
@@ -3011,160 +3166,38 @@ function ImpactReportCustomizationPage() {
                     </Grid>
 
                     {/* Gradient */}
-                    <Grid item xs={12}>
-                      <Typography variant="subtitle1" gutterBottom>
-                        Background Gradient
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} md={4}>
-                          <Typography
-                            variant="caption"
-                            color="rgba(255,255,255,0.7)"
-                          >
-                            Degree
-                          </Typography>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              flexDirection: "column",
-                              alignItems: "center",
-                              gap: 1,
-                            }}
-                          >
-                            <Typography variant="body2">
-                              {impactReportForm.hero.degree}°
-                            </Typography>
-                            <DegreePicker
-                              value={impactReportForm.hero.degree}
-                              onChange={(deg) =>
-                                handleSectionChange(
-                                  "hero",
-                                  "degree",
-                                  Math.max(1, Math.min(360, deg || 180)),
-                                )
-                              }
-                              size={140}
-                            />
-                          </Box>
-                        </Grid>
-                        <Grid
-                          item
-                          xs={12}
-                          md={4}
-                          sx={{
-                            ml: { md: 1.5 },
-                            mr: { md: -0.5 },
-                            display: { md: "flex" },
-                            justifyContent: { md: "flex-start" },
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: 2,
-                            }}
-                          >
-                            <Box>
-                              <Typography
-                                variant="caption"
-                                color="rgba(255,255,255,0.7)"
-                              >
-                                Color 1
-                              </Typography>
-                              <Button
-                                variant="outlined"
-                                onClick={(e) => {
-                                  setColorPickerField("color1");
-                                  setColorPickerAnchor(
-                                    e.currentTarget as HTMLElement,
-                                  );
-                                }}
-                                sx={{
-                                  mt: 0.5,
-                                  minWidth: 48,
-                                  px: 1,
-                                  borderColor: "rgba(255,255,255,0.3)",
-                                  color: "rgba(255,255,255,0.9)",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 1,
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    display: "inline-block",
-                                    width: 18,
-                                    height: 18,
-                                    borderRadius: 3,
-                                    background: impactReportForm.hero.color1,
-                                    border: "1px solid rgba(255,255,255,0.2)",
-                                  }}
-                                />
-                                Pick
-                              </Button>
-                            </Box>
-                            <Box>
-                              <Typography
-                                variant="caption"
-                                color="rgba(255,255,255,0.7)"
-                              >
-                                Color 2
-                              </Typography>
-                              <Button
-                                variant="outlined"
-                                onClick={(e) => {
-                                  setColorPickerField("color2");
-                                  setColorPickerAnchor(
-                                    e.currentTarget as HTMLElement,
-                                  );
-                                }}
-                                sx={{
-                                  mt: 0.5,
-                                  minWidth: 48,
-                                  px: 1,
-                                  borderColor: "rgba(255,255,255,0.3)",
-                                  color: "rgba(255,255,255,0.9)",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 1,
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    display: "inline-block",
-                                    width: 18,
-                                    height: 18,
-                                    borderRadius: 3,
-                                    background: impactReportForm.hero.color2,
-                                    border: "1px solid rgba(255,255,255,0.2)",
-                                  }}
-                                />
-                                Pick
-                              </Button>
-                            </Box>
-                          </Box>
-                        </Grid>
-                        <Grid item xs={12} md={4} sx={{ ml: { md: -2 } }}>
-                          <Box
-                            sx={{
-                              width: 140,
-                              height: 140,
-                              borderRadius: 1,
-                              border: "1px solid rgba(255,255,255,0.1)",
-                              background: composeGradient(
-                                impactReportForm.hero.degree,
-                                impactReportForm.hero.color1,
-                                impactReportForm.hero.color2,
-                                impactReportForm.hero.gradientOpacity,
-                              ),
-                            }}
-                          />
-                        </Grid>
-                      </Grid>
-                    </Grid>
+                    <GradientEditor
+                      label="Background Gradient"
+                      degree={impactReportForm.hero.degree}
+                      color1={impactReportForm.hero.color1}
+                      color2={impactReportForm.hero.color2}
+                      opacity={impactReportForm.hero.gradientOpacity}
+                      showOpacity
+                      onChangeDegree={(deg) =>
+                        handleSectionChange(
+                          "hero",
+                          "degree",
+                          Math.max(1, Math.min(360, deg || 180)),
+                        )
+                      }
+                      onPickColor1={(el) => {
+                        setColorPickerField("color1");
+                        setColorPickerAnchor(el);
+                      }}
+                      onPickColor2={(el) => {
+                        setColorPickerField("color2");
+                        setColorPickerAnchor(el);
+                      }}
+                      onChangeOpacity={(val) =>
+                        handleSectionChange("hero", "gradientOpacity", val)
+                      }
+                      previewBackground={composeGradient(
+                        impactReportForm.hero.degree,
+                        impactReportForm.hero.color1,
+                        impactReportForm.hero.color2,
+                        impactReportForm.hero.gradientOpacity,
+                      )}
+                    />
                     <ColorPickerPopover
                       open={openColorPicker}
                       anchorEl={colorPickerAnchor}
@@ -3426,8 +3459,93 @@ function ImpactReportCustomizationPage() {
                   <Divider sx={{ mb: 3, bgcolor: "rgba(255,255,255,0.1)" }} />
 
                   <Grid container spacing={{ xs: 2, md: 3 }}>
+                    {/* Structure & accessibility */}
+                    <Grid item xs={12} md={12}>
+                      <CustomTextField
+                        label="ARIA Label"
+                        value={impactReportForm.mission.ariaLabel}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "mission",
+                            "ariaLabel",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={12}>
+                      <CustomTextField
+                        select
+                        label="Text Alignment"
+                        value={impactReportForm.mission.textAlign}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "mission",
+                            "textAlign",
+                            e.target.value as MissionTextAlign,
+                          )
+                        }
+                        fullWidth
+                      >
+                        {MISSION_TEXT_ALIGN_OPTIONS.map((option) => (
+                          <MenuItem key={option} value={option}>
+                            {option.charAt(0).toUpperCase() + option.slice(1)}
+                          </MenuItem>
+                        ))}
+                      </CustomTextField>
+                    </Grid>
+                    <Grid item xs={12} md={12}>
+                      <CustomTextField
+                        select
+                        label="Layout Variant"
+                        value={impactReportForm.mission.layoutVariant}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "mission",
+                            "layoutVariant",
+                            e.target.value as MissionLayoutVariant,
+                          )
+                        }
+                        fullWidth
+                      >
+                        {MISSION_LAYOUT_VARIANTS.map((option) => (
+                          <MenuItem key={option} value={option}>
+                            {option === "ticket" ? "Ticket" : "Default"}
+                          </MenuItem>
+                        ))}
+                      </CustomTextField>
+                    </Grid>
+                    <Grid item xs={12} md={12}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={impactReportForm.mission.animationsEnabled}
+                            onChange={(e) =>
+                              handleSectionChange(
+                                "mission",
+                                "animationsEnabled",
+                                e.target.checked,
+                              )
+                            }
+                            sx={{
+                              "& .MuiSwitch-switchBase.Mui-checked": {
+                                color: COLORS.gogo_blue,
+                              },
+                              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                                {
+                                  backgroundColor: COLORS.gogo_blue,
+                                },
+                            }}
+                          />
+                        }
+                        label="Enable Animations"
+                        sx={{ color: "white" }}
+                      />
+                    </Grid>
+
                     {/* Basics */}
-                    <Grid item xs={12} md={6}>
+                    <Grid item xs={12} md={12}>
                       <CustomTextField
                         label="Mission Title"
                         value={impactReportForm.mission.title}
@@ -3471,232 +3589,74 @@ function ImpactReportCustomizationPage() {
                           &nbsp;Title text color
                         </Button>
                       </Box>
-                      <Typography variant="subtitle2" sx={{ mt: 2 }}>
-                        Title Gradient
-                      </Typography>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 2,
-                          mt: 1,
-                          flexWrap: "wrap",
+                      <GradientEditor
+                        label="Title Gradient"
+                        degree={impactReportForm.mission.titleGradientDegree}
+                        color1={impactReportForm.mission.titleGradientColor1}
+                        color2={impactReportForm.mission.titleGradientColor2}
+                        opacity={impactReportForm.mission.titleGradientOpacity}
+                        showOpacity
+                        onChangeDegree={(deg) =>
+                          updateMissionTitleGradient({
+                            titleGradientDegree: deg,
+                          })
+                        }
+                        onPickColor1={(el) => {
+                          setMissionColorPickerField("titleGradientColor1");
+                          setMissionColorPickerAnchor(el);
                         }}
-                      >
-                        <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                          Angle: {impactReportForm.mission.titleGradientDegree}°
-                        </Typography>
-                        <input
-                          type="range"
-                          min={0}
-                          max={360}
-                          value={impactReportForm.mission.titleGradientDegree}
-                          onChange={(e) =>
-                            updateMissionTitleGradient({
-                              titleGradientDegree: Number(e.target.value),
-                            })
-                          }
-                          style={{ flex: 1, minWidth: 160 }}
-                        />
-                      </Box>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          gap: 1,
-                          flexWrap: "wrap",
-                          mt: 1,
+                        onPickColor2={(el) => {
+                          setMissionColorPickerField("titleGradientColor2");
+                          setMissionColorPickerAnchor(el);
                         }}
-                      >
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={(e) => {
-                            setMissionColorPickerField("titleGradientColor1");
-                            setMissionColorPickerAnchor(
-                              e.currentTarget as HTMLElement,
-                            );
-                          }}
-                          sx={{
-                            borderColor: "rgba(255,255,255,0.3)",
-                            color: "rgba(255,255,255,0.9)",
-                          }}
-                        >
-                          <span
-                            style={{
-                              display: "inline-block",
-                              width: 16,
-                              height: 16,
-                              borderRadius: 3,
-                              background:
-                                impactReportForm.mission.titleGradientColor1,
-                              border: "1px solid rgba(255,255,255,0.2)",
-                            }}
-                          />
-                          &nbsp;Color A
-                        </Button>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={(e) => {
-                            setMissionColorPickerField("titleGradientColor2");
-                            setMissionColorPickerAnchor(
-                              e.currentTarget as HTMLElement,
-                            );
-                          }}
-                          sx={{
-                            borderColor: "rgba(255,255,255,0.3)",
-                            color: "rgba(255,255,255,0.9)",
-                          }}
-                        >
-                          <span
-                            style={{
-                              display: "inline-block",
-                              width: 16,
-                              height: 16,
-                              borderRadius: 3,
-                              background:
-                                impactReportForm.mission.titleGradientColor2,
-                              border: "1px solid rgba(255,255,255,0.2)",
-                            }}
-                          />
-                          &nbsp;Color B
-                        </Button>
-                      </Box>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 2,
-                          mt: 1,
+                        onChangeOpacity={(val) =>
+                          updateMissionTitleGradient({
+                            titleGradientOpacity: val,
+                          })
+                        }
+                        previewBackground={composeGradient(
+                          impactReportForm.mission.titleGradientDegree,
+                          impactReportForm.mission.titleGradientColor1,
+                          impactReportForm.mission.titleGradientColor2,
+                          impactReportForm.mission.titleGradientOpacity,
+                        )}
+                      />
+                      <GradientEditor
+                        label="Title Underline Gradient"
+                        degree={
+                          impactReportForm.mission.titleUnderlineGradientDegree
+                        }
+                        color1={
+                          impactReportForm.mission.titleUnderlineGradientColor1
+                        }
+                        color2={
+                          impactReportForm.mission.titleUnderlineGradientColor2
+                        }
+                        opacity={1}
+                        showOpacity={false}
+                        onChangeDegree={(deg) =>
+                          updateMissionUnderlineGradient({
+                            titleUnderlineGradientDegree: deg,
+                          })
+                        }
+                        onPickColor1={(el) => {
+                          setMissionColorPickerField(
+                            "titleUnderlineGradientColor1",
+                          );
+                          setMissionColorPickerAnchor(el);
                         }}
-                      >
-                        <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                          Opacity:{" "}
-                          {impactReportForm.mission.titleGradientOpacity.toFixed(
-                            2,
-                          )}
-                        </Typography>
-                        <input
-                          type="range"
-                          min={0}
-                          max={1}
-                          step={0.01}
-                          value={impactReportForm.mission.titleGradientOpacity}
-                          onChange={(e) =>
-                            updateMissionTitleGradient({
-                              titleGradientOpacity: Number(e.target.value),
-                            })
-                          }
-                          style={{ flex: 1, minWidth: 160 }}
-                        />
-                      </Box>
-                      <Typography variant="subtitle2" sx={{ mt: 3 }}>
-                        Title Underline Gradient
-                      </Typography>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 2,
-                          mt: 1,
-                          flexWrap: "wrap",
+                        onPickColor2={(el) => {
+                          setMissionColorPickerField(
+                            "titleUnderlineGradientColor2",
+                          );
+                          setMissionColorPickerAnchor(el);
                         }}
-                      >
-                        <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                          Angle:{" "}
-                          {
-                            impactReportForm.mission
-                              .titleUnderlineGradientDegree
-                          }
-                          °
-                        </Typography>
-                        <input
-                          type="range"
-                          min={0}
-                          max={360}
-                          value={
-                            impactReportForm.mission
-                              .titleUnderlineGradientDegree
-                          }
-                          onChange={(e) =>
-                            updateMissionUnderlineGradient({
-                              titleUnderlineGradientDegree: Number(
-                                e.target.value,
-                              ),
-                            })
-                          }
-                          style={{ flex: 1, minWidth: 160 }}
-                        />
-                      </Box>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          gap: 1,
-                          flexWrap: "wrap",
-                          mt: 1,
-                        }}
-                      >
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={(e) => {
-                            setMissionColorPickerField(
-                              "titleUnderlineGradientColor1",
-                            );
-                            setMissionColorPickerAnchor(
-                              e.currentTarget as HTMLElement,
-                            );
-                          }}
-                          sx={{
-                            borderColor: "rgba(255,255,255,0.3)",
-                            color: "rgba(255,255,255,0.9)",
-                          }}
-                        >
-                          <span
-                            style={{
-                              display: "inline-block",
-                              width: 16,
-                              height: 16,
-                              borderRadius: 3,
-                              background:
-                                impactReportForm.mission
-                                  .titleUnderlineGradientColor1,
-                              border: "1px solid rgba(255,255,255,0.2)",
-                            }}
-                          />
-                          &nbsp;Underline A
-                        </Button>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={(e) => {
-                            setMissionColorPickerField(
-                              "titleUnderlineGradientColor2",
-                            );
-                            setMissionColorPickerAnchor(
-                              e.currentTarget as HTMLElement,
-                            );
-                          }}
-                          sx={{
-                            borderColor: "rgba(255,255,255,0.3)",
-                            color: "rgba(255,255,255,0.9)",
-                          }}
-                        >
-                          <span
-                            style={{
-                              display: "inline-block",
-                              width: 16,
-                              height: 16,
-                              borderRadius: 3,
-                              background:
-                                impactReportForm.mission
-                                  .titleUnderlineGradientColor2,
-                              border: "1px solid rgba(255,255,255,0.2)",
-                            }}
-                          />
-                          &nbsp;Underline B
-                        </Button>
-                      </Box>
+                        previewBackground={composeSimpleGradient(
+                          impactReportForm.mission.titleUnderlineGradientDegree,
+                          impactReportForm.mission.titleUnderlineGradientColor1,
+                          impactReportForm.mission.titleUnderlineGradientColor2,
+                        )}
+                      />
                       <CustomTextField
                         label="Badge Label"
                         value={impactReportForm.mission.badgeLabel}
@@ -3724,7 +3684,7 @@ function ImpactReportCustomizationPage() {
                                 : "♫"
                               : badgeIconType === "iconKey" && badgeIconValue
                                 ? badgeIconValue
-                                : (MISSION_ICON_LIBRARY[0]?.key ?? "");
+                                : (IMPACT_ICON_LIBRARY[0]?.key ?? "");
                           handleSectionChange("mission", "badgeIcon", {
                             type: nextType,
                             value: fallbackValue,
@@ -3751,25 +3711,19 @@ function ImpactReportCustomizationPage() {
                           placeholder="e.g. ♫"
                         />
                       ) : (
-                        <CustomTextField
-                          select
-                          label="Badge Icon"
-                          value={badgeIconValue || ""}
-                          onChange={(e) =>
-                            handleSectionChange("mission", "badgeIcon", {
-                              type: "iconKey",
-                              value: e.target.value,
-                            })
-                          }
-                          fullWidth
-                          sx={{ mt: 2 }}
-                        >
-                          {MISSION_ICON_LIBRARY.map((icon) => (
-                            <MenuItem key={icon.key} value={icon.key}>
-                              {icon.label}
-                            </MenuItem>
-                          ))}
-                        </CustomTextField>
+                        <Box sx={{ mt: 2 }}>
+                          <IconSelector
+                            label="Badge Icon"
+                            value={(badgeIconValue as ImpactIconKey) || ""}
+                            onChange={(iconKey) =>
+                              handleSectionChange("mission", "badgeIcon", {
+                                type: "iconKey",
+                                value: iconKey,
+                              })
+                            }
+                            allowNone={false}
+                          />
+                        </Box>
                       )}
                       <Box
                         sx={{
@@ -3865,7 +3819,7 @@ function ImpactReportCustomizationPage() {
                         </Button>
                       </Box>
                     </Grid>
-                    <Grid item xs={12} md={6}>
+                    <Grid item xs={12} md={12}>
                       <CustomTextField
                         label="Statement Title"
                         value={impactReportForm.mission.statementTitle}
@@ -4058,212 +4012,38 @@ function ImpactReportCustomizationPage() {
                         Background
                       </Typography>
                     </Grid>
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                        Gradient Angle: {impactReportForm.mission.degree}°
-                      </Typography>
-                      <input
-                        type="range"
-                        min={1}
-                        max={360}
-                        step={1}
-                        value={impactReportForm.mission.degree}
-                        onChange={(e) =>
-                          handleSectionChange(
-                            "mission",
-                            "degree",
-                            Number(e.target.value),
-                          )
-                        }
-                        style={{ width: "100%" }}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={3}>
-                      <Typography variant="body2" sx={{ mb: 0.5 }}>
-                        Color Stop 1
-                      </Typography>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        onClick={(e) => {
-                          setColorPickerField("color1");
-                          setColorPickerAnchor(e.currentTarget as HTMLElement);
-                        }}
-                        sx={{
-                          borderColor: "rgba(255,255,255,0.3)",
-                          color: "rgba(255,255,255,0.9)",
-                        }}
-                      >
-                        <span
-                          style={{
-                            display: "inline-block",
-                            width: 16,
-                            height: 16,
-                            borderRadius: 3,
-                            background: impactReportForm.mission.color1,
-                            border: "1px solid rgba(255,255,255,0.2)",
-                          }}
-                        />
-                        &nbsp;Pick color
-                      </Button>
-                    </Grid>
-                    <Grid item xs={12} md={3}>
-                      <Typography variant="body2" sx={{ mb: 0.5 }}>
-                        Color Stop 2
-                      </Typography>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        onClick={(e) => {
-                          setColorPickerField("color2");
-                          setColorPickerAnchor(e.currentTarget as HTMLElement);
-                        }}
-                        sx={{
-                          borderColor: "rgba(255,255,255,0.3)",
-                          color: "rgba(255,255,255,0.9)",
-                        }}
-                      >
-                        <span
-                          style={{
-                            display: "inline-block",
-                            width: 16,
-                            height: 16,
-                            borderRadius: 3,
-                            background: impactReportForm.mission.color2,
-                            border: "1px solid rgba(255,255,255,0.2)",
-                          }}
-                        />
-                        &nbsp;Pick color
-                      </Button>
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                        Gradient Opacity:{" "}
-                        {impactReportForm.mission.gradientOpacity.toFixed(2)}
-                      </Typography>
-                      <input
-                        type="range"
-                        min={0}
-                        max={1}
-                        step={0.01}
-                        value={impactReportForm.mission.gradientOpacity}
-                        onChange={(e) =>
-                          handleSectionChange(
-                            "mission",
-                            "gradientOpacity",
-                            Number(e.target.value),
-                          )
-                        }
-                        style={{ width: "100%" }}
-                      />
-                    </Grid>
-
-                    {/* Background logo */}
-                    <Grid item xs={12}>
-                      <Divider
-                        sx={{ my: 1.5, bgcolor: "rgba(255,255,255,0.08)" }}
-                      />
-                      <Typography variant="h6" sx={{ mb: 1.5 }}>
-                        Background Logo
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={backgroundLogoState.enabled}
-                            onChange={(e) =>
-                              handleSectionChange("mission", "backgroundLogo", {
-                                ...backgroundLogoState,
-                                enabled: e.target.checked,
-                              })
-                            }
-                          />
-                        }
-                        label="Show background logo"
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <CustomTextField
-                        select
-                        label="Logo"
-                        value={backgroundLogoState.svgKey || ""}
-                        onChange={(e) =>
-                          handleSectionChange("mission", "backgroundLogo", {
-                            ...backgroundLogoState,
-                            svgKey: e.target.value,
-                          })
-                        }
-                        fullWidth
-                        disabled={!backgroundLogoState.enabled}
-                      >
-                        {BACKGROUND_LOGO_OPTIONS.map((opt) => (
-                          <MenuItem key={opt.key} value={opt.key}>
-                            {opt.label}
-                          </MenuItem>
-                        ))}
-                      </CustomTextField>
-                    </Grid>
-                    <Grid item xs={12} md={4}>
-                      <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                        Logo opacity:{" "}
-                        {(backgroundLogoState.opacity ?? 0.08).toFixed(2)}
-                      </Typography>
-                      <input
-                        type="range"
-                        min={0}
-                        max={1}
-                        step={0.01}
-                        value={backgroundLogoState.opacity ?? 0.08}
-                        onChange={(e) =>
-                          handleSectionChange("mission", "backgroundLogo", {
-                            ...backgroundLogoState,
-                            opacity: Number(e.target.value),
-                          })
-                        }
-                        style={{ width: "100%" }}
-                        disabled={!backgroundLogoState.enabled}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={4}>
-                      <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                        Rotation: {backgroundLogoState.rotationDeg ?? 90}°
-                      </Typography>
-                      <input
-                        type="range"
-                        min={-180}
-                        max={180}
-                        value={backgroundLogoState.rotationDeg ?? 90}
-                        onChange={(e) =>
-                          handleSectionChange("mission", "backgroundLogo", {
-                            ...backgroundLogoState,
-                            rotationDeg: Number(e.target.value),
-                          })
-                        }
-                        style={{ width: "100%" }}
-                        disabled={!backgroundLogoState.enabled}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={4}>
-                      <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                        Scale: {(backgroundLogoState.scale ?? 0.82).toFixed(2)}
-                      </Typography>
-                      <input
-                        type="range"
-                        min={0.2}
-                        max={2}
-                        step={0.01}
-                        value={backgroundLogoState.scale ?? 0.82}
-                        onChange={(e) =>
-                          handleSectionChange("mission", "backgroundLogo", {
-                            ...backgroundLogoState,
-                            scale: Number(e.target.value),
-                          })
-                        }
-                        style={{ width: "100%" }}
-                        disabled={!backgroundLogoState.enabled}
-                      />
-                    </Grid>
+                    <GradientEditor
+                      label="Background Gradient"
+                      degree={impactReportForm.mission.degree}
+                      color1={impactReportForm.mission.color1}
+                      color2={impactReportForm.mission.color2}
+                      opacity={impactReportForm.mission.gradientOpacity}
+                      showOpacity
+                      onChangeDegree={(deg) =>
+                        handleSectionChange(
+                          "mission",
+                          "degree",
+                          Math.max(1, Math.min(360, deg || 180)),
+                        )
+                      }
+                      onPickColor1={(el) => {
+                        setMissionColorPickerField("color1" as any);
+                        setMissionColorPickerAnchor(el);
+                      }}
+                      onPickColor2={(el) => {
+                        setMissionColorPickerField("color2" as any);
+                        setMissionColorPickerAnchor(el);
+                      }}
+                      onChangeOpacity={(val) =>
+                        handleSectionChange("mission", "gradientOpacity", val)
+                      }
+                      previewBackground={composeGradient(
+                        impactReportForm.mission.degree,
+                        impactReportForm.mission.color1,
+                        impactReportForm.mission.color2,
+                        impactReportForm.mission.gradientOpacity,
+                      )}
+                    />
 
                     {/* Stats editor */}
                     <Grid item xs={12}>
@@ -4359,8 +4139,132 @@ function ImpactReportCustomizationPage() {
                         }
                       />
                     </Grid>
+                    {/* Click actions for stats */}
+                    <Grid item xs={12}>
+                      <Typography variant="subtitle2" sx={{ mt: 1 }}>
+                        Click Actions
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={impactReportForm.mission.stats.some(
+                              (s) =>
+                                s.id === "disciplines" &&
+                                (s.action === "openDisciplinesModal" ||
+                                  (s.action === "openModal" &&
+                                    s.modalId === "disciplines")),
+                            )}
+                            onChange={(e) => {
+                              const enabled = e.target.checked;
+                              const next = impactReportForm.mission.stats.map(
+                                (s) =>
+                                  s.id === "disciplines"
+                                    ? {
+                                        ...s,
+                                        action: enabled
+                                          ? ("openDisciplinesModal" as MissionStatAction)
+                                          : ("none" as MissionStatAction),
+                                        modalId: enabled ? "disciplines" : null,
+                                      }
+                                    : s,
+                              );
+                              handleSectionChange("mission", "stats", next);
+                            }}
+                          />
+                        }
+                        label='"Disciplines" stat opens disciplines modal'
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={impactReportForm.mission.stats.some(
+                              (s) =>
+                                s.id === "students" &&
+                                s.action === "openStudentMusicModal",
+                            )}
+                            onChange={(e) => {
+                              const enabled = e.target.checked;
+                              const next = impactReportForm.mission.stats.map(
+                                (s) =>
+                                  s.id === "students"
+                                    ? {
+                                        ...s,
+                                        action: enabled
+                                          ? ("openStudentMusicModal" as MissionStatAction)
+                                          : ("none" as MissionStatAction),
+                                      }
+                                    : s,
+                              );
+                              handleSectionChange("mission", "stats", next);
+                            }}
+                          />
+                        }
+                        label='"Students" stat opens Student Music modal'
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={impactReportForm.mission.stats.some(
+                              (s) =>
+                                s.id === "mentors" &&
+                                s.action === "openMentorMusicModal",
+                            )}
+                            onChange={(e) => {
+                              const enabled = e.target.checked;
+                              const next = impactReportForm.mission.stats.map(
+                                (s) =>
+                                  s.id === "mentors"
+                                    ? {
+                                        ...s,
+                                        action: enabled
+                                          ? ("openMentorMusicModal" as MissionStatAction)
+                                          : ("none" as MissionStatAction),
+                                      }
+                                    : s,
+                              );
+                              handleSectionChange("mission", "stats", next);
+                            }}
+                          />
+                        }
+                        label='"Paid Mentors" stat opens Mentor Music modal'
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={impactReportForm.mission.stats.some(
+                              (s) =>
+                                s.id === "sites" && s.action === "scrollToMap",
+                            )}
+                            onChange={(e) => {
+                              const enabled = e.target.checked;
+                              const next = impactReportForm.mission.stats.map(
+                                (s) =>
+                                  s.id === "sites"
+                                    ? {
+                                        ...s,
+                                        action: enabled
+                                          ? ("scrollToMap" as MissionStatAction)
+                                          : ("none" as MissionStatAction),
+                                      }
+                                    : s,
+                              );
+                              handleSectionChange("mission", "stats", next);
+                            }}
+                          />
+                        }
+                        label='"School & Community Sites" stat skips ahead to map'
+                      />
+                    </Grid>
                     {impactReportForm.mission.stats.map((s, idx) => (
-                      <Grid item xs={12} md={6} key={`mission-stat-${s.id}`}>
+                      <Grid item xs={12} key={`mission-stat-${s.id}`}>
                         <Card
                           variant="outlined"
                           sx={{ bgcolor: "transparent" }}
@@ -4456,17 +4360,16 @@ function ImpactReportCustomizationPage() {
                                 </CustomTextField>
                               </Grid>
                               <Grid item xs={12} sm={6}>
-                                <CustomTextField
-                                  select
+                                <IconSelector
                                   label="Icon"
-                                  value={s.iconKey || ""}
-                                  onChange={(e) => {
+                                  value={(s.iconKey as ImpactIconKey) || ""}
+                                  onChange={(iconKey) => {
                                     const next = [
                                       ...impactReportForm.mission.stats,
                                     ];
                                     next[idx] = {
                                       ...s,
-                                      iconKey: e.target.value || null,
+                                      iconKey: iconKey || null,
                                     };
                                     handleSectionChange(
                                       "mission",
@@ -4474,45 +4377,10 @@ function ImpactReportCustomizationPage() {
                                       next,
                                     );
                                   }}
-                                  fullWidth
-                                >
-                                  <MenuItem value="">Default</MenuItem>
-                                  {MISSION_ICON_LIBRARY.map((icon) => (
-                                    <MenuItem key={icon.key} value={icon.key}>
-                                      {icon.label}
-                                    </MenuItem>
-                                  ))}
-                                </CustomTextField>
-                              </Grid>
-                              <Grid item xs={12} sm={6}>
-                                <FormControlLabel
-                                  control={
-                                    <Switch
-                                      checked={s.action === "openModal"}
-                                      onChange={(e) => {
-                                        const next = [
-                                          ...impactReportForm.mission.stats,
-                                        ];
-                                        next[idx] = {
-                                          ...s,
-                                          action: e.target.checked
-                                            ? "openModal"
-                                            : "none",
-                                          modalId: e.target.checked
-                                            ? "disciplines"
-                                            : null,
-                                        };
-                                        handleSectionChange(
-                                          "mission",
-                                          "stats",
-                                          next,
-                                        );
-                                      }}
-                                    />
-                                  }
-                                  label="Opens Disciplines Modal"
+                                  noneLabel="Default"
                                 />
                               </Grid>
+                              <Grid item xs={12} sm={6} />
                               <Grid
                                 item
                                 xs={12}
@@ -4569,131 +4437,6 @@ function ImpactReportCustomizationPage() {
                         Add Stat
                       </Button>
                     </Grid>
-
-                    {/* Disciplines modal editor */}
-                    <Grid item xs={12}>
-                      <Divider
-                        sx={{ my: 1.5, bgcolor: "rgba(255,255,255,0.08)" }}
-                      />
-                      <Typography variant="h6" sx={{ mb: 1.5 }}>
-                        Disciplines Modal
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <CustomTextField
-                        label="Modal Title"
-                        value={impactReportForm.mission.modalTitle || ""}
-                        onChange={(e) =>
-                          handleSectionChange(
-                            "mission",
-                            "modalTitle",
-                            e.target.value,
-                          )
-                        }
-                        fullWidth
-                      />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Typography variant="body2" sx={{ mb: 1 }}>
-                        Items
-                      </Typography>
-                      <Grid container spacing={1}>
-                        {impactReportForm.mission.disciplinesItems.map(
-                          (item, i) => (
-                            <Grid item xs={12} md={6} key={`disc-${i}`}>
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  gap: 1,
-                                  flexWrap: "wrap",
-                                  alignItems: "center",
-                                }}
-                              >
-                                <CustomTextField
-                                  label={`Item ${i + 1}`}
-                                  value={item.name}
-                                  onChange={(e) => {
-                                    const next = [
-                                      ...impactReportForm.mission
-                                        .disciplinesItems,
-                                    ];
-                                    next[i] = { ...item, name: e.target.value };
-                                    handleSectionChange(
-                                      "mission",
-                                      "disciplinesItems",
-                                      next,
-                                    );
-                                  }}
-                                  fullWidth
-                                />
-                                <CustomTextField
-                                  select
-                                  label="Icon"
-                                  value={item.iconKey || ""}
-                                  onChange={(e) => {
-                                    const next = [
-                                      ...impactReportForm.mission
-                                        .disciplinesItems,
-                                    ];
-                                    next[i] = {
-                                      ...item,
-                                      iconKey: e.target.value || null,
-                                    };
-                                    handleSectionChange(
-                                      "mission",
-                                      "disciplinesItems",
-                                      next,
-                                    );
-                                  }}
-                                  sx={{ minWidth: 140 }}
-                                >
-                                  <MenuItem value="">Default</MenuItem>
-                                  {MISSION_ICON_LIBRARY.map((icon) => (
-                                    <MenuItem key={icon.key} value={icon.key}>
-                                      {icon.label}
-                                    </MenuItem>
-                                  ))}
-                                </CustomTextField>
-                                <IconButton
-                                  onClick={() => {
-                                    const next =
-                                      impactReportForm.mission.disciplinesItems.filter(
-                                        (_, idx) => idx !== i,
-                                      );
-                                    handleSectionChange(
-                                      "mission",
-                                      "disciplinesItems",
-                                      next,
-                                    );
-                                  }}
-                                  color="error"
-                                >
-                                  <DeleteIcon />
-                                </IconButton>
-                              </Box>
-                            </Grid>
-                          ),
-                        )}
-                      </Grid>
-                      <Button
-                        startIcon={<AddIcon />}
-                        variant="outlined"
-                        sx={{ mt: 1.5 }}
-                        onClick={() => {
-                          const next = [
-                            ...impactReportForm.mission.disciplinesItems,
-                            { name: "", iconKey: null },
-                          ];
-                          handleSectionChange(
-                            "mission",
-                            "disciplinesItems",
-                            next,
-                          );
-                        }}
-                      >
-                        Add Item
-                      </Button>
-                    </Grid>
                   </Grid>
 
                   {/* Mission color picker popover */}
@@ -4735,6 +4478,17 @@ function ImpactReportCustomizationPage() {
                         updateMissionUnderlineGradient({
                           titleUnderlineGradientColor2: val,
                         });
+                        return;
+                      }
+                      if (
+                        missionColorPickerField === "color1" ||
+                        missionColorPickerField === "color2"
+                      ) {
+                        handleSectionChange(
+                          "mission",
+                          missionColorPickerField,
+                          val,
+                        );
                         return;
                       }
                       handleSectionChange(

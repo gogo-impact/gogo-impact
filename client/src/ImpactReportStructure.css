@@ -1605,9 +1605,8 @@ section:hover h2::after {
 .nav-item .section-icon svg {
   width: 16px;
   height: 16px;
-  stroke: rgba(255, 255, 255, 0.95);
-  fill: none;
-  stroke-width: 2px;
+  /* Use a lighter visual weight for MUI icons */
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .nav-section {
@@ -1657,6 +1656,86 @@ section:hover h2::after {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin: 24px 16px 16px;
+}
+
+.playlist-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 16px 8px;
+}
+
+.playlist-button {
+  margin: 0;
+  padding: 10px 18px;
+  border-radius: 999px;
+  position: relative;
+  overflow: hidden;
+  color: #ffffff;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(86, 204, 242, 0.45), transparent 55%),
+    radial-gradient(circle at 100% 0%, rgba(123, 97, 255, 0.6), transparent 55%),
+    radial-gradient(circle at 0% 100%, rgba(251, 139, 36, 0.5), transparent 55%),
+    radial-gradient(circle at 100% 100%, rgba(58, 227, 116, 0.6), transparent 55%),
+    linear-gradient(135deg, #1b1b2f 0%, #111827 40%, #020617 100%);
+  background-size: 180% 180%;
+  animation: playlist-marble 18s ease infinite;
+}
+
+.playlist-button span {
+  position: relative;
+  z-index: 1;
+}
+
+.playlist-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+      circle at 20% 20%,
+      rgba(255, 255, 255, 0.12),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 80% 80%,
+      rgba(255, 255, 255, 0.06),
+      transparent 55%
+    );
+  mix-blend-mode: screen;
+  opacity: 0.6;
+}
+
+.playlist-button:hover {
+  transform: translateY(-1px) scale(1.01);
+  box-shadow:
+    0 16px 35px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.playlist-button:active {
+  transform: translateY(0) scale(0.99);
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+@keyframes playlist-marble {
+  0% {
+    background-position: 0% 50%, 100% 50%, 0% 100%, 100% 0%, 50% 50%;
+  }
+  50% {
+    background-position: 100% 50%, 0% 50%, 100% 0%, 0% 100%, 50% 100%;
+  }
+  100% {
+    background-position: 0% 50%, 100% 50%, 0% 100%, 100% 0%, 50% 50%;
+  }
 }
 
 .playlist-icon {

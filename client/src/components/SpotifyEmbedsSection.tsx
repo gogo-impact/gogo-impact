@@ -132,6 +132,20 @@ function SpotifyEmbedsSection({
     });
   }, [showMentorProfiles, showAllSongs]);
 
+  // Allow external triggers (e.g., from header playlist links) to open the modals.
+  useEffect(() => {
+    const handleMentor = () => setShowMentorProfiles(true);
+    const handleStudent = () => setShowAllSongs(true);
+
+    window.addEventListener('openMentorMusicModal', handleMentor);
+    window.addEventListener('openStudentMusicModal', handleStudent);
+
+    return () => {
+      window.removeEventListener('openMentorMusicModal', handleMentor);
+      window.removeEventListener('openStudentMusicModal', handleStudent);
+    };
+  }, [setShowMentorProfiles, setShowAllSongs]);
+
   // Spotify artist profile embeds (mentor profiles)
   const mentorArtistEmbeds: string[] = [
     'https://open.spotify.com/embed/artist/66CXWjxzNUsdJxJ2JdwvnR',

@@ -419,6 +419,7 @@ const TicketLeft = styled.div`
   display: grid;
   grid-template-rows: auto auto 1fr auto;
   gap: 8px;
+  text-align: left;
 `;
 
 const TicketRight = styled.div`

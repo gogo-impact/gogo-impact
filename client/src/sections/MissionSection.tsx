@@ -782,25 +782,9 @@ function MissionSection(
           ticketStripeGradient={mission?.ticketStripeGradient ?? null}
           ticketBorderColor={mission?.ticketBorderColor ?? null}
           ticketBackdropColor={mission?.ticketBackdropColor ?? null}
-          ticketShowBarcode={mission?.ticketShowBarcode ?? null}
-          backgroundLogoCfg={
-            mission?.backgroundLogo &&
-            mission.backgroundLogo.enabled !== false
-              ? {
-                  opacity:
-                    mission.backgroundLogo.opacity != null
-                      ? mission.backgroundLogo.opacity
-                      : undefined,
-                  rotationDeg:
-                    mission.backgroundLogo.rotationDeg != null
-                      ? mission.backgroundLogo.rotationDeg
-                      : undefined,
-                  scale:
-                    mission.backgroundLogo.scale != null
-                      ? mission.backgroundLogo.scale
-                      : undefined,
-                }
-              : null
+          ticketShowBarcode={
+            // Default to showing the barcode unless explicitly disabled
+            mission?.ticketShowBarcode === false ? false : true
           }
         />
 
@@ -809,28 +793,61 @@ function MissionSection(
         </AtGlanceLabel>
 
         <StatsContainer>
-          {computedStats.map((stat: any, idx) => (
-            <StatItem
-              key={`${stat.id}-${idx}`}
-              className={
-                animationsEnabled && inView ? 'slide-up' : undefined
+          {computedStats.map((stat: any, idx) => {
+            const action: string =
+              stat?.action ||
+              (stat?.id === 'disciplines' ? 'openDisciplinesModal' : 'none');
+
+            const isClickable =
+              action === 'openModal' ||
+              action === 'openDisciplinesModal' ||
+              action === 'openStudentMusicModal' ||
+              action === 'openMentorMusicModal' ||
+              action === 'scrollToMap';
+
+            const handleClick = () => {
+              if (!isClickable) return;
+              if (action === 'openModal' || action === 'openDisciplinesModal') {
+                setShowDisciplines(true);
+                return;
               }
-              style={{
-                animationDelay: animationsEnabled ? `${stat.delay}s` : undefined,
-                transitionDelay: animationsEnabled
-                  ? `${stat.delay}s`
-                  : undefined,
-                cursor:
-                  stat.id === 'disciplines' || stat.action === 'openModal'
-                    ? 'pointer'
+              if (action === 'openStudentMusicModal') {
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new Event('openStudentMusicModal'));
+                }
+                return;
+              }
+              if (action === 'openMentorMusicModal') {
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new Event('openMentorMusicModal'));
+                }
+                return;
+              }
+              if (action === 'scrollToMap') {
+                if (typeof document !== 'undefined') {
+                  const el = document.getElementById('locations');
+                  if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }
+              }
+            };
+
+            return (
+              <StatItem
+                key={`${stat.id}-${idx}`}
+                className={
+                  animationsEnabled && inView ? 'slide-up' : undefined
+                }
+                style={{
+                  animationDelay: animationsEnabled ? `${stat.delay}s` : undefined,
+                  transitionDelay: animationsEnabled
+                    ? `${stat.delay}s`
                     : undefined,
-              }}
-              onClick={
-                stat.id === 'disciplines' || stat.action === 'openModal'
-                  ? () => setShowDisciplines(true)
-                  : undefined
-              }
-            >
+                  cursor: isClickable ? 'pointer' : undefined,
+                }}
+                onClick={isClickable ? handleClick : undefined}
+              >
               <StatContent>
                 <StatIcon style={{ color: stat.color }}>
                   {renderStatIcon(stat)}
@@ -859,8 +876,9 @@ function MissionSection(
                   ))}
                 </EqualizerBars>
               )}
-            </StatItem>
-          ))}
+              </StatItem>
+            );
+          })}
         </StatsContainer>
       </Content>
 

@@ -513,16 +513,25 @@ function FinancialAnalysisSection(): JSX.Element {
   const onMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
     const svg = chartRef.current;
     if (!svg) return;
-    const rect = svg.getBoundingClientRect();
+
+    // Use the SVG's current transform matrix so this stays correct
+    // even if the SVG is scaled, animated, or transformed by CSS.
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return;
+
+    const svgPoint = pt.matrixTransform(ctm.inverse());
+
     const padL = 60;
     const padR = 20;
-    // Compute inner plot pixel bounds within the rendered SVG
-    const xStartPx = rect.left + (padL / width) * rect.width;
-    const xEndPx = rect.left + ((width - padR) / width) * rect.width;
-    const innerPx = xEndPx - xStartPx;
-    const mouseOffsetPx = e.clientX - xStartPx;
-    const clamped = Math.max(0, Math.min(innerPx, mouseOffsetPx));
-    const idx = Math.round((clamped / innerPx) * (labels.length - 1));
+    const innerW = width - padL - padR;
+
+    const clampedX = Math.max(padL, Math.min(width - padR, svgPoint.x));
+    const t = (clampedX - padL) / innerW;
+    const idx = Math.round(t * (labels.length - 1));
     setHoverIdx(idx);
   };
 
@@ -720,13 +729,14 @@ function FinancialAnalysisSection(): JSX.Element {
                     const rectContainer = container.getBoundingClientRect();
                     const padL = 60;
                     const padR = 20;
-                    const xStartPx =
-                      rectSVG.left + (padL / width) * rectSVG.width;
-                    const xEndPx =
-                      rectSVG.left + ((width - padR) / width) * rectSVG.width;
-                    const innerPx = xEndPx - xStartPx;
-                    const stepPx = innerPx / (labels.length - 1);
-                    const xPx = xStartPx + hoverIdx * stepPx;
+                    const innerW = width - padL - padR;
+                    const stepX = innerW / (labels.length - 1);
+                    // X position of the guide line in SVG viewBox coordinates
+                    const xViewBox = padL + hoverIdx * stepX;
+                    // Convert that SVG x-coordinate into screen pixels, then
+                    // into a left-offset within the chart card container.
+                    const xPx =
+                      rectSVG.left + (xViewBox / width) * rectSVG.width;
                     const leftPx = xPx - rectContainer.left;
                     return `${leftPx}px`;
                   })(),

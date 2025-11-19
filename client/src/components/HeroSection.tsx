@@ -791,6 +791,7 @@ const VisuallyHidden = styled.span`
 `;
 function HeroSection(props: { previewMode?: boolean; heroOverride?: Partial<HeroContent> } = {}): JSX.Element {
   const { previewMode = false, heroOverride } = props;
+  // In preview mode, keep the static visuals (including waveform) but skip heavy JS/audio animation
   const disableAnimations = previewMode;
   const [hero, setHero] = useState<HeroContent | null>(null);
   const padConfigMap = useMemo(
@@ -1699,6 +1700,7 @@ function HeroSection(props: { previewMode?: boolean; heroOverride?: Partial<Hero
   const background = hero?.backgroundColor;
   const backgroundImage = hero?.backgroundImage;
   const backgroundImageGrayscale = (hero as any)?.backgroundImageGrayscale === true;
+  const ariaLabel = (hero as any)?.ariaLabel as string | undefined;
   const titleColor = (hero as any)?.titleColor as string | undefined;
   const subtitleColor = (hero as any)?.subtitleColor as string | undefined;
   const yearColor = (hero as any)?.yearColor as string | undefined;
@@ -1728,7 +1730,10 @@ function HeroSection(props: { previewMode?: boolean; heroOverride?: Partial<Hero
   })();
 
   return (
-    <HeroContainer $background={composedBackground}>
+    <HeroContainer
+      $background={composedBackground}
+      aria-label={ariaLabel && ariaLabel.trim().length > 0 ? ariaLabel : undefined}
+    >
       {/* If grayscale requested, render the image as a separate layer with filter */}
       {backgroundImage && backgroundImageGrayscale && (
         <>
@@ -1737,7 +1742,7 @@ function HeroSection(props: { previewMode?: boolean; heroOverride?: Partial<Hero
         </>
       )}
       {/* Music waveform visualization */}
-      <WaveBackground ref={waveBackgroundRef} style={disableAnimations ? { opacity: 0 } : undefined}>
+      <WaveBackground ref={waveBackgroundRef}>
         {Array.from({ length: numWaveBars }).map((_, i) => {
           const uniqueId = `wave-bar-${i}`;
           const position = i / numWaveBars;

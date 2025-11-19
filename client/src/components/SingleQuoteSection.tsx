@@ -1,5 +1,6 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
+import MusicNoteOutlinedIcon from '@mui/icons-material/MusicNoteOutlined';
 import COLORS from '../../assets/colors';
 import bgPhoto from '../../assets/missionPhotos/Photo1.jpg';
 
@@ -173,15 +174,11 @@ const Attribution = styled.div`
 `;
 
 const Note = () => (
-  <svg
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill={COLORS.gogo_teal}
+  <MusicNoteOutlinedIcon
+    fontSize="small"
+    sx={{ color: COLORS.gogo_teal }}
     aria-hidden="true"
-  >
-    <path d="M9 3v12.26A4 4 0 108 19V7h10V3H9z" />
-  </svg>
+  />
 );
 
 function SingleQuoteSection(): JSX.Element {
