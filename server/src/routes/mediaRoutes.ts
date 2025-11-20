@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import { getDatabase } from '../config/database.js';
+import { requireAuth } from '../middleware/authMiddleware.js';
 
 const router = Router();
 
-router.post('/media', async (req, res) => {
+router.post('/media', requireAuth, async (req, res) => {
   try {
     const {
       key,

@@ -105,9 +105,9 @@ function withAlpha(color: string, alpha: number): string {
     const expand = (s: string) =>
       s.length === 3
         ? s
-            .split("")
-            .map((c) => c + c)
-            .join("")
+          .split("")
+          .map((c) => c + c)
+          .join("")
         : s;
     const full = expand(raw);
     const r = parseInt(full.slice(0, 2), 16);
@@ -777,7 +777,7 @@ function ImpactReportCustomizationPage() {
       window.scrollTo(0, 0);
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
-    } catch {}
+    } catch { }
     const prevHtmlOverflow = document.documentElement.style.overflow;
     const prevBodyOverflow = document.body.style.overflow;
     document.documentElement.style.overflow = "hidden";
@@ -1164,22 +1164,22 @@ function ImpactReportCustomizationPage() {
         ? impactReportForm.mission.statementTextColor || "#b8ffe9"
         : missionColorPickerField === "statementMetaColor"
           ? impactReportForm.mission.statementMetaColor ||
-            "rgba(255,255,255,0.75)"
+          "rgba(255,255,255,0.75)"
           : missionColorPickerField === "serialColor"
             ? impactReportForm.mission.serialColor || "rgba(255,255,255,0.55)"
             : missionColorPickerField === "titleColor"
               ? impactReportForm.mission.titleColor || "#ffffff"
               : missionColorPickerField === "badgeTextColor"
                 ? impactReportForm.mission.badgeTextColor ||
-                  "rgba(255,255,255,0.8)"
+                "rgba(255,255,255,0.8)"
                 : missionColorPickerField === "badgeBgColor"
                   ? impactReportForm.mission.badgeBgColor || "rgba(0,0,0,0.4)"
                   : missionColorPickerField === "badgeBorderColor"
                     ? impactReportForm.mission.badgeBorderColor ||
-                      "rgba(255,255,255,0.1)"
+                    "rgba(255,255,255,0.1)"
                     : missionColorPickerField === "statsTitleColor"
                       ? impactReportForm.mission.statsTitleColor ||
-                        "rgba(255,255,255,0.7)"
+                      "rgba(255,255,255,0.7)"
                       : missionColorPickerField === "color1"
                         ? impactReportForm.mission.color1
                         : missionColorPickerField === "color2"
@@ -1189,13 +1189,13 @@ function ImpactReportCustomizationPage() {
                             : missionColorPickerField === "titleGradientColor2"
                               ? impactReportForm.mission.titleGradientColor2
                               : missionColorPickerField ===
-                                  "titleUnderlineGradientColor1"
+                                "titleUnderlineGradientColor1"
                                 ? impactReportForm.mission
-                                    .titleUnderlineGradientColor1
+                                  .titleUnderlineGradientColor1
                                 : missionColorPickerField ===
-                                    "titleUnderlineGradientColor2"
+                                  "titleUnderlineGradientColor2"
                                   ? impactReportForm.mission
-                                      .titleUnderlineGradientColor2
+                                    .titleUnderlineGradientColor2
                                   : "#000000"
     : "#000000";
 
@@ -1522,22 +1522,22 @@ function ImpactReportCustomizationPage() {
           ...prev,
           hero: {
             ...prev.hero,
-            title: hero.title ?? prev.hero.title,
-            subtitle: hero.subtitle ?? prev.hero.subtitle,
-            year: hero.year ?? prev.hero.year,
-            tagline: hero.tagline ?? prev.hero.tagline,
+            title: hero.title !== undefined ? hero.title : prev.hero.title,
+            subtitle: hero.subtitle !== undefined ? hero.subtitle : prev.hero.subtitle,
+            year: hero.year !== undefined ? hero.year : prev.hero.year,
+            tagline: hero.tagline !== undefined ? hero.tagline : prev.hero.tagline,
             ariaLabel:
               typeof hero.ariaLabel === "string"
                 ? hero.ariaLabel
                 : prev.hero.ariaLabel,
             textAlign:
               hero.textAlign &&
-              (["left", "center", "right"] as string[]).includes(hero.textAlign)
+                (["left", "center", "right"] as string[]).includes(hero.textAlign)
                 ? (hero.textAlign as MissionTextAlign)
                 : prev.hero.textAlign,
             layoutVariant:
               hero.layoutVariant === "ticket" ||
-              hero.layoutVariant === "default"
+                hero.layoutVariant === "default"
                 ? hero.layoutVariant
                 : prev.hero.layoutVariant,
             titleColor: (hero as any)?.titleColor ?? prev.hero.titleColor,
@@ -1623,39 +1623,39 @@ function ImpactReportCustomizationPage() {
         (mission as any)?.stats,
       )
         ? ((mission as any)?.stats as any[]).map((s, idx) => {
-            const rawAction = (s?.action as string | undefined) || "none";
-            let action: MissionStatAction = "none";
-            if (
-              rawAction === "openDisciplinesModal" ||
-              rawAction === "openStudentMusicModal" ||
-              rawAction === "openMentorMusicModal" ||
-              rawAction === "scrollToMap"
-            ) {
-              action = rawAction as MissionStatAction;
-            } else if (rawAction === "openModal") {
-              // Legacy: treat openModal as disciplines modal when modalId is disciplines
-              action =
-                s?.modalId === "disciplines"
-                  ? ("openDisciplinesModal" as MissionStatAction)
-                  : "none";
-            }
-            return {
-              id: String(s?.id ?? idx),
-              number: s?.number ?? "",
-              label: s?.label ?? "",
-              color: s?.color ?? undefined,
-              action,
-              modalId: s?.modalId ?? null,
-              iconKey:
-                typeof s?.iconKey === "string" && s.iconKey.length > 0
-                  ? s.iconKey
-                  : null,
-              numberSource:
-                s?.numberSource === "modalItemsLength"
-                  ? "modalItemsLength"
-                  : "explicit",
-            };
-          })
+          const rawAction = (s?.action as string | undefined) || "none";
+          let action: MissionStatAction = "none";
+          if (
+            rawAction === "openDisciplinesModal" ||
+            rawAction === "openStudentMusicModal" ||
+            rawAction === "openMentorMusicModal" ||
+            rawAction === "scrollToMap"
+          ) {
+            action = rawAction as MissionStatAction;
+          } else if (rawAction === "openModal") {
+            // Legacy: treat openModal as disciplines modal when modalId is disciplines
+            action =
+              s?.modalId === "disciplines"
+                ? ("openDisciplinesModal" as MissionStatAction)
+                : "none";
+          }
+          return {
+            id: String(s?.id ?? idx),
+            number: s?.number ?? "",
+            label: s?.label ?? "",
+            color: s?.color ?? undefined,
+            action,
+            modalId: s?.modalId ?? null,
+            iconKey:
+              typeof s?.iconKey === "string" && s.iconKey.length > 0
+                ? s.iconKey
+                : null,
+            numberSource:
+              s?.numberSource === "modalItemsLength"
+                ? "modalItemsLength"
+                : "explicit",
+          };
+        })
         : null;
       const statsEqualizerConfig = (() => {
         const eq = (mission as any)?.statsEqualizer ?? {};
@@ -1742,12 +1742,12 @@ function ImpactReportCustomizationPage() {
             badgeIcon:
               typeof (mission as any)?.badgeIcon?.value === "string"
                 ? {
-                    type:
-                      (mission as any)?.badgeIcon?.type === "iconKey"
-                        ? "iconKey"
-                        : "glyph",
-                    value: (mission as any)?.badgeIcon?.value,
-                  }
+                  type:
+                    (mission as any)?.badgeIcon?.type === "iconKey"
+                      ? "iconKey"
+                      : "glyph",
+                  value: (mission as any)?.badgeIcon?.value,
+                }
                 : prev.mission.badgeIcon,
             badgeTextColor:
               (mission as any)?.badgeTextColor ??
@@ -1820,7 +1820,7 @@ function ImpactReportCustomizationPage() {
                   : prevBackgroundLogo?.opacity,
               rotationDeg:
                 typeof (mission as any)?.backgroundLogo?.rotationDeg ===
-                "number"
+                  "number"
                   ? (mission as any)?.backgroundLogo?.rotationDeg
                   : prevBackgroundLogo?.rotationDeg,
               scale:
@@ -1850,8 +1850,8 @@ function ImpactReportCustomizationPage() {
       ];
       const incoming =
         defs?.colorSwatch &&
-        Array.isArray(defs.colorSwatch) &&
-        defs.colorSwatch.length > 0
+          Array.isArray(defs.colorSwatch) &&
+          defs.colorSwatch.length > 0
           ? defs.colorSwatch
           : brand;
       const normalized = Array.from({ length: DEFAULT_SWATCH_SIZE }).map(
@@ -1976,7 +1976,10 @@ function ImpactReportCustomizationPage() {
         secondaryCtaColor: impactReportForm.hero.secondaryCtaColor || undefined,
       };
       console.log("[admin][hero] save payload", payload);
-      await saveHeroContent(payload);
+      const heroSaveResult = await saveHeroContent(payload);
+      if (!heroSaveResult) {
+        throw new Error("Failed to save hero content: server returned no data");
+      }
       // Save Defaults (swatch)
       if (defaultSwatch && defaultSwatch.length > 0) {
         await saveDefaults({ colorSwatch: defaultSwatch });
@@ -2075,7 +2078,10 @@ function ImpactReportCustomizationPage() {
         ],
       };
       console.log("[admin][mission] save payload", missionPayload);
-      await saveMissionContent(missionPayload);
+      const missionSaveResult = await saveMissionContent(missionPayload);
+      if (!missionSaveResult) {
+        throw new Error("Failed to save mission content: server returned no data");
+      }
       enqueueSnackbar("Impact report saved", { variant: "success" });
       setIsDirty(false);
       setLastSavedAt(new Date());
@@ -2084,11 +2090,14 @@ function ImpactReportCustomizationPage() {
       );
     } catch (error) {
       console.error("Error saving impact report:", error);
+      const errorMessage = error instanceof Error
+        ? error.message
+        : "An error occurred while saving. Please try again.";
       setErrors((prev) => ({
         ...prev,
-        general: "An error occurred while saving. Please try again.",
+        general: errorMessage,
       }));
-      enqueueSnackbar("Failed to save impact report", { variant: "error" });
+      enqueueSnackbar(errorMessage, { variant: "error", autoHideDuration: 6000 });
     } finally {
       setIsSubmitting(false);
     }
@@ -2122,8 +2131,8 @@ function ImpactReportCustomizationPage() {
       ];
       const incoming =
         defs?.colorSwatch &&
-        Array.isArray(defs.colorSwatch) &&
-        defs.colorSwatch.length > 0
+          Array.isArray(defs.colorSwatch) &&
+          defs.colorSwatch.length > 0
           ? defs.colorSwatch
           : brand;
       const normalized = Array.from({ length: DEFAULT_SWATCH_SIZE }).map(
@@ -2438,7 +2447,7 @@ function ImpactReportCustomizationPage() {
                               const text = getReadableTextColor(c);
                               const accent =
                                 (defaultSwatch ?? [])[
-                                  (i + 1) % (defaultSwatch?.length || 1) || 0
+                                (i + 1) % (defaultSwatch?.length || 1) || 0
                                 ] || c;
                               const subtle = withAlphaHex(
                                 text === "#ffffff" ? "#000000" : "#ffffff",
@@ -3360,9 +3369,9 @@ function ImpactReportCustomizationPage() {
                                   color: COLORS.gogo_blue,
                                 },
                                 "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                  {
-                                    backgroundColor: COLORS.gogo_blue,
-                                  },
+                                {
+                                  backgroundColor: COLORS.gogo_blue,
+                                },
                               }}
                             />
                           }
@@ -3446,9 +3455,9 @@ function ImpactReportCustomizationPage() {
                               color: COLORS.gogo_blue,
                             },
                             "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                              {
-                                backgroundColor: COLORS.gogo_blue,
-                              },
+                            {
+                              backgroundColor: COLORS.gogo_blue,
+                            },
                           }}
                         />
                       }
@@ -3533,9 +3542,9 @@ function ImpactReportCustomizationPage() {
                                 color: COLORS.gogo_blue,
                               },
                               "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                {
-                                  backgroundColor: COLORS.gogo_blue,
-                                },
+                              {
+                                backgroundColor: COLORS.gogo_blue,
+                              },
                             }}
                           />
                         }
@@ -4162,12 +4171,12 @@ function ImpactReportCustomizationPage() {
                                 (s) =>
                                   s.id === "disciplines"
                                     ? {
-                                        ...s,
-                                        action: enabled
-                                          ? ("openDisciplinesModal" as MissionStatAction)
-                                          : ("none" as MissionStatAction),
-                                        modalId: enabled ? "disciplines" : null,
-                                      }
+                                      ...s,
+                                      action: enabled
+                                        ? ("openDisciplinesModal" as MissionStatAction)
+                                        : ("none" as MissionStatAction),
+                                      modalId: enabled ? "disciplines" : null,
+                                    }
                                     : s,
                               );
                               handleSectionChange("mission", "stats", next);
@@ -4192,11 +4201,11 @@ function ImpactReportCustomizationPage() {
                                 (s) =>
                                   s.id === "students"
                                     ? {
-                                        ...s,
-                                        action: enabled
-                                          ? ("openStudentMusicModal" as MissionStatAction)
-                                          : ("none" as MissionStatAction),
-                                      }
+                                      ...s,
+                                      action: enabled
+                                        ? ("openStudentMusicModal" as MissionStatAction)
+                                        : ("none" as MissionStatAction),
+                                    }
                                     : s,
                               );
                               handleSectionChange("mission", "stats", next);
@@ -4221,11 +4230,11 @@ function ImpactReportCustomizationPage() {
                                 (s) =>
                                   s.id === "mentors"
                                     ? {
-                                        ...s,
-                                        action: enabled
-                                          ? ("openMentorMusicModal" as MissionStatAction)
-                                          : ("none" as MissionStatAction),
-                                      }
+                                      ...s,
+                                      action: enabled
+                                        ? ("openMentorMusicModal" as MissionStatAction)
+                                        : ("none" as MissionStatAction),
+                                    }
                                     : s,
                               );
                               handleSectionChange("mission", "stats", next);
@@ -4249,11 +4258,11 @@ function ImpactReportCustomizationPage() {
                                 (s) =>
                                   s.id === "sites"
                                     ? {
-                                        ...s,
-                                        action: enabled
-                                          ? ("scrollToMap" as MissionStatAction)
-                                          : ("none" as MissionStatAction),
-                                      }
+                                      ...s,
+                                      action: enabled
+                                        ? ("scrollToMap" as MissionStatAction)
+                                        : ("none" as MissionStatAction),
+                                    }
                                     : s,
                               );
                               handleSectionChange("mission", "stats", next);

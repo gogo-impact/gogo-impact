@@ -1102,68 +1102,68 @@ function HeroSection(props: { previewMode?: boolean; heroOverride?: Partial<Hero
   );
 
   const triggerSynthVoice = useCallback((kind: 'melody' | 'bass', midi: number) => {
-      const ctx = audioContextRef.current;
-      if (!ctx) return;
-      if (ctx.state === 'suspended') {
-        ctx.resume().catch((err) => {
-          console.warn('[hero] synth resume failed', err);
-        });
+    const ctx = audioContextRef.current;
+    if (!ctx) return;
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch((err) => {
+        console.warn('[hero] synth resume failed', err);
+      });
+    }
+    const frequency = midiToFrequency(midi);
+    const now = ctx.currentTime;
+    const duration = kind === 'melody' ? 0.25 : 0.6;
+    const peak = kind === 'melody' ? 0.18 : 0.32;
+
+    const mainOsc = ctx.createOscillator();
+    mainOsc.type = kind === 'melody' ? 'triangle' : 'sine';
+    mainOsc.frequency.value = frequency;
+
+    let subOsc: OscillatorNode | null = null;
+    let subGain: GainNode | null = null;
+    if (kind === 'bass') {
+      subOsc = ctx.createOscillator();
+      subOsc.type = 'sine';
+      subOsc.frequency.value = frequency / 2;
+      subGain = ctx.createGain();
+      subGain.gain.value = 0.45;
+    }
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(peak, now + 0.04);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = kind === 'melody' ? 'lowpass' : 'lowshelf';
+    if (kind === 'melody') {
+      filter.frequency.setValueAtTime(1800, now);
+    } else {
+      filter.frequency?.setValueAtTime(150, now);
+      filter.gain?.setValueAtTime(5, now);
+      filter.Q?.setValueAtTime(0.7, now);
+    }
+
+    mainOsc.connect(gain);
+    if (subOsc && subGain) {
+      subOsc.connect(subGain).connect(gain);
+    }
+    gain.connect(filter).connect(ctx.destination);
+
+    mainOsc.start(now);
+    mainOsc.stop(now + duration + 0.1);
+    if (subOsc) {
+      subOsc.start(now);
+      subOsc.stop(now + duration + 0.1);
+    }
+
+    mainOsc.onended = () => {
+      gain.disconnect();
+      filter.disconnect();
+      if (subGain) {
+        subGain.disconnect();
       }
-      const frequency = midiToFrequency(midi);
-      const now = ctx.currentTime;
-      const duration = kind === 'melody' ? 0.25 : 0.6;
-      const peak = kind === 'melody' ? 0.18 : 0.32;
-
-      const mainOsc = ctx.createOscillator();
-      mainOsc.type = kind === 'melody' ? 'triangle' : 'sine';
-      mainOsc.frequency.value = frequency;
-
-      let subOsc: OscillatorNode | null = null;
-      let subGain: GainNode | null = null;
-      if (kind === 'bass') {
-        subOsc = ctx.createOscillator();
-        subOsc.type = 'sine';
-        subOsc.frequency.value = frequency / 2;
-        subGain = ctx.createGain();
-        subGain.gain.value = 0.45;
-      }
-
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0, now);
-      gain.gain.linearRampToValueAtTime(peak, now + 0.04);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
-
-      const filter = ctx.createBiquadFilter();
-      filter.type = kind === 'melody' ? 'lowpass' : 'lowshelf';
-      if (kind === 'melody') {
-        filter.frequency.setValueAtTime(1800, now);
-      } else {
-        filter.frequency?.setValueAtTime(150, now);
-        filter.gain?.setValueAtTime(5, now);
-        filter.Q?.setValueAtTime(0.7, now);
-      }
-
-      mainOsc.connect(gain);
-      if (subOsc && subGain) {
-        subOsc.connect(subGain).connect(gain);
-      }
-      gain.connect(filter).connect(ctx.destination);
-
-      mainOsc.start(now);
-      mainOsc.stop(now + duration + 0.1);
-      if (subOsc) {
-        subOsc.start(now);
-        subOsc.stop(now + duration + 0.1);
-      }
-
-      mainOsc.onended = () => {
-        gain.disconnect();
-        filter.disconnect();
-        if (subGain) {
-          subGain.disconnect();
-        }
-      };
-    },
+    };
+  },
     [],
   );
 
@@ -1184,8 +1184,7 @@ function HeroSection(props: { previewMode?: boolean; heroOverride?: Partial<Hero
         const track = padConfigMap[padId];
         if (track) {
           setSrMessage(
-            `${track.label} step ${stepIndex + 1} ${
-              nextRow[stepIndex] ? 'enabled' : 'muted'
+            `${track.label} step ${stepIndex + 1} ${nextRow[stepIndex] ? 'enabled' : 'muted'
             }`,
           );
         }
@@ -1365,10 +1364,10 @@ function HeroSection(props: { previewMode?: boolean; heroOverride?: Partial<Hero
           elem.style.backgroundColor =
             burstColor && burstInfluence > 0
               ? mixHslColors(
-                  baseColor,
-                  burstColor,
-                  Math.min(1, burstInfluence * 1.3),
-                )
+                baseColor,
+                burstColor,
+                Math.min(1, burstInfluence * 1.3),
+              )
               : baseColor;
         },
       );
@@ -1451,7 +1450,7 @@ function HeroSection(props: { previewMode?: boolean; heroOverride?: Partial<Hero
         easing: 'easeOutExpo',
       });
     }
-    
+
     if (!disableAnimations && underlineRef.current) {
       animate(underlineRef.current, {
         scaleX: [0, 1],
@@ -1461,7 +1460,7 @@ function HeroSection(props: { previewMode?: boolean; heroOverride?: Partial<Hero
         delay: 200,
       });
     }
-    
+
     if (!disableAnimations && subtitleRef.current) {
       animate(subtitleRef.current, {
         opacity: [0, 1],
@@ -1471,7 +1470,7 @@ function HeroSection(props: { previewMode?: boolean; heroOverride?: Partial<Hero
         delay: 400,
       });
     }
-    
+
     if (!disableAnimations && yearRef.current) {
       animate(yearRef.current, {
         opacity: [0, 1],
@@ -1481,7 +1480,7 @@ function HeroSection(props: { previewMode?: boolean; heroOverride?: Partial<Hero
         delay: 600,
       });
     }
-    
+
     if (!disableAnimations && taglineRef.current) {
       animate(taglineRef.current, {
         opacity: [0, 1],
@@ -1615,16 +1614,69 @@ function HeroSection(props: { previewMode?: boolean; heroOverride?: Partial<Hero
 
   // Ensure entrance animations run once when hero content becomes available
   useEffect(() => {
-    if (!hero || hasEntranceAnimatedRef.current || disableAnimations) return;
+    if (!hero) return;
 
-    if (titleRef.current) {
-      animate(titleRef.current, {
-        opacity: [0, 1],
-        translateY: [50, 0],
-        duration: 1000,
-        easing: 'easeOutExpo',
+    // If animations are disabled, ensure all elements are visible immediately
+    if (disableAnimations) {
+      if (titleRef.current) {
+        titleRef.current.style.opacity = '1';
+        titleRef.current.style.transform = 'none';
+      }
+      if (underlineRef.current) {
+        underlineRef.current.style.opacity = '1';
+        underlineRef.current.style.transform = 'scaleX(1)';
+      }
+      if (subtitleRef.current) {
+        subtitleRef.current.style.opacity = '1';
+        subtitleRef.current.style.transform = 'none';
+      }
+      if (yearRef.current) {
+        yearRef.current.style.opacity = '1';
+        yearRef.current.style.transform = 'none';
+      }
+      if (taglineRef.current) {
+        taglineRef.current.style.opacity = '1';
+        taglineRef.current.style.transform = 'none';
+      }
+      const buttons = [primaryButtonRef.current, secondaryButtonRef.current].filter(
+        (b): b is HTMLButtonElement => b !== null,
+      );
+      buttons.forEach((btn) => {
+        btn.style.opacity = '1';
+        btn.style.transform = 'none';
       });
+      if (waveBackgroundRef.current) {
+        waveBackgroundRef.current.style.opacity = '0.7';
+      }
+      return;
     }
+
+    if (hasEntranceAnimatedRef.current) return;
+
+    // Use a small timeout to ensure refs are available after render
+    let timeoutId: number | undefined;
+    let retryTimeoutId: number | undefined;
+
+    timeoutId = window.setTimeout(() => {
+      if (titleRef.current) {
+        animate(titleRef.current, {
+          opacity: [0, 1],
+          translateY: [50, 0],
+          duration: 1000,
+          easing: 'easeOutExpo',
+        });
+        hasEntranceAnimatedRef.current = true;
+      } else if (hero.title) {
+        // Fallback: if title exists but ref isn't ready, try again
+        retryTimeoutId = window.setTimeout(() => {
+          if (titleRef.current) {
+            titleRef.current.style.opacity = '1';
+            titleRef.current.style.transform = 'none';
+          }
+        }, 500);
+      }
+    }, 100);
+
     if (underlineRef.current) {
       animate(underlineRef.current, {
         scaleX: [0, 1],
@@ -1684,6 +1736,11 @@ function HeroSection(props: { previewMode?: boolean; heroOverride?: Partial<Hero
     }
 
     hasEntranceAnimatedRef.current = true;
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      if (retryTimeoutId) clearTimeout(retryTimeoutId);
+    };
   }, [hero, disableAnimations]);
 
   // Reduced number of wave bars for better performance
@@ -1767,11 +1824,12 @@ function HeroSection(props: { previewMode?: boolean; heroOverride?: Partial<Hero
       <ContentWrapper>
         <LeftContent>
           <HeroTextBlock>
-            {title && (
+            {title && title.trim() && (
               <MainTitle
                 ref={titleRef}
                 style={{
-                  ...(disableAnimations ? { opacity: 1, transform: 'none' } : {}),
+                  opacity: disableAnimations ? 1 : undefined,
+                  transform: disableAnimations ? 'none' : undefined,
                   ...(titleColor ? { color: titleColor } : {}),
                 }}
               >
@@ -1952,9 +2010,8 @@ function HeroSection(props: { previewMode?: boolean; heroOverride?: Partial<Hero
                                 $active={isActive}
                                 $current={isCurrent}
                                 aria-pressed={isActive}
-                                aria-label={`${pad.label} step ${
-                                  stepIdx + 1
-                                } ${ariaState}`}
+                                aria-label={`${pad.label} step ${stepIdx + 1
+                                  } ${ariaState}`}
                                 onClick={() =>
                                   handleStepToggle(pad.id, stepIdx)
                                 }

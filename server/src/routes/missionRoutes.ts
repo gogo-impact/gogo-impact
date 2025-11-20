@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { findMissionBySlug, upsertMissionBySlug } from "../services/missionService.js";
+import { requireAuth } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
@@ -25,7 +26,7 @@ router.get("/impact/mission", async (req, res, next) => {
   }
 });
 
-router.put("/impact/mission", async (req, res, next) => {
+router.put("/impact/mission", requireAuth, async (req, res, next) => {
   try {
     const slug = (req.query.slug as string) ?? "impact-report";
     const data = (req.body ?? {}) as Record<string, unknown>;

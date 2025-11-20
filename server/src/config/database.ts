@@ -43,6 +43,10 @@ export async function getDatabase(): Promise<Db> {
   return database;
 }
 
+export function getClient(): MongoClient | null {
+  return client;
+}
+
 export async function disconnectDatabase() {
   if (client) {
     await client.close();

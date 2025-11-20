@@ -2,6 +2,7 @@ import { Router } from 'express';
 import crypto from 'node:crypto';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { requireAuth } from '../middleware/authMiddleware.js';
 
 const router = Router();
 
@@ -24,7 +25,7 @@ interface SignUploadRequestBody {
   key?: string; // optional explicit object key to support versioned overwrites
 }
 
-router.post('/uploads/sign', async (req, res) => {
+router.post('/uploads/sign', requireAuth, async (req, res) => {
   try {
     const { contentType, extension, folder, key: providedKey }: SignUploadRequestBody = req.body ?? {};
     if (!contentType) {

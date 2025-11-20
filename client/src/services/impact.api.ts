@@ -245,6 +245,10 @@ export async function saveMissionContent(
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('[ImpactReport] Failed to save mission content', error);
+    // Re-throw network errors so they can be handled with better messages
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error(`Cannot connect to backend server at ${API_BASE_URL}. Please make sure the server is running.`);
+    }
     return null;
   }
 }
@@ -277,6 +281,10 @@ export async function saveHeroContent(
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('[ImpactReport] Failed to save hero content', error);
+    // Re-throw network errors so they can be handled with better messages
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error(`Cannot connect to backend server at ${API_BASE_URL}. Please make sure the server is running.`);
+    }
     return null;
   }
 }

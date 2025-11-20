@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { findDefaultsBySlug, upsertDefaultsBySlug } from "../services/defaultsService.js";
+import { requireAuth } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
@@ -23,7 +24,7 @@ router.get("/impact/defaults", async (req, res, next) => {
   }
 });
 
-router.put("/impact/defaults", async (req, res, next) => {
+router.put("/impact/defaults", requireAuth, async (req, res, next) => {
   try {
     const slug = (req.query.slug as string) ?? "impact-report";
     const data = (req.body ?? {}) as Record<string, unknown>;
