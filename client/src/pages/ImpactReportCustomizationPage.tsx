@@ -111,9 +111,9 @@ function withAlpha(color: string, alpha: number): string {
     const expand = (s: string) =>
       s.length === 3
         ? s
-          .split("")
-          .map((c) => c + c)
-          .join("")
+            .split("")
+            .map((c) => c + c)
+            .join("")
         : s;
     const full = expand(raw);
     const r = parseInt(full.slice(0, 2), 16);
@@ -705,6 +705,7 @@ interface MissionSection {
   stats: MissionStat[];
   modalTitle?: string;
   disciplinesItems: MissionDisciplineItem[];
+  backgroundLogo: MissionBackgroundLogo;
 }
 
 interface ImpactSection {
@@ -789,7 +790,7 @@ function ImpactReportCustomizationPage() {
       window.scrollTo(0, 0);
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
-    } catch { }
+    } catch {}
     const prevHtmlOverflow = document.documentElement.style.overflow;
     const prevBodyOverflow = document.body.style.overflow;
     document.documentElement.style.overflow = "hidden";
@@ -1270,7 +1271,6 @@ function ImpactReportCustomizationPage() {
                                 : missionColorPickerField ===
                                   "titleUnderlineGradientColor2"
                                   ? impactReportForm.mission
-<<<<<<< HEAD
                                       .titleUnderlineGradientColor2
                                   : missionColorPickerField ===
                                       "ticketStripeGradientColor1"
@@ -1281,10 +1281,6 @@ function ImpactReportCustomizationPage() {
                                       ? impactReportForm.mission
                                           .ticketStripeGradientColor2
                                       : "#000000"
-=======
-                                    .titleUnderlineGradientColor2
-                                  : "#000000"
->>>>>>> 81445d7a99398c5d4c4eeabbe1a677514c7ca2c7
     : "#000000";
 
   // Refs for file inputs
@@ -1745,7 +1741,6 @@ function ImpactReportCustomizationPage() {
         (mission as any)?.stats,
       )
         ? ((mission as any)?.stats as any[]).map((s, idx) => {
-<<<<<<< HEAD
             const rawAction = (s?.action as string | undefined) || "none";
             let action: MissionStatAction = "none";
             if (
@@ -1780,41 +1775,6 @@ function ImpactReportCustomizationPage() {
                   : "explicit",
             };
           })
-=======
-          const rawAction = (s?.action as string | undefined) || "none";
-          let action: MissionStatAction = "none";
-          if (
-            rawAction === "openDisciplinesModal" ||
-            rawAction === "openStudentMusicModal" ||
-            rawAction === "openMentorMusicModal" ||
-            rawAction === "scrollToMap"
-          ) {
-            action = rawAction as MissionStatAction;
-          } else if (rawAction === "openModal") {
-            // Legacy: treat openModal as disciplines modal when modalId is disciplines
-            action =
-              s?.modalId === "disciplines"
-                ? ("openDisciplinesModal" as MissionStatAction)
-                : "none";
-          }
-          return {
-            id: String(s?.id ?? idx),
-            number: s?.number ?? "",
-            label: s?.label ?? "",
-            color: s?.color ?? undefined,
-            action,
-            modalId: s?.modalId ?? null,
-            iconKey:
-              typeof s?.iconKey === "string" && s.iconKey.length > 0
-                ? s.iconKey
-                : null,
-            numberSource:
-              s?.numberSource === "modalItemsLength"
-                ? "modalItemsLength"
-                : "explicit",
-          };
-        })
->>>>>>> 81445d7a99398c5d4c4eeabbe1a677514c7ca2c7
         : null;
       const statsEqualizerConfig = (() => {
         const eq = (mission as any)?.statsEqualizer ?? {};
@@ -1983,8 +1943,6 @@ function ImpactReportCustomizationPage() {
             modalTitle: disciplinesModal?.title ?? prev.mission.modalTitle,
             disciplinesItems:
               sanitizedDisciplines ?? prev.mission.disciplinesItems,
-<<<<<<< HEAD
-=======
             backgroundLogo: {
               enabled:
                 (mission as any)?.backgroundLogo?.enabled === false
@@ -2007,7 +1965,6 @@ function ImpactReportCustomizationPage() {
                   ? (mission as any)?.backgroundLogo?.scale
                   : prevBackgroundLogo?.scale,
             },
->>>>>>> 81445d7a99398c5d4c4eeabbe1a677514c7ca2c7
           },
         };
         setSavedSnapshot(next);
@@ -2171,19 +2128,10 @@ function ImpactReportCustomizationPage() {
         secondaryCtaColor: impactReportForm.hero.secondaryCtaColor || undefined,
       };
       console.log("[admin][hero] save payload", payload);
-<<<<<<< HEAD
-      await saveHeroContent(payload);
-      // Save Population content
-      await savePopulationContent(impactReportForm.population, {
-        slug: "population",
-      });
-
-=======
       const heroSaveResult = await saveHeroContent(payload);
       if (!heroSaveResult) {
         throw new Error("Failed to save hero content: server returned no data");
       }
->>>>>>> 81445d7a99398c5d4c4eeabbe1a677514c7ca2c7
       // Save Defaults (swatch)
       if (defaultSwatch && defaultSwatch.length > 0) {
         await saveDefaults({ colorSwatch: defaultSwatch });
@@ -2287,19 +2235,10 @@ function ImpactReportCustomizationPage() {
         ],
       };
       console.log("[admin][mission] save payload", missionPayload);
-<<<<<<< HEAD
-      await saveMissionContent(missionPayload);
-
-      // Save Population content
-      const populationPayload = { ...impactReportForm.population };
-      await savePopulationContent(populationPayload);
-
-=======
       const missionSaveResult = await saveMissionContent(missionPayload);
       if (!missionSaveResult) {
         throw new Error("Failed to save mission content: server returned no data");
       }
->>>>>>> 81445d7a99398c5d4c4eeabbe1a677514c7ca2c7
       enqueueSnackbar("Impact report saved", { variant: "success" });
       setIsDirty(false);
       setLastSavedAt(new Date());
@@ -4468,7 +4407,6 @@ function ImpactReportCustomizationPage() {
                                 label="Interactive (Music Modal)"
                               />
                             )}
-<<<<<<< HEAD
                             {isMentors && (
                               <FormControlLabel
                                 control={
@@ -4567,237 +4505,6 @@ function ImpactReportCustomizationPage() {
                           >
                             <CardContent>
                               <Box
-=======
-                            onChange={(e) => {
-                              const enabled = e.target.checked;
-                              const next = impactReportForm.mission.stats.map(
-                                (s) =>
-                                  s.id === "disciplines"
-                                    ? {
-                                      ...s,
-                                      action: enabled
-                                        ? ("openDisciplinesModal" as MissionStatAction)
-                                        : ("none" as MissionStatAction),
-                                      modalId: enabled ? "disciplines" : null,
-                                    }
-                                    : s,
-                              );
-                              handleSectionChange("mission", "stats", next);
-                            }}
-                          />
-                        }
-                        label='"Disciplines" stat opens disciplines modal'
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={impactReportForm.mission.stats.some(
-                              (s) =>
-                                s.id === "students" &&
-                                s.action === "openStudentMusicModal",
-                            )}
-                            onChange={(e) => {
-                              const enabled = e.target.checked;
-                              const next = impactReportForm.mission.stats.map(
-                                (s) =>
-                                  s.id === "students"
-                                    ? {
-                                      ...s,
-                                      action: enabled
-                                        ? ("openStudentMusicModal" as MissionStatAction)
-                                        : ("none" as MissionStatAction),
-                                    }
-                                    : s,
-                              );
-                              handleSectionChange("mission", "stats", next);
-                            }}
-                          />
-                        }
-                        label='"Students" stat opens Student Music modal'
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={impactReportForm.mission.stats.some(
-                              (s) =>
-                                s.id === "mentors" &&
-                                s.action === "openMentorMusicModal",
-                            )}
-                            onChange={(e) => {
-                              const enabled = e.target.checked;
-                              const next = impactReportForm.mission.stats.map(
-                                (s) =>
-                                  s.id === "mentors"
-                                    ? {
-                                      ...s,
-                                      action: enabled
-                                        ? ("openMentorMusicModal" as MissionStatAction)
-                                        : ("none" as MissionStatAction),
-                                    }
-                                    : s,
-                              );
-                              handleSectionChange("mission", "stats", next);
-                            }}
-                          />
-                        }
-                        label='"Paid Mentors" stat opens Mentor Music modal'
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={impactReportForm.mission.stats.some(
-                              (s) =>
-                                s.id === "sites" && s.action === "scrollToMap",
-                            )}
-                            onChange={(e) => {
-                              const enabled = e.target.checked;
-                              const next = impactReportForm.mission.stats.map(
-                                (s) =>
-                                  s.id === "sites"
-                                    ? {
-                                      ...s,
-                                      action: enabled
-                                        ? ("scrollToMap" as MissionStatAction)
-                                        : ("none" as MissionStatAction),
-                                    }
-                                    : s,
-                              );
-                              handleSectionChange("mission", "stats", next);
-                            }}
-                          />
-                        }
-                        label='"School & Community Sites" stat skips ahead to map'
-                      />
-                    </Grid>
-                    {impactReportForm.mission.stats.map((s, idx) => (
-                      <Grid item xs={12} key={`mission-stat-${s.id}`}>
-                        <Card
-                          variant="outlined"
-                          sx={{ bgcolor: "transparent" }}
-                        >
-                          <CardContent>
-                            <Grid container spacing={2}>
-                              <Grid item xs={12} sm={4}>
-                                <CustomTextField
-                                  label="Label"
-                                  value={s.label}
-                                  onChange={(e) => {
-                                    const next = [
-                                      ...impactReportForm.mission.stats,
-                                    ];
-                                    next[idx] = { ...s, label: e.target.value };
-                                    handleSectionChange(
-                                      "mission",
-                                      "stats",
-                                      next,
-                                    );
-                                  }}
-                                  fullWidth
-                                />
-                              </Grid>
-                              <Grid item xs={12} sm={4}>
-                                <CustomTextField
-                                  label="Number"
-                                  value={String(s.number ?? "")}
-                                  onChange={(e) => {
-                                    const next = [
-                                      ...impactReportForm.mission.stats,
-                                    ];
-                                    next[idx] = {
-                                      ...s,
-                                      number: e.target.value,
-                                    };
-                                    handleSectionChange(
-                                      "mission",
-                                      "stats",
-                                      next,
-                                    );
-                                  }}
-                                  fullWidth
-                                />
-                              </Grid>
-                              <Grid item xs={12} sm={4}>
-                                <CustomTextField
-                                  label="Color"
-                                  value={s.color || ""}
-                                  onChange={(e) => {
-                                    const next = [
-                                      ...impactReportForm.mission.stats,
-                                    ];
-                                    next[idx] = { ...s, color: e.target.value };
-                                    handleSectionChange(
-                                      "mission",
-                                      "stats",
-                                      next,
-                                    );
-                                  }}
-                                  placeholder="#22C55E"
-                                  fullWidth
-                                />
-                              </Grid>
-                              <Grid item xs={12} sm={6}>
-                                <CustomTextField
-                                  select
-                                  label="Number Source"
-                                  value={s.numberSource || "explicit"}
-                                  onChange={(e) => {
-                                    const next = [
-                                      ...impactReportForm.mission.stats,
-                                    ];
-                                    next[idx] = {
-                                      ...s,
-                                      numberSource: e.target
-                                        .value as MissionStatNumberSource,
-                                    };
-                                    handleSectionChange(
-                                      "mission",
-                                      "stats",
-                                      next,
-                                    );
-                                  }}
-                                  fullWidth
-                                >
-                                  <MenuItem value="explicit">
-                                    Manual value
-                                  </MenuItem>
-                                  <MenuItem value="modalItemsLength">
-                                    Disciplines count
-                                  </MenuItem>
-                                </CustomTextField>
-                              </Grid>
-                              <Grid item xs={12} sm={6}>
-                                <IconSelector
-                                  label="Icon"
-                                  value={(s.iconKey as ImpactIconKey) || ""}
-                                  onChange={(iconKey) => {
-                                    const next = [
-                                      ...impactReportForm.mission.stats,
-                                    ];
-                                    next[idx] = {
-                                      ...s,
-                                      iconKey: iconKey || null,
-                                    };
-                                    handleSectionChange(
-                                      "mission",
-                                      "stats",
-                                      next,
-                                    );
-                                  }}
-                                  noneLabel="Default"
-                                />
-                              </Grid>
-                              <Grid item xs={12} sm={6} />
-                              <Grid
-                                item
-                                xs={12}
-                                sm={6}
->>>>>>> 81445d7a99398c5d4c4eeabbe1a677514c7ca2c7
                                 sx={{
                                   display: "flex",
                                   flexDirection: "column",
