@@ -129,6 +129,8 @@ export const Reveal: React.FC<PropsWithChildren<RevealProps>> = ({
                 ? Array.from(element.querySelectorAll(staggerSelector))
                 : Array.from(element.children);
               if (targets.length > 0) {
+                // Ensure container is visible when animating children
+                element.style.opacity = '1';
                 animate(targets as Element[], {
                   opacity: [0, 1],
                   translateY: [distance, 0],

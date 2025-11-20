@@ -128,98 +128,230 @@ const EqBar = styled.div<{ $h: number; $d: number; $c: string }>`
 
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-  margin-top: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
 `;
 
-const Card = styled.div`
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  padding: 1.6rem;
-  backdrop-filter: blur(8px);
-  transition: transform 0.3s ease, background 0.3s ease;
-  opacity: 0;
+const Pedal = styled.div<{ $accentColor: string }>`
+  background: #1a1a1a;
+  border-radius: 12px;
+  padding: 0 0 1.5rem 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 
+    0 20px 40px -10px rgba(0,0,0,0.6),
+    0 0 0 1px rgba(255,255,255,0.05);
+  overflow: hidden;
   transform: translateY(20px);
+  opacity: 0;
+  transition: transform 0.3s ease;
 
   &:hover {
-    transform: translateY(-6px);
-    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-5px) !important;
+  }
+
+  // Metallic faceplate look
+  &:before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+`;
+
+const PedalTop = styled.div`
+  padding: 1.5rem;
+  background: rgba(0,0,0,0.2);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  position: relative;
+  z-index: 1;
+`;
+
+const Knob = styled.div`
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: conic-gradient(from 180deg, #2a2a2a 0%, #111 100%);
+  border: 2px solid #333;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+  position: relative;
+  
+  // Indicator
+  &:after {
+    content: '';
+    position: absolute;
+    top: 5px;
+    left: 50%;
+    width: 2px;
+    height: 40%;
+    background: #fff;
+    transform-origin: bottom center;
+    transform: translateX(-50%) rotate(${(props: { $rot?: number }) => props.$rot || 0}deg);
+  }
+`;
+
+const PedalBody = styled.div`
+  padding: 1.5rem;
+  text-align: center;
+  flex: 1;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const Led = styled.div<{ $color: string }>`
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: ${(p) => p.$color};
+  box-shadow: 0 0 10px ${(p) => p.$color}, 0 0 20px ${(p) => p.$color};
+  margin-bottom: 1rem;
+`;
+
+const Footswitch = styled.div`
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #d0d0d0, #888);
+  margin-top: auto;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 4px 0 #555, 0 8px 15px rgba(0,0,0,0.5);
+  position: relative;
+  cursor: pointer;
+  
+  &:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #555, 0 4px 8px rgba(0,0,0,0.5);
   }
 `;
 
 const CardTitle = styled.h3`
-  margin: 0 0 0.6rem;
-  font-size: 1.2rem;
+  margin: 0 0 0.8rem;
+  font-size: 1.4rem;
   color: white;
   font-weight: 800;
+  font-family: 'Century Gothic', sans-serif;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
 `;
 
 const CardText = styled.p`
-  margin: 0;
-  color: rgba(255, 255, 255, 0.8);
+  margin: 0 0 1.5rem;
+  color: rgba(255, 255, 255, 0.7);
   line-height: 1.6;
-  font-size: 0.98rem;
+  font-size: 0.95rem;
 `;
 
 const BadgeRow = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 0.6rem;
-  margin-top: 1rem;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
 `;
 
 const Badge = styled.span<{ $color?: string }>`
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0.8rem;
-  border-radius: 999px;
-  font-size: 0.85rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  background: ${(p) => p.$color ?? 'rgba(255, 255, 255, 0.08)'};
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: white;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: ${(p) => p.$color ? `${p.$color}22` : 'rgba(255, 255, 255, 0.06)'};
+  border: 1px solid ${(p) => p.$color ? `${p.$color}44` : 'rgba(255, 255, 255, 0.1)'};
+  color: ${(p) => p.$color ?? 'rgba(255, 255, 255, 0.9)'};
 `;
 
 const Timeline = styled.div`
-  margin-top: 2.5rem;
+  margin-top: 4rem;
   position: relative;
-  padding-left: 1.5rem;
+  padding: 2rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+`;
+
+const SignalPath = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  position: relative;
 
   &:before {
     content: '';
     position: absolute;
-    left: 0.5rem;
-    top: 0.2rem;
-    bottom: 0.2rem;
-    width: 3px;
-    background: linear-gradient(${COLORS.gogo_blue}, ${COLORS.gogo_purple});
+    top: 20px;
+    bottom: 20px;
+    left: 23px;
+    width: 4px;
+    background: #333;
     border-radius: 2px;
+    z-index: 0;
   }
 `;
 
 const TimelineItem = styled.div`
   position: relative;
-  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  z-index: 1;
 `;
 
-const Dot = styled.div`
-  position: absolute;
-  left: -1.03rem;
-  top: 0.35rem;
-  width: 12px;
-  height: 12px;
+const Jack = styled.div`
+  width: 50px;
+  height: 50px;
+  flex-shrink: 0;
   border-radius: 50%;
-  background: ${COLORS.gogo_blue};
-  box-shadow: 0 0 0 4px ${COLORS.gogo_blue}33;
+  background: #222;
+  border: 2px solid #444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+  position: relative;
+  
+  &:after {
+    content: '';
+    width: 20px;
+    height: 20px;
+    background: #111;
+    border-radius: 50%;
+    border: 2px solid #555;
+  }
 `;
 
-const TimelineText = styled.div`
-  color: rgba(255, 255, 255, 0.9);
-  line-height: 1.6;
+const TimelineContent = styled.div`
+  padding-top: 0.4rem;
+`;
+
+const TimelineTitle = styled.h4`
+  margin: 0 0 0.4rem;
+  font-size: 1.1rem;
+  color: ${COLORS.gogo_teal};
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+`;
+
+const TimelineText = styled.p`
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
 `;
 
 function CurriculumSection(): JSX.Element {
@@ -257,8 +389,8 @@ function CurriculumSection(): JSX.Element {
       animate(cards, {
         opacity: [0, 1],
         translateY: [20, 0],
-        delay: stagger(80, { start: 300 }),
-        duration: 700,
+        delay: stagger(150, { start: 300 }),
+        duration: 800,
         easing: 'easeOutCubic',
       });
     }
@@ -317,68 +449,126 @@ function CurriculumSection(): JSX.Element {
         </Header>
 
         <Grid>
-          <Card ref={(el) => setCardRef(el, 0)}>
-            <CardTitle>Opening Chorus</CardTitle>
-            <CardText>
-              We start with an opening circle and a shared song to tune the
-              room—building community, voice, and confidence. Mentors and
-              students shape the groove together.
-            </CardText>
-            <BadgeRow>
-              <Badge>Soundcheck</Badge>
-              <Badge>House Setlist</Badge>
-              <Badge>Band‑Led</Badge>
-            </BadgeRow>
-          </Card>
+          <Pedal
+            ref={(el) => setCardRef(el, 0)}
+            $accentColor={COLORS.gogo_blue}
+          >
+            <PedalTop>
+              <Knob className="knob" />
+              <Knob className="knob" />
+              <Knob className="knob" />
+            </PedalTop>
+            <PedalBody>
+              <Led $color={COLORS.gogo_blue} />
+              <CardTitle>Opening Chorus</CardTitle>
+              <CardText>
+                We start with an opening circle and a shared song to tune the
+                room—building community, voice, and confidence. Mentors and
+                students shape the groove together.
+              </CardText>
+              <BadgeRow>
+                <Badge $color={COLORS.gogo_blue}>Soundcheck</Badge>
+                <Badge $color={COLORS.gogo_blue}>House Setlist</Badge>
+                <Badge $color={COLORS.gogo_blue}>Band‑Led</Badge>
+              </BadgeRow>
+              <Footswitch />
+            </PedalBody>
+          </Pedal>
 
-          <Card ref={(el) => setCardRef(el, 1)}>
-            <CardTitle>Weekly Setlist</CardTitle>
-            <CardText>
-              After‑school programs rehearse twice weekly; community sites run
-              3‑hour jam blocks. Instruments and backline are provided at no
-              cost.
-            </CardText>
-            <BadgeRow>
-              <Badge $color={`${COLORS.gogo_blue}33`}>2 rehearsals/week</Badge>
-              <Badge $color={`${COLORS.gogo_purple}33`}>3h jam blocks</Badge>
-              <Badge $color={`${COLORS.gogo_teal}33`}>Backline provided</Badge>
-            </BadgeRow>
-          </Card>
+          <Pedal
+            ref={(el) => setCardRef(el, 1)}
+            $accentColor={COLORS.gogo_purple}
+          >
+            <PedalTop>
+              <Knob className="knob" />
+              <Knob className="knob" />
+              <Knob className="knob" />
+            </PedalTop>
+            <PedalBody>
+              <Led $color={COLORS.gogo_purple} />
+              <CardTitle>Weekly Setlist</CardTitle>
+              <CardText>
+                After‑school programs rehearse twice weekly; community sites run
+                3‑hour jam blocks. Instruments and backline are provided at no
+                cost.
+              </CardText>
+              <BadgeRow>
+                <Badge $color={COLORS.gogo_purple}>2 rehearsals/week</Badge>
+                <Badge $color={COLORS.gogo_purple}>3h jam blocks</Badge>
+                <Badge $color={COLORS.gogo_purple}>Backline provided</Badge>
+              </BadgeRow>
+              <Footswitch />
+            </PedalBody>
+          </Pedal>
 
-          <Card ref={(el) => setCardRef(el, 2)}>
-            <CardTitle>Culminating Releases</CardTitle>
-            <CardText>
-              Learning crescendos with live shows, studio sessions, exhibitions,
-              and drops— students take the lead on and off stage and celebrate
-              growth.
-            </CardText>
-            <BadgeRow>
-              <Badge>Live Shows</Badge>
-              <Badge>Studio Sessions</Badge>
-              <Badge>Release Parties</Badge>
-            </BadgeRow>
-          </Card>
+          <Pedal
+            ref={(el) => setCardRef(el, 2)}
+            $accentColor={COLORS.gogo_teal}
+          >
+            <PedalTop>
+              <Knob className="knob" />
+              <Knob className="knob" />
+              <Knob className="knob" />
+            </PedalTop>
+            <PedalBody>
+              <Led $color={COLORS.gogo_teal} />
+              <CardTitle>Culminating Releases</CardTitle>
+              <CardText>
+                Learning crescendos with live shows, studio sessions, exhibitions,
+                and drops— students take the lead on and off stage and celebrate
+                growth.
+              </CardText>
+              <BadgeRow>
+                <Badge $color={COLORS.gogo_teal}>Live Shows</Badge>
+                <Badge $color={COLORS.gogo_teal}>Studio Sessions</Badge>
+                <Badge $color={COLORS.gogo_teal}>Release Parties</Badge>
+              </BadgeRow>
+              <Footswitch />
+            </PedalBody>
+          </Pedal>
         </Grid>
 
         <Timeline>
-          <TimelineItem>
-            <Dot />
-            <TimelineText>
-              Soundcheck & Opening Circle → Community agreements and vibe check
-            </TimelineText>
-          </TimelineItem>
-          <TimelineItem>
-            <Dot />
-            <TimelineText>
-              Rehearsal & Groove → Skill‑building through ensemble practice
-            </TimelineText>
-          </TimelineItem>
-          <TimelineItem>
-            <Dot />
-            <TimelineText>
-              Arrangement & Reflection → Student‑led decisions and goal‑setting
-            </TimelineText>
-          </TimelineItem>
+          <div style={{ marginBottom: '1.5rem', fontSize: '0.9rem', textTransform: 'uppercase', color: '#666', letterSpacing: '0.1em' }}>
+            Signal Flow
+          </div>
+          <SignalPath>
+            <TimelineItem>
+              <Jack />
+              <TimelineContent>
+                <TimelineTitle>
+                  Soundcheck & Opening Circle
+                </TimelineTitle>
+                <TimelineText>
+                  Community agreements, vibe check, and tuning into the space together.
+                </TimelineText>
+              </TimelineContent>
+            </TimelineItem>
+            
+            <TimelineItem>
+              <Jack />
+              <TimelineContent>
+                <TimelineTitle>
+                  Rehearsal & Groove
+                </TimelineTitle>
+                <TimelineText>
+                  Skill‑building through ensemble practice, jamming, and improvisation.
+                </TimelineText>
+              </TimelineContent>
+            </TimelineItem>
+
+            <TimelineItem>
+              <Jack />
+              <TimelineContent>
+                <TimelineTitle>
+                  Arrangement & Reflection
+                </TimelineTitle>
+                <TimelineText>
+                  Student‑led decisions, goal‑setting, and finalizing the track for performance.
+                </TimelineText>
+              </TimelineContent>
+            </TimelineItem>
+          </SignalPath>
         </Timeline>
       </Container>
     </Section>

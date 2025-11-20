@@ -4,15 +4,15 @@ import COLORS from '../../assets/colors.ts';
 
 const PartnersSectionWrapper = styled.section`
   position: relative;
-  padding: 6rem 0;
+  padding: 8rem 0;
   background: radial-gradient(
       80rem 60rem at 10% -10%,
-      rgba(79, 70, 229, 0.35),
+      rgba(79, 70, 229, 0.25),
       transparent
     ),
     radial-gradient(
       70rem 50rem at 110% 10%,
-      rgba(16, 185, 129, 0.25),
+      rgba(16, 185, 129, 0.15),
       transparent
     ),
     linear-gradient(180deg, #121212 0%, #0f0f10 100%);
@@ -25,10 +25,10 @@ const PartnersSectionWrapper = styled.section`
     height: 40rem;
     background: radial-gradient(
       closest-side,
-      rgba(56, 189, 248, 0.15),
+      rgba(56, 189, 248, 0.1),
       transparent
     );
-    filter: blur(40px);
+    filter: blur(60px);
     pointer-events: none;
   }
 `;
@@ -38,29 +38,32 @@ const SectionContainer = styled.div`
   margin: 0 auto;
   padding: 0 2rem;
   width: 100%;
+  position: relative;
+  z-index: 1;
 `;
 
 const Heading = styled.div`
   text-align: center;
-  margin-bottom: 2.25rem;
+  margin-bottom: 3rem;
 `;
-
-// Eyebrow removed to avoid redundancy in title
 
 const Title = styled.h2`
   margin: 0.9rem 0 0.4rem;
-  font-size: 2.8rem;
+  font-size: 3rem;
   line-height: 1.1;
   font-weight: 900;
-  letter-spacing: 0.01em;
-  color: ${COLORS.gogo_blue};
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 `;
 
 const SubTitle = styled.p`
-  margin: 0 auto;
+  margin: 0.5rem auto 0;
   max-width: 760px;
-  color: #e5e7eb;
-  font-size: 1.05rem;
+  color: #94a3b8;
+  font-size: 1.1rem;
+  line-height: 1.6;
 `;
 
 const GridLabel = styled.p`
@@ -69,155 +72,172 @@ const GridLabel = styled.p`
   color: #cbd5e1;
   font-size: 0.95rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
 `;
-
-// (Removed unused Tabs/Tab controls)
 
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1.25rem;
-  margin-top: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
 `;
 
 const Badge = styled.a`
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 1.1rem;
-  border-radius: 14px;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.06),
-    rgba(255, 255, 255, 0.03)
-  );
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 1rem;
+  padding: 1.25rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   text-decoration: none;
   color: #f3f4f6;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
-  transition: transform 0.25s ease, box-shadow 0.25s ease,
-    border-color 0.25s ease, background 0.25s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
-    transform: translateY(-3px);
-    border-color: rgba(99, 102, 241, 0.35);
-    background: linear-gradient(
-      180deg,
-      rgba(79, 70, 229, 0.14),
-      rgba(255, 255, 255, 0.04)
-    );
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+    transform: translateY(-4px) scale(1.02);
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
   }
 `;
 
 const Dot = styled.span<{ $color: string }>`
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: ${(p) => p.$color};
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06) inset;
+  box-shadow: 0 0 10px ${(p) => p.$color}, 0 0 0 2px rgba(255, 255, 255, 0.1) inset;
+  flex-shrink: 0;
 `;
 
 const BadgeText = styled.div`
   display: flex;
   flex-direction: column;
+  gap: 0.25rem;
 `;
 
 const BadgeTitle = styled.span`
-  font-weight: 800;
+  font-weight: 700;
   font-size: 1rem;
-  letter-spacing: 0.01em;
+  line-height: 1.2;
+  color: #f1f5f9;
 `;
 
 const BadgeSub = styled.span`
   font-size: 0.85rem;
-  color: #cbd5e1;
+  color: #94a3b8;
 `;
-
-// (Removed CTA buttons)
-
-// (Removed unused StatsBar/StatPill controls)
 
 const scroll = keyframes`
   0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  100% { transform: translateX(-25%); }
 `;
 
 const TickerWrapper = styled.div`
   overflow: hidden;
-  margin-top: 0.75rem;
+  margin-top: 1rem;
   mask-image: linear-gradient(
     to right,
     transparent 0,
-    #000 8%,
-    #000 92%,
+    #000 10%,
+    #000 90%,
     transparent 100%
   );
   -webkit-mask-image: linear-gradient(
     to right,
     transparent 0,
-    #000 8%,
-    #000 92%,
+    #000 10%,
+    #000 90%,
     transparent 100%
   );
 `;
 
 const TickerRow = styled.div`
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  gap: 2rem;
+  margin-top: 3rem;
+  position: relative;
+  
+  &:before {
+    content: '';
+    position: absolute;
+    top: -1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  }
+`;
+
+const ButtonsRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 1rem;
-  margin-top: 1.5rem;
   flex-wrap: wrap;
 `;
 
 const ViewAllLink = styled.a`
-  color: ${COLORS.gogo_blue};
+  color: #e2e8f0;
   text-decoration: none;
-  font-weight: 800;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 0.5rem 0.85rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.75rem 1.5rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
   transition: all 0.2s ease;
+  font-size: 0.95rem;
 
   &:hover {
-    color: #f8fafc;
-    background: rgba(79, 70, 229, 0.2);
-    border-color: rgba(99, 102, 241, 0.35);
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
   }
 `;
 
 const DonateButton = styled.a`
-  color: #0b1020;
+  color: #fff;
   text-decoration: none;
-  font-weight: 800;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 0.5rem 0.85rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+  padding: 0.75rem 2rem;
   border-radius: 999px;
-  background: ${COLORS.gogo_blue};
-  transition: all 0.2s ease;
-  margin-left: 0.5rem;
+  background: linear-gradient(135deg, ${COLORS.gogo_blue}, ${COLORS.gogo_purple});
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 12px rgba(25, 70, 245, 0.3);
 
   &:hover {
-    color: #f8fafc;
-    background: ${COLORS.gogo_purple};
-    border-color: rgba(99, 102, 241, 0.35);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(25, 70, 245, 0.5);
+    filter: brightness(1.1);
   }
 `;
 
 const BetweenNote = styled.p`
-  margin: 1rem 0 0.5rem;
-  color: #cbd5e1;
+  margin: 0;
+  color: #94a3b8;
   font-size: 0.95rem;
+  text-align: center;
+  max-width: 600px;
 `;
 
 const TickerTrack = styled.div`
   display: flex;
   width: max-content;
-  gap: 0.75rem;
-  padding: 0.15rem 0;
-  animation: ${scroll} 30s linear infinite;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  animation: ${scroll} 60s linear infinite;
   will-change: transform;
   @media (prefers-reduced-motion: reduce) {
     animation: none;
@@ -231,13 +251,20 @@ const TickerItem = styled.span`
   display: inline-flex;
   align-items: center;
   white-space: nowrap;
-  padding: 0.5rem 0.85rem;
+  padding: 0.6rem 1.2rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.05);
-  color: #e5e7eb;
-  font-weight: 800;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.02);
+  color: #cbd5e1;
+  font-weight: 500;
   font-size: 0.9rem;
+  transition: all 0.2s;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
 `;
 
 type CategoryKey =
@@ -339,21 +366,30 @@ function PartnersSection(): JSX.Element {
     const names = (Object.keys(data) as CategoryKey[]).flatMap((k) =>
       data[k].slice(majorCounts[k] || 0).map((i) => i.name),
     );
-    // If not enough other donors exist, add placeholders
-    const minOthers = 16;
-    const placeholders: string[] = [];
-    let counter = 1;
-    while (names.length + placeholders.length < minOthers) {
-      const next = counter + 1;
-      placeholders.push(`Supporter ${counter}`);
-      counter = next;
+    
+    // If not enough other donors exist, just repeat existing major donors for the ticker effect
+    // to ensure we have enough items for the animation to look good.
+    const minItems = 40;
+    let result = [...names];
+    
+    if (result.length === 0) {
+       // Fallback to major donors if no "other" donors
+       result = majorDonors.map(d => d.name);
     }
-    return [...names, ...placeholders];
-  }, [data, majorCounts]);
+
+    // Repeat until we have enough items
+    while (result.length < minItems && result.length > 0) {
+        result = [...result, ...result];
+    }
+    
+    return result;
+  }, [data, majorCounts, majorDonors]);
 
   const tickerNames = useMemo(() => {
-    const list = [...otherDonorNames];
-    return [...list, ...list];
+    // Create a seamless loop by duplicating the list multiple times
+    // Using 4 copies ensures that on very wide screens, we don't see the end
+    // before the beginning loops back around.
+    return [...otherDonorNames, ...otherDonorNames, ...otherDonorNames, ...otherDonorNames];
   }, [otherDonorNames]);
 
   const renderBadges = (items: SupporterItem[], delayBase = 0) =>
@@ -368,10 +404,10 @@ function PartnersSection(): JSX.Element {
         }`}
         style={{
           opacity: inView ? 1 : 0,
-          transform: inView ? 'translateY(0)' : 'translateY(8px)',
-          transition: `opacity .45s ease ${
+          transform: inView ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.95)',
+          transition: `opacity .6s cubic-bezier(0.2, 0.8, 0.2, 1) ${
             delayBase + idx * 0.05
-          }s, transform .45s ease ${delayBase + idx * 0.05}s`,
+          }s, transform .6s cubic-bezier(0.2, 0.8, 0.2, 1) ${delayBase + idx * 0.05}s`,
         }}
       >
         <Dot $color={item.color} />
@@ -396,13 +432,13 @@ function PartnersSection(): JSX.Element {
         <GridLabel>Major Supporters ($25,000+)</GridLabel>
         <Grid aria-live="polite">{renderBadges(majorDonors)}</Grid>
 
-        <BetweenNote>
-          The supporters below represent additional donors who make our work
-          possible. Our $25,000+ list highlights a featured selection; please
-          see the full roll at the link below.
-        </BetweenNote>
-
         <TickerRow>
+            <BetweenNote>
+            The supporters below represent additional donors who make our work
+            possible. Our $25,000+ list highlights a featured selection; please
+            see the full roll at the link below.
+            </BetweenNote>
+
           <TickerWrapper aria-hidden>
             <TickerTrack>
               {tickerNames.map((label, index) => (
@@ -410,7 +446,8 @@ function PartnersSection(): JSX.Element {
               ))}
             </TickerTrack>
           </TickerWrapper>
-          <div>
+          
+          <ButtonsRow>
             <ViewAllLink
               href="https://guitarsoverguns.org/supporters/"
               target="_blank"
@@ -427,7 +464,7 @@ function PartnersSection(): JSX.Element {
             >
               Donate
             </DonateButton>
-          </div>
+          </ButtonsRow>
         </TickerRow>
       </SectionContainer>
     </PartnersSectionWrapper>

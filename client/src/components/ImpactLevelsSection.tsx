@@ -1,6 +1,5 @@
-import React, { useEffect, useMemo, useRef, memo } from 'react';
-import styled, { keyframes } from 'styled-components';
-import { animate, stagger } from 'animejs';
+import React, { useMemo, memo, useRef, useEffect } from 'react';
+import styled from 'styled-components';
 import COLORS from '../../assets/colors';
 import photo1 from '../../assets/missionPhotos/Photo1.jpg';
 import photo2 from '../../assets/missionPhotos/Photo2.jpg';
@@ -10,37 +9,28 @@ import photo5 from '../../assets/missionPhotos/Photo5.jpg';
 import photo6 from '../../assets/missionPhotos/Photo6.jpg';
 import photo7 from '../../assets/missionPhotos/Photo7.jpg';
 import photo8 from '../../assets/missionPhotos/Photo8.jpg';
-
-const float = keyframes`
-  0% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-  100% { transform: translateY(0); }
-`;
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import Reveal from '../../animations/components/Reveal';
 
 const Section = styled.section`
-  padding: 7rem 0;
-  background: linear-gradient(135deg, #121212 0%, #1e1e1e 50%, #121212 100%);
+  padding: 8rem 0 10rem;
+  background: #0a0a0a;
   position: relative;
   overflow: hidden;
-`;
 
-const BackgroundDecoration = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  background: radial-gradient(
-      circle at 20% 20%,
-      rgba(25, 70, 245, 0.08) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      circle at 80% 80%,
-      rgba(190, 43, 147, 0.08) 0%,
-      transparent 50%
-    );
+  /* Ambient background lighting */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: 
+      radial-gradient(circle at 20% 30%, ${COLORS.gogo_blue}15 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, ${COLORS.gogo_purple}15 0%, transparent 50%);
+    pointer-events: none;
+  }
 `;
 
 const SoundWaveContainer = styled.div`
@@ -48,39 +38,17 @@ const SoundWaveContainer = styled.div`
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 36px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 3px;
-  opacity: 0.4;
+  height: 120px;
   z-index: 0;
+  mask-image: linear-gradient(to bottom, transparent, black 20%);
+  pointer-events: none;
 `;
 
-const soundwave = keyframes`
-  0% { height: 3px; }
-  50% { height: 18px; }
-  100% { height: 3px; }
+const WaveCanvas = styled.canvas`
+  width: 100%;
+  height: 100%;
+  display: block;
 `;
-
-const SoundWaveLine = styled.div<{ $delay: number }>`
-  width: 3px;
-  background: linear-gradient(to top, ${COLORS.gogo_blue}, ${COLORS.gogo_teal});
-  border-radius: 3px;
-  height: 3px;
-  animation: ${soundwave} ${(props) => 0.8 + props.$delay * 0.2}s ease-in-out
-    infinite;
-  animation-delay: ${(props) => props.$delay * 0.1}s;
-`;
-
-const shimmer = keyframes`
-  0% { transform: translateX(-120%); opacity: 0; }
-  10% { opacity: 1; }
-  60% { opacity: 1; }
-  100% { transform: translateX(120%); opacity: 0; }
-`;
-
-// Removed cursor-tracking spotlight for performance
 
 const Container = styled.div`
   max-width: 1400px;
@@ -92,238 +60,335 @@ const Container = styled.div`
 
 const Header = styled.div`
   text-align: center;
-  margin-bottom: 2.5rem;
+  margin-bottom: 5rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
 `;
 
 const Title = styled.h2`
-  font-size: 2.6rem;
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
   font-weight: 900;
+  letter-spacing: -0.02em;
+  margin-bottom: 1.5rem;
+  font-family: 'Century Gothic', 'Arial', sans-serif;
   background: linear-gradient(
-    to right,
-    ${COLORS.gogo_green},
-    ${COLORS.gogo_blue},
-    ${COLORS.gogo_purple}
+    135deg,
+    #ffffff 0%,
+    #e0e0e0 50%,
+    ${COLORS.gogo_blue} 100%
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 `;
 
 const Subtitle = styled.p`
-  margin: 0.25rem 0 1.25rem;
+  font-size: 1.1rem;
   color: rgba(255, 255, 255, 0.7);
-  font-weight: 600;
-`;
-
-const CTAWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1.5rem;
-`;
-
-const DonateButton = styled.a`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 22px;
-  border-radius: 999px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  color: #0e0e0e;
-  text-decoration: none;
-  background: linear-gradient(
-    90deg,
-    ${COLORS.gogo_green},
-    ${COLORS.gogo_blue},
-    ${COLORS.gogo_purple}
-  );
-  box-shadow: 0 8px 20px rgba(25, 70, 245, 0.25);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 26px rgba(25, 70, 245, 0.35);
-    filter: brightness(1.05);
-  }
+  font-weight: 400;
+  line-height: 1.6;
+  max-width: 600px;
+  margin: 0 auto;
 `;
 
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.75rem 1.75rem;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 2rem;
+  margin-bottom: 5rem;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
 
   @media (max-width: 900px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (max-width: 600px) {
     grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
   }
 `;
 
 const Card = styled.div`
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
-  display: grid;
-  grid-template-rows: 1fr auto;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 1rem;
+  transition: background 0.3s ease;
+  cursor: default;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 
   &:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+    background: rgba(255, 255, 255, 0.08);
   }
 `;
 
 const ThumbWrap = styled.div`
-  position: relative;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1;
+  border-radius: 8px;
   overflow: hidden;
-  isolation: isolate;
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      110deg,
-      transparent 0%,
-      rgba(255, 255, 255, 0.08) 40%,
-      rgba(255, 255, 255, 0.18) 50%,
-      rgba(255, 255, 255, 0.08) 60%,
-      transparent 100%
-    );
-    transform: translateX(-120%);
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  ${Card}:hover &::after {
-    animation: ${shimmer} 1.2s ease-out forwards;
-  }
+  position: relative;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 `;
 
 const Thumb = styled.img`
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
-  transition: transform 0.4s ease;
+  transition: transform 0.5s ease;
 
   ${Card}:hover & {
-    transform: scale(1.03);
+    transform: scale(1.05);
   }
 `;
 
-const Caption = styled.div`
-  color: rgba(255, 255, 255, 0.95);
+const Content = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+`;
+
+const Amount = styled.div`
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: white;
+  font-family: 'Century Gothic', 'Arial', sans-serif;
+`;
+
+const Description = styled.div`
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 400;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+`;
+
+const CTAWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+`;
+
+const DonateButton = styled.a`
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 36px;
+  background: white;
+  color: black;
+  border-radius: 99px;
+  font-weight: 700;
   font-size: 1rem;
-  line-height: 1.45;
-  padding: 0.9rem 1rem 1.1rem;
-  text-align: center;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.1);
+  font-family: 'Century Gothic', 'Arial', sans-serif;
+  
+  &:hover {
+    transform: scale(1.05);
+    background: ${COLORS.gogo_green}; // Spotify/Action green
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  }
 `;
 
 const levels = [
-  { img: photo1, text: '$75 provides one mentoring session' },
-  { img: photo2, text: '$100 provides an acoustic guitar' },
-  { img: photo3, text: '$250 provides a drum set' },
-  { img: photo4, text: '$500 provides a keyboard' },
-  { img: photo5, text: '$1,000 supports a music video' },
-  { img: photo6, text: '$2,500 supports a recording session' },
-  { img: photo7, text: '$5,000 supports a summer scholarship' },
-  { img: photo8, text: '$10,000 supports national mental health programming' },
-  // New higher tiers
-  { img: photo1, text: '$25,000 supports Mentor Leadership Development' },
-  { img: photo2, text: '$50,000 supports a school program' },
+  { img: photo1, amount: '$75', desc: 'Provides one mentoring session' },
+  { img: photo2, amount: '$100', desc: 'Provides an acoustic guitar' },
+  { img: photo3, amount: '$250', desc: 'Provides a drum set' },
+  { img: photo4, amount: '$500', desc: 'Provides a keyboard' },
+  { img: photo5, amount: '$1,000', desc: 'Supports a music video' },
+  { img: photo6, amount: '$2,500', desc: 'Supports a recording session' },
+  { img: photo7, amount: '$5,000', desc: 'Supports a summer scholarship' },
+  { img: photo8, amount: '$10,000', desc: 'Supports national mental health programming' },
+  { img: photo1, amount: '$25,000', desc: 'Supports Mentor Leadership Development' },
+  { img: photo2, amount: '$50,000', desc: 'Supports a school program' },
 ];
 
 function ImpactLevelsSection(): JSX.Element {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const reducedMotionRef = useRef<boolean>(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const prefersReduced =
-      typeof window !== 'undefined' &&
-      typeof window.matchMedia !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const canvas = canvasRef.current;
+    const container = sectionRef.current;
+    if (!canvas || !container) return;
 
-    reducedMotionRef.current = prefersReduced;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-    const el = sectionRef.current;
-    if (!el) return undefined;
+    let animationId: number;
+    let time = 0;
+    let mouseX = -1000;
+    let mouseY = -1000;
 
-    el.style.opacity = '0';
-    el.style.transform = 'translateY(16px)';
-    el.style.willChange = 'opacity, transform';
+    const handleResize = () => {
+      // Set canvas size to match display size for sharpness
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      
+      ctx.scale(dpr, dpr);
+    };
 
+    // Initial resize
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      mouseX = e.clientX - rect.left;
+      mouseY = e.clientY - rect.top;
+    };
+
+    // Use IntersectionObserver to only animate when visible
+    let isVisible = false;
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            if (!prefersReduced) {
-              animate(el, {
-                opacity: [0, 1],
-                translateY: [16, 0],
-                duration: 600,
-                easing: 'easeOutCubic',
-              });
-
-              const children = el.querySelectorAll('.animate-child');
-              if (children && children.length > 0) {
-                animate(children, {
-                  opacity: [0, 1],
-                  translateY: [12, 0],
-                  scale: [0.98, 1],
-                  duration: 480,
-                  delay: stagger(80),
-                  easing: 'easeOutCubic',
-                });
-              }
-            } else {
-              el.setAttribute('style', 'opacity: 1; transform: none;');
-              const children = el.querySelectorAll('.animate-child');
-              children.forEach((child) => {
-                const childEl = child as HTMLElement;
-                childEl.style.opacity = '1';
-                childEl.style.transform = 'none';
-              });
-            }
-
-            observer.unobserve(entry.target);
+          isVisible = entry.isIntersecting;
+          if (isVisible) {
+             // Restart loop if it stopped
+             if (!animationId) {
+               draw();
+             }
           }
         });
       },
-      {
-        threshold: 0,
-        rootMargin: '200px 0px -10% 0px',
-      },
+      { threshold: 0.1 }
     );
 
-    observer.observe(el);
+    if (container) {
+      observer.observe(container);
+    }
 
-    return () => observer.disconnect();
-  }, []);
+    // Listen on the whole section for mouse moves
+    container.addEventListener('mousemove', handleMouseMove);
+    container.addEventListener('mouseleave', () => {
+      mouseX = -1000;
+      mouseY = -1000;
+    });
 
-  // Removed mousemove handlers for performance
+    const draw = () => {
+      if (!isVisible) {
+         animationId = 0; // Mark as stopped
+         return;
+      }
 
-  const waveLineIds = useMemo(() => {
-    return Array.from({ length: 140 }).map(
-      (_, i) => `lvl-wave-${i.toString().padStart(3, '0')}`,
-    );
+      const rect = canvas.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
+      
+      // Clear canvas
+      ctx.clearRect(0, 0, width, height);
+      
+      // Bar settings
+      const barWidth = 4;
+      const gap = 4;
+      const totalBarWidth = barWidth + gap;
+      const barCount = Math.ceil(width / totalBarWidth);
+      
+      // Create gradient
+      const gradient = ctx.createLinearGradient(0, height, 0, 0);
+      gradient.addColorStop(0, COLORS.gogo_purple);
+      gradient.addColorStop(1, COLORS.gogo_blue);
+      
+      ctx.fillStyle = gradient;
+      
+      for (let i = 0; i < barCount; i++) {
+        const x = i * totalBarWidth;
+        
+        // Base sine wave animation
+        // Different frequencies for more organic look
+        const baseHeight = 4 + 
+          Math.sin(i * 0.1 + time) * 5 + 
+          Math.sin(i * 0.05 - time * 1.5) * 5;
+          
+        // Mouse interaction
+        // Calculate distance from mouse X
+        const dist = Math.abs(x - mouseX);
+        const influenceRadius = 150;
+        let mouseInfluence = 0;
+        
+        if (dist < influenceRadius) {
+          // Gaussian-like curve
+          const factor = 1 - (dist / influenceRadius);
+          // Easing
+          const ease = factor * factor * (3 - 2 * factor); // smoothstep
+          mouseInfluence = ease * 60;
+        }
+        
+        // Final height logic
+        let h = Math.max(4, baseHeight + mouseInfluence);
+        
+        // Clamp height
+        if (h > height) h = height;
+        
+        // Draw rounded rect (pill)
+        const radius = barWidth / 2;
+        
+        ctx.beginPath();
+        ctx.roundRect(x, height - h, barWidth, h, radius);
+        ctx.fill();
+      }
+      
+      time += 0.05;
+      animationId = requestAnimationFrame(draw);
+    };
+
+    draw();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      container.removeEventListener('mousemove', handleMouseMove);
+      cancelAnimationFrame(animationId);
+    };
   }, []);
 
   return (
     <Section ref={sectionRef}>
-      <BackgroundDecoration />
-      <SoundWaveContainer>
-        {waveLineIds.map((id, i) => (
-          <SoundWaveLine key={id} $delay={i % 10} />
-        ))}
-      </SoundWaveContainer>
       <Container>
-        <Header>
-          <Title>Impact Levels</Title>
-          <Subtitle>Your gift powers real moments like these.</Subtitle>
+        <Reveal variant="fade-up">
+          <Header>
+            <Title>Impact Levels</Title>
+            <Subtitle>
+              Every dollar contributes to the transformative power of music and mentorship.
+              See exactly what your gift can do.
+            </Subtitle>
+          </Header>
+        </Reveal>
+        
+        <Reveal variant="stagger-up" staggerSelector=".impact-card" delay={200}>
+          <Grid>
+            {levels.map((l, i) => (
+              <Card key={i} className="impact-card">
+                <ThumbWrap>
+                  <Thumb
+                    src={l.img}
+                    alt={`${l.amount} - ${l.desc}`}
+                    loading="lazy"
+                  />
+                </ThumbWrap>
+                <Content>
+                  <Amount>{l.amount}</Amount>
+                  <Description>{l.desc}</Description>
+                </Content>
+              </Card>
+            ))}
+          </Grid>
+        </Reveal>
+
+        <Reveal variant="fade-up" delay={400}>
           <CTAWrapper>
             <DonateButton
               href="https://www.classy.org/give/352794/#!/donation/checkout"
@@ -331,26 +396,16 @@ function ImpactLevelsSection(): JSX.Element {
               rel="noopener noreferrer"
               aria-label="Donate to support GOGO"
             >
-              Donate Now
+              Make an Impact Today
+              <ArrowForwardIcon style={{ fontSize: '1.2rem' }} />
             </DonateButton>
           </CTAWrapper>
-        </Header>
-        <Grid>
-          {levels.map((l) => (
-            <Card key={l.text} className="animate-child" style={{ opacity: 0 }}>
-              <ThumbWrap>
-                <Thumb
-                  src={l.img}
-                  alt={l.text}
-                  loading="lazy"
-                  decoding="async"
-                />
-              </ThumbWrap>
-              <Caption>{l.text}</Caption>
-            </Card>
-          ))}
-        </Grid>
+        </Reveal>
       </Container>
+
+      <SoundWaveContainer>
+        <WaveCanvas ref={canvasRef} />
+      </SoundWaveContainer>
     </Section>
   );
 }

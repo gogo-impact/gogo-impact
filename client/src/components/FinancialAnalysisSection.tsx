@@ -247,8 +247,8 @@ const Tooltip = styled.div`
   border-radius: 8px;
   padding: 8px 10px;
   font-size: 12px;
-  transform: translate(-50%, -120%);
   white-space: nowrap;
+  z-index: 10;
 `;
 
 const Bullets = styled.ul`
@@ -409,6 +409,10 @@ function FinancialAnalysisSection(): JSX.Element {
   const [showExpenses] = useState(true);
   const [range] = useState<'ALL' | 'SINCE2019' | 'RECENT3'>('ALL');
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+  const [cursorX, setCursorX] = useState<number | null>(null);
+  const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | null>(
+    null,
+  );
 
   // Animations temporarily disabled in this section
 
@@ -530,12 +534,27 @@ function FinancialAnalysisSection(): JSX.Element {
     const innerW = width - padL - padR;
 
     const clampedX = Math.max(padL, Math.min(width - padR, svgPoint.x));
+    setCursorX(clampedX);
+
+    const container = chartCardRef.current;
+    if (container) {
+      const rect = container.getBoundingClientRect();
+      setCursorPos({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      });
+    }
+
     const t = (clampedX - padL) / innerW;
     const idx = Math.round(t * (labels.length - 1));
     setHoverIdx(idx);
   };
 
-  const onMouseLeave = () => setHoverIdx(null);
+  const onMouseLeave = () => {
+    setHoverIdx(null);
+    setCursorX(null);
+    setCursorPos(null);
+  };
 
   return (
     <SectionWrapper ref={sectionRef}>
@@ -600,6 +619,7 @@ function FinancialAnalysisSection(): JSX.Element {
               height="340"
               onMouseMove={onMouseMove}
               onMouseLeave={onMouseLeave}
+              style={{ cursor: 'crosshair' }}
             >
               <defs>
                 <linearGradient id="rev" x1="0" x2="0" y1="0" y2="1">
@@ -647,28 +667,20 @@ function FinancialAnalysisSection(): JSX.Element {
                 />
               )}
 
-              {hoverIdx !== null && (
+              {hoverIdx !== null && cursorX !== null && (
                 <g>
-                  {/* vertical guide */}
-                  {(() => {
-                    const padL = 60;
-                    const padR = 20;
-                    const innerW = width - padL - padR;
-                    const stepX = innerW / (labels.length - 1);
-                    const x = padL + hoverIdx * stepX;
-                    return (
-                      <line
-                        x1={x}
-                        y1={20}
-                        x2={x}
-                        y2={height - 40}
-                        stroke="#777"
-                        strokeDasharray="4 4"
-                      />
-                    );
-                  })()}
+                  {/* vertical guide - continuous */}
+                  <line
+                    x1={cursorX}
+                    y1={20}
+                    x2={cursorX}
+                    y2={height - 40}
+                    stroke="#888"
+                    strokeWidth={1}
+                    strokeDasharray="4 4"
+                  />
 
-                  {/* points */}
+                  {/* points - snapped to data */}
                   {(() => {
                     const padL = 60;
                     const padR = 20;
@@ -694,6 +706,8 @@ function FinancialAnalysisSection(): JSX.Element {
                             cy={revY}
                             r={5}
                             fill={COLORS.gogo_blue}
+                            stroke="#121212"
+                            strokeWidth={2}
                           />
                         )}
                         {showExpenses && (
@@ -702,6 +716,8 @@ function FinancialAnalysisSection(): JSX.Element {
                             cy={expY}
                             r={5}
                             fill={COLORS.gogo_pink}
+                            stroke="#121212"
+                            strokeWidth={2}
                           />
                         )}
                       </>
@@ -718,28 +734,12 @@ function FinancialAnalysisSection(): JSX.Element {
                 <Swatch $color={COLORS.gogo_pink} /> Expenses
               </LegendItem>
             </Legend>
-            {hoverIdx !== null && (
+            {hoverIdx !== null && cursorPos !== null && (
               <Tooltip
                 style={{
-                  left: (() => {
-                    const svg = chartRef.current;
-                    const container = chartCardRef.current;
-                    if (!svg || !container) return undefined;
-                    const rectSVG = svg.getBoundingClientRect();
-                    const rectContainer = container.getBoundingClientRect();
-                    const padL = 60;
-                    const padR = 20;
-                    const innerW = width - padL - padR;
-                    const stepX = innerW / (labels.length - 1);
-                    // X position of the guide line in SVG viewBox coordinates
-                    const xViewBox = padL + hoverIdx * stepX;
-                    // Convert that SVG x-coordinate into screen pixels, then
-                    // into a left-offset within the chart card container.
-                    const xPx =
-                      rectSVG.left + (xViewBox / width) * rectSVG.width;
-                    const leftPx = xPx - rectContainer.left;
-                    return `${leftPx}px`;
-                  })(),
+                  left: cursorPos.x,
+                  top: cursorPos.y,
+                  transform: 'translate(15px, -50%)',
                 }}
               >
                 <div style={{ fontWeight: 700, marginBottom: 4 }}>
@@ -815,26 +815,6 @@ function FinancialAnalysisSection(): JSX.Element {
               </PieContainer>
             </PieCard>
 
-            <ChartCard
-              className="animate-child"
-              data-anim-id="program-services"
-            >
-              <CardTitle style={{ marginBottom: '0.75rem' }}>
-                Program Services Includes
-              </CardTitle>
-              <Note>
-                Mentors, Staff, Performances, Field Trips, Instruments &
-                Supplies, Mentor Training, Other operating expenses.
-              </Note>
-              <Legend style={{ marginTop: '1rem' }}>
-                {goesTo.map((g) => (
-                  <LegendItem key={g.id}>
-                    <Swatch $color={(g as any).color} />
-                    <strong>{g.label}</strong>: {g.value}%
-                  </LegendItem>
-                ))}
-              </Legend>
-            </ChartCard>
           </div>
         </Grid>
       </MainContainer>

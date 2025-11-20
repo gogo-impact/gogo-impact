@@ -427,12 +427,52 @@ const TicketRight = styled.div`
   align-items: center;
   justify-content: center;
   padding-left: 18px;
-  border-left: 1px dashed rgba(255, 255, 255, 0.14);
+  border-left: 2px dashed rgba(255, 255, 255, 0.25);
+  position: relative;
+
+  /* Notches (Stub cutout effect) */
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    left: -7px; /* Center on the 2px border */
+    width: 12px;
+    height: 12px;
+    background-color: #0b0b0f; /* Matches section dark bg */
+    border-radius: 50%;
+    box-shadow: inset -1px 0 2px rgba(255, 255, 255, 0.05);
+    z-index: 3;
+  }
+
+  &::before {
+    top: -24px; /* Positioned to cut the top edge (18px padding + 6px radius) */
+  }
+
+  &::after {
+    bottom: -24px; /* Positioned to cut the bottom edge */
+  }
 
   @media (max-width: 768px) {
     border-left: 0;
     padding-left: 0;
     justify-content: flex-start;
+    
+    border-top: 2px dashed rgba(255, 255, 255, 0.25);
+    padding-top: 18px;
+    margin-top: 12px;
+    width: 100%;
+
+    &::before {
+      top: -7px;
+      left: -30px; /* Left padding (24px) + radius (6px) */
+    }
+
+    &::after {
+      top: -7px;
+      bottom: auto;
+      left: auto;
+      right: -26px; /* Right padding (20px) + radius (6px) */
+    }
   }
 `;
 
@@ -457,10 +497,12 @@ const Badge = styled.span`
 `;
 
 const Serial = styled.span`
-  font-size: 0.65rem;
-  letter-spacing: 0.18em;
-  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.75rem;
+  font-family: 'Courier New', Courier, monospace;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.65);
   user-select: none;
+  font-weight: 600;
 `;
 
 const Title = styled.h3`

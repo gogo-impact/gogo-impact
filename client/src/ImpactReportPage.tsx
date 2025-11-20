@@ -14,7 +14,7 @@ import HeroSection from './components/HeroSection';
 import MissionSection from './sections/MissionSection';
 import ImpactSection from './components/ImpactSection';
 import OurMethodSection from './components/OurMethodSection';
-import ProgramsSection from './components/ProgramsSection';
+// import ProgramsSection from './components/ProgramsSection';
 import CurriculumSection from './components/CurriculumSection';
 import LocationsSection from './sections/LocationsSection';
 // Replaced Stories of Impact carousel with a single quote section
@@ -253,7 +253,7 @@ function ImpactReportPage() {
   const impactRef = useRef<HTMLDivElement>(null);
   const methodRef = useRef<HTMLDivElement>(null);
   const disciplinesRef = useRef<HTMLDivElement>(null);
-  const programsRef = useRef<HTMLDivElement>(null);
+  // const programsRef = useRef<HTMLDivElement>(null);
   const testimonialRef = useRef<HTMLDivElement>(null);
   const musicRef = useRef<HTMLDivElement>(null);
   const locationsRef = useRef<HTMLDivElement>(null);
@@ -426,11 +426,11 @@ function ImpactReportPage() {
     );
 
     // Observe all sections except hero (which is animated on load)
+    // methodRef is also excluded as it handles its own internal animations
     const sections = [
       impactRef.current,
-      methodRef.current,
       disciplinesRef.current,
-      programsRef.current,
+      // programsRef.current,
       testimonialRef.current,
       musicRef.current,
       financialRef.current,
@@ -506,9 +506,7 @@ function ImpactReportPage() {
           <CurriculumSection />
         </div>
 
-        <div id="programs" ref={programsRef}>
-          <ProgramsSection />
-        </div>
+        {/* ProgramsSection removed as it was redundant with Flex sections */}
         {/* Impact section (moved lower, includes measurement) */}
         <div id="impact" ref={impactRef}>
           <ImpactSection />

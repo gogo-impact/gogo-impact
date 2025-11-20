@@ -38,6 +38,7 @@ import photo11 from '../../assets/missionPhotos/Photo11.jpg';
 import photo12 from '../../assets/missionPhotos/Photo12.jpg';
 import photo13 from '../../assets/missionPhotos/Photo13.jpg';
 import photo14 from '../../assets/missionPhotos/Photo14.jpg';
+import EnhancedLeafletMap from '../components/map/EnhancedLeafletMap';
 
 const ICON_COMPONENTS: Record<string, React.ReactNode> = {
   musicNote: <MusicNoteIcon />,
@@ -495,6 +496,7 @@ function MissionSection(
   const { previewMode = false, missionOverride } = props;
   const [inView, setInView] = useState(true);
   const [showDisciplines, setShowDisciplines] = useState(false);
+  const [showMap, setShowMap] = useState(false);
   const modalGridRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const [mission, setMission] = useState<MissionContent | null>(null);
@@ -583,24 +585,43 @@ function MissionSection(
     mission?.stats && mission.stats.length > 0
       ? mission.stats
       : [
-          { id: 'students', number: '1622', label: 'Students', color: COLORS.gogo_green },
-          { id: 'mentors', number: '105', label: 'Paid Mentors', color: COLORS.gogo_blue },
-          { id: 'sites', number: '59', label: 'School & Community Sites', color: COLORS.gogo_purple },
+          { id: 'students', number: '1622', label: 'Students', color: COLORS.gogo_green, action: 'openStudentMusicModal' },
+          { id: 'mentors', number: '105', label: 'Paid Mentors', color: COLORS.gogo_blue, action: 'openMentorMusicModal' },
+          { id: 'sites', number: '59', label: 'School & Community Sites', color: COLORS.gogo_purple, action: 'openMapModal' },
           {
             id: 'disciplines',
             number: fallbackDisciplinesData.length,
             label: 'Artistic Disciplines',
             color: COLORS.gogo_yellow,
+            action: 'openDisciplinesModal'
           },
         ];
+
+  const getActionForStatId = (id: string) => {
+    switch (id) {
+      case 'students': return 'openStudentMusicModal';
+      case 'mentors': return 'openMentorMusicModal';
+      case 'sites': return 'openMapModal';
+      case 'disciplines': return 'openDisciplinesModal';
+      default: return 'none';
+    }
+  };
+
   const computedStats = statsSource.map((s, idx) => {
     const useModalCount = s.numberSource === 'modalItemsLength';
     const displayNumber =
       useModalCount && disciplinesModal?.items
         ? disciplinesModal.items.length
         : s.number ?? '';
+    
+    // Force action based on ID if not explicitly set to something else
+    const effectiveAction = s.action && s.action !== 'none' 
+      ? s.action 
+      : getActionForStatId(s.id);
+
     return {
       ...s,
+      action: effectiveAction,
       delay: idx * 0.2,
       displayNumber,
     };
@@ -803,7 +824,8 @@ function MissionSection(
               action === 'openDisciplinesModal' ||
               action === 'openStudentMusicModal' ||
               action === 'openMentorMusicModal' ||
-              action === 'scrollToMap';
+              action === 'scrollToMap' ||
+              action === 'openMapModal';
 
             const handleClick = () => {
               if (!isClickable) return;
@@ -830,6 +852,10 @@ function MissionSection(
                     el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   }
                 }
+              }
+              if (action === 'openMapModal') {
+                setShowMap(true);
+                return;
               }
             };
 
@@ -906,7 +932,7 @@ function MissionSection(
           },
         }}
       >
-        <DialogTitle sx={{ m: 0, p: 2 }}>
+        <DialogTitle sx={{ m: 0, p: 2, color: 'white' }}>
           {disciplinesModal?.title ||
             mission?.modalTitle ||
             'Artistic Disciplines'}
@@ -924,24 +950,6 @@ function MissionSection(
           </IconButton>
         </DialogTitle>
         <DialogContent dividers>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              marginBottom: 16,
-            }}
-          >
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => {
-                setShowDisciplines(false);
-                navigate('/impact-report');
-              }}
-            >
-              Return to Impact Report
-            </Button>
-          </div>
           <ModalHeader>
             <ModalSubtitle>
               Guitars Over Guns mentors teach a diverse range of disciplines.
@@ -970,6 +978,44 @@ function MissionSection(
           </ModalGrid>
         </DialogContent>
         <ShineOverlay aria-hidden />
+      </Dialog>
+
+      {/* Map Modal */}
+      <Dialog
+        open={showMap}
+        onClose={() => setShowMap(false)}
+        fullWidth
+        maxWidth="lg"
+        PaperProps={{
+          style: {
+             background: '#121212',
+             border: '1px solid rgba(255,255,255,0.1)',
+             borderRadius: 16,
+             overflow: 'hidden'
+          }
+        }}
+        BackdropProps={{
+          style: {
+            backdropFilter: 'blur(10px)',
+            backgroundColor: 'rgba(0,0,0,0.6)',
+          },
+        }}
+      >
+        <DialogTitle sx={{ m: 0, p: 2, color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Our Locations
+           <IconButton
+            aria-label="close"
+            onClick={() => setShowMap(false)}
+            sx={{
+              color: 'rgba(255,255,255,0.6)',
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ p: 0, height: '500px' }}>
+          <EnhancedLeafletMap />
+        </DialogContent>
       </Dialog>
 
       {/* <ListenNow>

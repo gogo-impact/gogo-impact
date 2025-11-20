@@ -2263,7 +2263,7 @@ function ImpactReportCustomizationPage() {
 
   // Viewport simulator (desktop/tablet/mobile artboard)
   const VIEWPORTS = [
-    { label: "Desktop 1440×900", width: 1440, height: 900 },
+    { label: "Desktop 1920×1080", width: 1920, height: 1080 },
     { label: "Laptop 1280×800", width: 1280, height: 800 },
     { label: "Tablet 1024×768", width: 1024, height: 768 },
     { label: "Mobile 390×844", width: 390, height: 844 },

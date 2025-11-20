@@ -221,7 +221,7 @@ function SpotifyEmbedsSection({
           },
         }}
       >
-        <DialogTitle sx={{ m: 0, p: 2 }}>
+        <DialogTitle sx={{ m: 0, p: 2, color: 'white' }}>
           Mentor Profiles
           <IconButton
             aria-label="close"
@@ -296,7 +296,7 @@ function SpotifyEmbedsSection({
           },
         }}
       >
-        <DialogTitle sx={{ m: 0, p: 2 }}>
+        <DialogTitle sx={{ m: 0, p: 2, color: 'white' }}>
           All Our Songs
           <IconButton
             aria-label="close"
