@@ -33,6 +33,11 @@ import COLORS from "../../assets/colors.ts";
 import styled from "styled-components";
 import HeroSection from "../components/HeroSection.tsx";
 import MissionSection from "../sections/MissionSection.tsx";
+import ProgramsSection from "../components/ProgramsSection.tsx";
+import ImpactSection from "../components/ImpactSection.tsx";
+import LocationsSection from "../sections/LocationsSection.tsx";
+import SingleQuoteSection from "../components/SingleQuoteSection.tsx";
+import PartnersSection from "../components/PartnersSection.tsx";
 import { signUpload } from "../services/upload.api.ts";
 import { saveMedia } from "../services/media.api.ts";
 import {
@@ -50,11 +55,21 @@ import { useNavigate, useParams } from "react-router-dom";
 
 const MemoHeroSection = React.memo(HeroSection);
 const MemoMissionSection = React.memo(MissionSection);
+const MemoProgramsSection = React.memo(ProgramsSection);
+const MemoImpactSection = React.memo(ImpactSection);
+const MemoLocationsSection = React.memo(LocationsSection);
+const MemoSingleQuoteSection = React.memo(SingleQuoteSection);
+const MemoPartnersSection = React.memo(PartnersSection);
 
 const ADMIN_TABS = [
   { label: "Defaults", value: 0, routeKey: "defaults" as const },
   { label: "Hero Section", value: 1, routeKey: "hero" as const },
   { label: "Mission Section", value: 2, routeKey: "mission" as const },
+  { label: "Programs Section", value: 3, routeKey: "programs" as const },
+  { label: "Impact Section", value: 4, routeKey: "impact" as const },
+  { label: "Locations Section", value: 5, routeKey: "locations" as const },
+  { label: "Testimonials Section", value: 6, routeKey: "testimonials" as const },
+  { label: "Partners Section", value: 7, routeKey: "partners" as const },
 ] as const;
 
 type AdminTabRouteKey = (typeof ADMIN_TABS)[number]["routeKey"];
@@ -697,49 +712,81 @@ interface MissionSection {
 }
 
 interface ImpactSection {
+  enabled: boolean;
   title: string;
+  statsTitle: string;
   stats: Array<{
     id: string;
-    number: string;
+    number: number;
     label: string;
   }>;
-  enabled: boolean;
+  highlightsTitle: string;
+  highlightsSubtitle: string;
+  capacities: Array<{
+    id: string;
+    title: string;
+    iconKey: string | null;
+  }>;
+}
+
+interface ProgramsProgram {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  category: string;
+  color: string;
+  features: string[];
+  image: File | null;
+  imagePreview: string | null;
 }
 
 interface ProgramsSection {
-  title: string;
-  programs: Array<{
-    id: string;
-    name: string;
-    description: string;
-    image: File | null;
-    imagePreview: string | null;
-  }>;
   enabled: boolean;
+  title: string;
+  subtitle: string;
+  programs: ProgramsProgram[];
 }
 
 interface LocationsSection {
-  title: string;
-  locations: Array<{
-    id: string;
-    name: string;
-    address: string;
-    coordinates: { lat: number; lng: number };
-  }>;
   enabled: boolean;
+  title: string;
 }
 
 interface TestimonialSection {
-  title: string;
-  testimonials: Array<{
-    id: string;
-    name: string;
-    role: string;
-    content: string;
-    image: File | null;
-    imagePreview: string | null;
-  }>;
   enabled: boolean;
+  eyebrow: string;
+  name: string;
+  quote: string;
+  attribution: string;
+  image: File | null;
+  imagePreview: string | null;
+}
+
+interface PartnersSupporter {
+  id: string;
+  name: string;
+  descriptor?: string;
+  url?: string;
+  color: string;
+  category: 'Foundations' | 'Corporate & Individual' | 'Government' | 'Community & In‑Kind';
+}
+
+interface PartnersSection {
+  enabled: boolean;
+  title: string;
+  subtitle: string;
+  gridLabel: string;
+  betweenNote: string;
+  viewAllLink: string;
+  donateLink: string;
+  majorCounts: {
+    Foundations: number;
+    'Corporate & Individual': number;
+    Government: number;
+    'Community & In‑Kind': number;
+  };
+  supporters: PartnersSupporter[];
 }
 
 interface ImpactReportForm {
@@ -749,6 +796,7 @@ interface ImpactReportForm {
   programs: ProgramsSection;
   locations: LocationsSection;
   testimonials: TestimonialSection;
+  partners: PartnersSection;
 }
 
 const DEFAULT_SWATCH_SIZE = 6;
@@ -971,67 +1019,124 @@ function ImpactReportCustomizationPage() {
       },
     },
     impact: {
-      title: "Our Impact",
-      stats: [
-        { id: "1", number: "500+", label: "Students Served" },
-        { id: "2", number: "15", label: "Years of Service" },
-        { id: "3", number: "95%", label: "Graduation Rate" },
-        { id: "4", number: "4", label: "Cities" },
-      ],
       enabled: true,
+      title: "Our Impact",
+      statsTitle: "IN 2024-2025...",
+      stats: [
+        { id: "1", number: 94, label: "made or maintained academic gains" },
+        { id: "2", number: 85, label: "showed measurable growth across PYD capacities" },
+        { id: "3", number: 90, label: "felt their mentor can be counted on for help" },
+        { id: "4", number: 87, label: "felt encouraged to work through difficult challenges" },
+      ],
+      highlightsTitle: "Core Capacities We Build",
+      highlightsSubtitle: "Growth we cultivate through mentorship, music-making, and healing-centered practice.",
+      capacities: [
+        { id: "1", title: "Academic Self‑Efficacy", iconKey: null },
+        { id: "2", title: "Positive Identity", iconKey: null },
+        { id: "3", title: "Self‑Management", iconKey: null },
+        { id: "4", title: "Social Skills", iconKey: null },
+        { id: "5", title: "Contribution", iconKey: null },
+      ],
     },
     programs: {
+      enabled: true,
       title: "Our Programs",
+      subtitle: "GOGO offers diverse programs led by professional artist mentors who are passionate about nurturing creativity, building confidence, and developing skills in young artists.",
       programs: [
         {
-          id: "1",
-          name: "Music Mentorship",
-          description: "One-on-one mentorship with professional musicians",
+          id: "m-power",
+          title: "M-Power Program",
+          description: "Our M-Power Mental Health and Wellness program has experienced remarkable expansion across all regions, emphasizing the need for comprehensive support services for both youth and mentors.",
+          icon: "🌱",
+          category: "wellness",
+          color: COLORS.gogo_pink,
+          features: [
+            "Enhanced curriculum with reflective, community-building circle sessions",
+            "Mentors lead interactive exercises that promote connection and growth",
+            "All staff trained in Youth Mental Health First Aid",
+            "Mental wellness fully integrated into every aspect of our programming",
+          ],
           image: null,
           imagePreview: null,
         },
         {
-          id: "2",
-          name: "Group Sessions",
-          description: "Collaborative learning in small groups",
+          id: "tasc",
+          title: "Pilot Program with the TASC Reporting Center",
+          description: "GOGO partnered with TASC to give justice-involved youth a voice through music, supporting support 39 Cook County youth on probation",
+          icon: "🎙️",
+          category: "music",
+          color: COLORS.gogo_yellow,
+          features: [
+            "Youth learned songwriting, rap, and music production from caring mentors",
+            "Safe, creative spaces helped build self-esteem and emotional resilience",
+            "Program addressed critical risks like incarceration, school dropout, and poor mental health",
+            "Mentees gained clarity, confidence, and a renewed sense of direction through music",
+          ],
+          image: null,
+          imagePreview: null,
+        },
+        {
+          id: "career-coaching",
+          title: "College and Career Coaching",
+          description: "Through individualized mentorship and partnerships, students receive guidance on college access, vocational pathways, and early career readiness — building on Zaya's model across regions.",
+          icon: "🎓",
+          category: "readiness",
+          color: COLORS.gogo_teal,
+          features: [
+            "Application and FAFSA support sessions with mentors",
+            "Career days with industry professionals and alumni mentors",
+            "Portfolio, resume, and audition prep integrated into programming",
+          ],
           image: null,
           imagePreview: null,
         },
       ],
-      enabled: true,
     },
     locations: {
-      title: "Our Locations",
-      locations: [
-        {
-          id: "1",
-          name: "Miami",
-          address: "Miami, FL",
-          coordinates: { lat: 25.7617, lng: -80.1918 },
-        },
-        {
-          id: "2",
-          name: "Chicago",
-          address: "Chicago, IL",
-          coordinates: { lat: 41.8781, lng: -87.6298 },
-        },
-      ],
       enabled: true,
+      title: "Our National Impact",
     },
     testimonials: {
-      title: "What Our Students Say",
-      testimonials: [
-        {
-          id: "1",
-          name: "Maria Rodriguez",
-          role: "Student, Miami",
-          content:
-            "Guitars Over Guns changed my life. I found my voice through music.",
-          image: null,
-          imagePreview: null,
-        },
-      ],
       enabled: true,
+      eyebrow: "Testimonial",
+      name: "Jayden Holmes",
+      quote: "Aside from all my awesome concert stories, my days in the alumni band are some of my best memories. From eighth grade all the way to senior year every Monday and Wednesday was the highlight of my week.",
+      attribution: "— 2023 Louis Salgar Award Winner",
+      image: null,
+      imagePreview: null,
+    },
+    partners: {
+      enabled: true,
+      title: "Our Supporters",
+      subtitle: "Thank you to every donor and partner—your generosity makes Guitars Over Guns possible.",
+      gridLabel: "Major Supporters ($25,000+)",
+      betweenNote: "The supporters below represent additional donors who make our work possible. Our $25,000+ list highlights a featured selection; please see the full roll at the link below.",
+      viewAllLink: "https://guitarsoverguns.org/supporters/",
+      donateLink: "https://www.classy.org/give/352794/#!/donation/checkout",
+      majorCounts: {
+        Foundations: 7,
+        'Corporate & Individual': 5,
+        Government: 3,
+        'Community & In‑Kind': 3,
+      },
+      supporters: [
+        { id: "1", name: "Helen V. Brach Foundation", color: COLORS.gogo_blue, category: "Foundations" },
+        { id: "2", name: "The Barry & Mimi Sternlicht Foundation", color: COLORS.gogo_purple, category: "Foundations" },
+        { id: "3", name: "Lovett‑Woodsum Foundation", color: COLORS.gogo_teal, category: "Foundations" },
+        { id: "4", name: "Margaret & Daniel Loeb Family Foundation", color: COLORS.gogo_yellow, category: "Foundations" },
+        { id: "5", name: "Cox‑Vadakan Foundation", color: COLORS.gogo_green, category: "Foundations" },
+        { id: "6", name: "The Howard & Paula Trienens Fund", color: COLORS.gogo_pink, category: "Foundations" },
+        { id: "7", name: "Shippy Foundation", color: "#60a5fa", category: "Foundations" },
+        { id: "8", name: "Daniel Lewis & Valerie Dillon", color: COLORS.gogo_purple, category: "Corporate & Individual" },
+        { id: "9", name: "Savage Content", color: COLORS.gogo_yellow, category: "Corporate & Individual" },
+        { id: "10", name: "Moss Foundation", color: COLORS.gogo_green, category: "Corporate & Individual" },
+        { id: "11", name: "MJ & Fred Wright", color: COLORS.gogo_teal, category: "Corporate & Individual" },
+        { id: "12", name: "Turner Investment Management", color: "#f59e0b", category: "Corporate & Individual" },
+        { id: "13", name: "Office of Senator Elgie R. Sims, Jr.", descriptor: "Illinois' 17th District", color: "#86efac", category: "Government" },
+        { id: "14", name: "Office of Senator Mattie Hunter", descriptor: "Illinois' 3rd District", color: "#93c5fd", category: "Government" },
+        { id: "15", name: "Office of Senator Robert Peters", descriptor: "Illinois' 13th District", color: "#fda4af", category: "Government" },
+        { id: "16", name: "McDermott Will & Emery", color: "#c4b5fd", category: "Community & In‑Kind" },
+      ],
     },
   });
 
@@ -1069,28 +1174,11 @@ function ImpactReportCustomizationPage() {
   );
   const [lastDeletedStat, setLastDeletedStat] = useState<{
     index: number;
-    item: { id: string; number: string; label: string };
+    item: { id: string; number: number; label: string };
   } | null>(null);
   const [lastDeletedProgram, setLastDeletedProgram] = useState<{
     index: number;
-    item: {
-      id: string;
-      name: string;
-      description: string;
-      image: File | null;
-      imagePreview: string | null;
-    };
-  } | null>(null);
-  const [lastDeletedTestimonial, setLastDeletedTestimonial] = useState<{
-    index: number;
-    item: {
-      id: string;
-      name: string;
-      role: string;
-      content: string;
-      image: File | null;
-      imagePreview: string | null;
-    };
+    item: ProgramsProgram;
   } | null>(null);
   const [colorPickerAnchor, setColorPickerAnchor] =
     useState<HTMLElement | null>(null);
@@ -1444,66 +1532,6 @@ function ImpactReportCustomizationPage() {
     });
   };
 
-  // Handle testimonial changes
-  const handleTestimonialChange = (
-    testimonialIndex: number,
-    field: string,
-    value: any,
-  ) => {
-    const updatedTestimonials = [...impactReportForm.testimonials.testimonials];
-    updatedTestimonials[testimonialIndex] = {
-      ...updatedTestimonials[testimonialIndex],
-      [field]: value,
-    };
-    handleSectionChange("testimonials", "testimonials", updatedTestimonials);
-  };
-
-  // Add testimonial
-  const handleAddTestimonial = () => {
-    const newTestimonial = {
-      id: uuidv4(),
-      name: "",
-      role: "",
-      content: "",
-      image: null,
-      imagePreview: null,
-    };
-    handleSectionChange("testimonials", "testimonials", [
-      ...impactReportForm.testimonials.testimonials,
-      newTestimonial,
-    ]);
-  };
-
-  // Remove testimonial
-  const handleRemoveTestimonial = (index: number) => {
-    const removed = impactReportForm.testimonials.testimonials[index];
-    const updatedTestimonials =
-      impactReportForm.testimonials.testimonials.filter((_, i) => i !== index);
-    handleSectionChange("testimonials", "testimonials", updatedTestimonials);
-    setLastDeletedTestimonial({ index, item: removed });
-    enqueueSnackbar("Testimonial deleted", {
-      variant: "info",
-      action: (
-        <Button
-          color="inherit"
-          size="small"
-          onClick={() => {
-            setImpactReportForm((prev) => {
-              const testimonials = [...prev.testimonials.testimonials];
-              testimonials.splice(index, 0, removed);
-              return {
-                ...prev,
-                testimonials: { ...prev.testimonials, testimonials },
-              };
-            });
-            setLastDeletedTestimonial(null);
-          }}
-        >
-          Undo
-        </Button>
-      ),
-    });
-  };
 
   // Prefill from backend
   useEffect(() => {
@@ -2552,6 +2580,16 @@ function ImpactReportCustomizationPage() {
                           previewMode
                           missionOverride={debouncedMissionOverride as any}
                         />
+                      ) : currentTab === 3 ? (
+                        <MemoProgramsSection />
+                      ) : currentTab === 4 ? (
+                        <MemoImpactSection />
+                      ) : currentTab === 5 ? (
+                        <MemoLocationsSection />
+                      ) : currentTab === 6 ? (
+                        <MemoSingleQuoteSection />
+                      ) : currentTab === 7 ? (
+                        <MemoPartnersSection />
                       ) : (
                         <MemoHeroSection
                           previewMode
@@ -4510,6 +4548,1053 @@ function ImpactReportCustomizationPage() {
                   />
                 </Box>
               )}
+
+              {/* Programs Section */}
+              {currentTab === 3 && (
+                <Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      mb: 3,
+                    }}
+                  >
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        fontFamily:
+                          "'Airwaves', 'Century Gothic', 'Arial', sans-serif",
+                      }}
+                    >
+                      Programs Section
+                    </Typography>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={impactReportForm.programs.enabled}
+                          onChange={(e) =>
+                            handleSectionChange(
+                              "programs",
+                              "enabled",
+                              e.target.checked,
+                            )
+                          }
+                          sx={{
+                            "& .MuiSwitch-switchBase.Mui-checked": {
+                              color: COLORS.gogo_green,
+                            },
+                            "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                            {
+                              backgroundColor: COLORS.gogo_green,
+                            },
+                          }}
+                        />
+                      }
+                      label={impactReportForm.programs.enabled ? "Enabled" : "Disabled"}
+                    />
+                  </Box>
+
+                  <Grid container spacing={{ xs: 2, md: 3 }}>
+                    <Grid item xs={12}>
+                      <CustomTextField
+                        label="Section Title"
+                        value={impactReportForm.programs.title}
+                        onChange={(e) =>
+                          handleSectionChange("programs", "title", e.target.value)
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <CustomTextField
+                        label="Subtitle"
+                        value={impactReportForm.programs.subtitle}
+                        onChange={(e) =>
+                          handleSectionChange("programs", "subtitle", e.target.value)
+                        }
+                        fullWidth
+                        multiline
+                        rows={3}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12}>
+                      <Divider sx={{ my: 3 }} />
+                      <Typography variant="h6" sx={{ mb: 2 }}>
+                        Programs
+                      </Typography>
+                    </Grid>
+                    {impactReportForm.programs.programs.map((program, idx) => (
+                      <Grid item xs={12} key={program.id}>
+                        <Card sx={{ bgcolor: "rgba(255,255,255,0.05)" }}>
+                          <CardContent>
+                            <Grid container spacing={2}>
+                              <Grid item xs={12} sm={6}>
+                                <CustomTextField
+                                  label="Program Title"
+                                  value={program.title}
+                                  onChange={(e) => {
+                                    const next = [...impactReportForm.programs.programs];
+                                    next[idx] = { ...next[idx], title: e.target.value };
+                                    handleSectionChange("programs", "programs", next);
+                                  }}
+                                  fullWidth
+                                />
+                              </Grid>
+                              <Grid item xs={12} sm={6}>
+                                <CustomTextField
+                                  label="Category"
+                                  value={program.category}
+                                  onChange={(e) => {
+                                    const next = [...impactReportForm.programs.programs];
+                                    next[idx] = { ...next[idx], category: e.target.value };
+                                    handleSectionChange("programs", "programs", next);
+                                  }}
+                                  fullWidth
+                                />
+                              </Grid>
+                              <Grid item xs={12}>
+                                <CustomTextField
+                                  label="Description"
+                                  value={program.description}
+                                  onChange={(e) => {
+                                    const next = [...impactReportForm.programs.programs];
+                                    next[idx] = { ...next[idx], description: e.target.value };
+                                    handleSectionChange("programs", "programs", next);
+                                  }}
+                                  fullWidth
+                                  multiline
+                                  rows={3}
+                                />
+                              </Grid>
+                              <Grid item xs={12} sm={6}>
+                                <CustomTextField
+                                  label="Icon (emoji)"
+                                  value={program.icon}
+                                  onChange={(e) => {
+                                    const next = [...impactReportForm.programs.programs];
+                                    next[idx] = { ...next[idx], icon: e.target.value };
+                                    handleSectionChange("programs", "programs", next);
+                                  }}
+                                  fullWidth
+                                  placeholder="🌱"
+                                />
+                              </Grid>
+                              <Grid item xs={12} sm={6}>
+                                <CustomTextField
+                                  label="Color"
+                                  value={program.color}
+                                  onChange={(e) => {
+                                    const next = [...impactReportForm.programs.programs];
+                                    next[idx] = { ...next[idx], color: e.target.value };
+                                    handleSectionChange("programs", "programs", next);
+                                  }}
+                                  fullWidth
+                                  InputProps={{
+                                    startAdornment: (
+                                      <Box
+                                        sx={{
+                                          width: 24,
+                                          height: 24,
+                                          borderRadius: 1,
+                                          bgcolor: program.color,
+                                          border: "1px solid rgba(255,255,255,0.2)",
+                                          mr: 1,
+                                        }}
+                                      />
+                                    ),
+                                  }}
+                                />
+                              </Grid>
+                              <Grid item xs={12}>
+                                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                                  Features
+                                </Typography>
+                                {program.features.map((feature, featureIdx) => (
+                                  <Box key={featureIdx} sx={{ display: "flex", gap: 1, mb: 1 }}>
+                                    <CustomTextField
+                                      value={feature}
+                                      onChange={(e) => {
+                                        const next = [...impactReportForm.programs.programs];
+                                        const nextFeatures = [...next[idx].features];
+                                        nextFeatures[featureIdx] = e.target.value;
+                                        next[idx] = { ...next[idx], features: nextFeatures };
+                                        handleSectionChange("programs", "programs", next);
+                                      }}
+                                      fullWidth
+                                      size="small"
+                                    />
+                                    <IconButton
+                                      onClick={() => {
+                                        const next = [...impactReportForm.programs.programs];
+                                        const nextFeatures = next[idx].features.filter(
+                                          (_, i) => i !== featureIdx,
+                                        );
+                                        next[idx] = { ...next[idx], features: nextFeatures };
+                                        handleSectionChange("programs", "programs", next);
+                                      }}
+                                      color="error"
+                                      size="small"
+                                    >
+                                      <DeleteIcon />
+                                    </IconButton>
+                                  </Box>
+                                ))}
+                                <Button
+                                  size="small"
+                                  startIcon={<AddIcon />}
+                                  onClick={() => {
+                                    const next = [...impactReportForm.programs.programs];
+                                    next[idx] = {
+                                      ...next[idx],
+                                      features: [...next[idx].features, ""],
+                                    };
+                                    handleSectionChange("programs", "programs", next);
+                                  }}
+                                >
+                                  Add Feature
+                                </Button>
+                              </Grid>
+                              <Grid item xs={12} sm={6}>
+                                <Button
+                                  component="label"
+                                  variant="outlined"
+                                  startIcon={<CloudUploadIcon />}
+                                  fullWidth
+                                >
+                                  Upload Image
+                                  <input
+                                    type="file"
+                                    hidden
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (!file) return;
+                                      const reader = new FileReader();
+                                      reader.onloadend = () => {
+                                        const next = [...impactReportForm.programs.programs];
+                                        next[idx] = {
+                                          ...next[idx],
+                                          image: file,
+                                          imagePreview: reader.result as string,
+                                        };
+                                        handleSectionChange("programs", "programs", next);
+                                      };
+                                      reader.readAsDataURL(file);
+                                    }}
+                                  />
+                                </Button>
+                              </Grid>
+                              {program.imagePreview && (
+                                <Grid item xs={12} sm={6}>
+                                  <Box
+                                    component="img"
+                                    src={program.imagePreview}
+                                    alt="Preview"
+                                    sx={{
+                                      maxWidth: "100%",
+                                      maxHeight: 200,
+                                      borderRadius: 1,
+                                    }}
+                                  />
+                                </Grid>
+                              )}
+                              <Grid item xs={12}>
+                                <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                                  <IconButton
+                                    onClick={() => {
+                                      const next = impactReportForm.programs.programs.filter(
+                                        (_, i) => i !== idx,
+                                      );
+                                      handleSectionChange("programs", "programs", next);
+                                    }}
+                                    color="error"
+                                  >
+                                    <DeleteIcon />
+                                  </IconButton>
+                                </Box>
+                              </Grid>
+                            </Grid>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                    <Grid item xs={12}>
+                      <Button
+                        startIcon={<AddIcon />}
+                        variant="outlined"
+                        onClick={() => {
+                          const next = [
+                            ...impactReportForm.programs.programs,
+                            {
+                              id: uuidv4(),
+                              title: "",
+                              description: "",
+                              icon: "🎵",
+                              category: "music",
+                              color: COLORS.gogo_blue,
+                              features: [],
+                              image: null,
+                              imagePreview: null,
+                            },
+                          ];
+                          handleSectionChange("programs", "programs", next);
+                        }}
+                      >
+                        Add Program
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </Box>
+              )}
+
+              {/* Impact Section */}
+              {currentTab === 4 && (
+                <Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      mb: 3,
+                    }}
+                  >
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        fontFamily:
+                          "'Airwaves', 'Century Gothic', 'Arial', sans-serif",
+                      }}
+                    >
+                      Impact Section
+                    </Typography>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={impactReportForm.impact.enabled}
+                          onChange={(e) =>
+                            handleSectionChange(
+                              "impact",
+                              "enabled",
+                              e.target.checked,
+                            )
+                          }
+                          sx={{
+                            "& .MuiSwitch-switchBase.Mui-checked": {
+                              color: COLORS.gogo_green,
+                            },
+                            "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                            {
+                              backgroundColor: COLORS.gogo_green,
+                            },
+                          }}
+                        />
+                      }
+                      label={impactReportForm.impact.enabled ? "Enabled" : "Disabled"}
+                    />
+                  </Box>
+
+                  <Grid container spacing={{ xs: 2, md: 3 }}>
+                    <Grid item xs={12}>
+                      <CustomTextField
+                        label="Section Title"
+                        value={impactReportForm.impact.title}
+                        onChange={(e) =>
+                          handleSectionChange("impact", "title", e.target.value)
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <CustomTextField
+                        label="Stats Title"
+                        value={impactReportForm.impact.statsTitle}
+                        onChange={(e) =>
+                          handleSectionChange("impact", "statsTitle", e.target.value)
+                        }
+                        fullWidth
+                        placeholder="IN 2024-2025..."
+                      />
+                    </Grid>
+
+                    <Grid item xs={12}>
+                      <Divider sx={{ my: 3 }} />
+                      <Typography variant="h6" sx={{ mb: 2 }}>
+                        Impact Stats
+                      </Typography>
+                    </Grid>
+                    {impactReportForm.impact.stats.map((stat, idx) => (
+                      <Grid item xs={12} key={stat.id}>
+                        <Card sx={{ bgcolor: "rgba(255,255,255,0.05)" }}>
+                          <CardContent>
+                            <Grid container spacing={2}>
+                              <Grid item xs={12} sm={4}>
+                                <CustomTextField
+                                  label="Number"
+                                  type="number"
+                                  value={stat.number}
+                                  onChange={(e) => {
+                                    const next = [...impactReportForm.impact.stats];
+                                    next[idx] = {
+                                      ...next[idx],
+                                      number: parseInt(e.target.value) || 0,
+                                    };
+                                    handleSectionChange("impact", "stats", next);
+                                  }}
+                                  fullWidth
+                                />
+                              </Grid>
+                              <Grid item xs={12} sm={8}>
+                                <CustomTextField
+                                  label="Label"
+                                  value={stat.label}
+                                  onChange={(e) => {
+                                    const next = [...impactReportForm.impact.stats];
+                                    next[idx] = { ...next[idx], label: e.target.value };
+                                    handleSectionChange("impact", "stats", next);
+                                  }}
+                                  fullWidth
+                                />
+                              </Grid>
+                              <Grid item xs={12}>
+                                <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                                  <IconButton
+                                    onClick={() => {
+                                      const next = impactReportForm.impact.stats.filter(
+                                        (_, i) => i !== idx,
+                                      );
+                                      handleSectionChange("impact", "stats", next);
+                                    }}
+                                    color="error"
+                                  >
+                                    <DeleteIcon />
+                                  </IconButton>
+                                </Box>
+                              </Grid>
+                            </Grid>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                    <Grid item xs={12}>
+                      <Button
+                        startIcon={<AddIcon />}
+                        variant="outlined"
+                        onClick={() => {
+                          const next = [
+                            ...impactReportForm.impact.stats,
+                            {
+                              id: uuidv4(),
+                              number: 0,
+                              label: "",
+                            },
+                          ];
+                          handleSectionChange("impact", "stats", next);
+                        }}
+                      >
+                        Add Stat
+                      </Button>
+                    </Grid>
+
+                    <Grid item xs={12}>
+                      <Divider sx={{ my: 3 }} />
+                      <Typography variant="h6" sx={{ mb: 2 }}>
+                        Highlights
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <CustomTextField
+                        label="Highlights Title"
+                        value={impactReportForm.impact.highlightsTitle}
+                        onChange={(e) =>
+                          handleSectionChange("impact", "highlightsTitle", e.target.value)
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <CustomTextField
+                        label="Highlights Subtitle"
+                        value={impactReportForm.impact.highlightsSubtitle}
+                        onChange={(e) =>
+                          handleSectionChange("impact", "highlightsSubtitle", e.target.value)
+                        }
+                        fullWidth
+                        multiline
+                        rows={2}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="subtitle2" sx={{ mb: 2, mt: 2 }}>
+                        Core Capacities
+                      </Typography>
+                      {impactReportForm.impact.capacities.map((capacity, idx) => (
+                        <Box key={capacity.id} sx={{ display: "flex", gap: 1, mb: 1 }}>
+                          <CustomTextField
+                            value={capacity.title}
+                            onChange={(e) => {
+                              const next = [...impactReportForm.impact.capacities];
+                              next[idx] = { ...next[idx], title: e.target.value };
+                              handleSectionChange("impact", "capacities", next);
+                            }}
+                            fullWidth
+                            size="small"
+                          />
+                          <IconButton
+                            onClick={() => {
+                              const next = impactReportForm.impact.capacities.filter(
+                                (_, i) => i !== idx,
+                              );
+                              handleSectionChange("impact", "capacities", next);
+                            }}
+                            color="error"
+                            size="small"
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Box>
+                      ))}
+                      <Button
+                        size="small"
+                        startIcon={<AddIcon />}
+                        onClick={() => {
+                          const next = [
+                            ...impactReportForm.impact.capacities,
+                            {
+                              id: uuidv4(),
+                              title: "",
+                              iconKey: null,
+                            },
+                          ];
+                          handleSectionChange("impact", "capacities", next);
+                        }}
+                      >
+                        Add Capacity
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </Box>
+              )}
+
+              {/* Locations Section */}
+              {currentTab === 5 && (
+                <Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      mb: 3,
+                    }}
+                  >
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        fontFamily:
+                          "'Airwaves', 'Century Gothic', 'Arial', sans-serif",
+                      }}
+                    >
+                      Locations Section
+                    </Typography>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={impactReportForm.locations.enabled}
+                          onChange={(e) =>
+                            handleSectionChange(
+                              "locations",
+                              "enabled",
+                              e.target.checked,
+                            )
+                          }
+                          sx={{
+                            "& .MuiSwitch-switchBase.Mui-checked": {
+                              color: COLORS.gogo_green,
+                            },
+                            "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                            {
+                              backgroundColor: COLORS.gogo_green,
+                            },
+                          }}
+                        />
+                      }
+                      label={impactReportForm.locations.enabled ? "Enabled" : "Disabled"}
+                    />
+                  </Box>
+
+                  <Grid container spacing={{ xs: 2, md: 3 }}>
+                    <Grid item xs={12}>
+                      <CustomTextField
+                        label="Section Title"
+                        value={impactReportForm.locations.title}
+                        onChange={(e) =>
+                          handleSectionChange("locations", "title", e.target.value)
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.7)", mt: 2 }}>
+                        Note: The map locations are managed by the EnhancedLeafletMap component.
+                        Map customization will be available in a future update.
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Box>
+              )}
+
+              {/* Testimonials Section */}
+              {currentTab === 6 && (
+                <Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      mb: 3,
+                    }}
+                  >
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        fontFamily:
+                          "'Airwaves', 'Century Gothic', 'Arial', sans-serif",
+                      }}
+                    >
+                      Testimonials Section
+                    </Typography>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={impactReportForm.testimonials.enabled}
+                          onChange={(e) =>
+                            handleSectionChange(
+                              "testimonials",
+                              "enabled",
+                              e.target.checked,
+                            )
+                          }
+                          sx={{
+                            "& .MuiSwitch-switchBase.Mui-checked": {
+                              color: COLORS.gogo_green,
+                            },
+                            "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                            {
+                              backgroundColor: COLORS.gogo_green,
+                            },
+                          }}
+                        />
+                      }
+                      label={impactReportForm.testimonials.enabled ? "Enabled" : "Disabled"}
+                    />
+                  </Box>
+
+                  <Grid container spacing={{ xs: 2, md: 3 }}>
+                    <Grid item xs={12}>
+                      <CustomTextField
+                        label="Eyebrow Text"
+                        value={impactReportForm.testimonials.eyebrow}
+                        onChange={(e) =>
+                          handleSectionChange("testimonials", "eyebrow", e.target.value)
+                        }
+                        fullWidth
+                        placeholder="Testimonial"
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <CustomTextField
+                        label="Name"
+                        value={impactReportForm.testimonials.name}
+                        onChange={(e) =>
+                          handleSectionChange("testimonials", "name", e.target.value)
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <CustomTextField
+                        label="Quote"
+                        value={impactReportForm.testimonials.quote}
+                        onChange={(e) =>
+                          handleSectionChange("testimonials", "quote", e.target.value)
+                        }
+                        fullWidth
+                        multiline
+                        rows={4}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <CustomTextField
+                        label="Attribution"
+                        value={impactReportForm.testimonials.attribution}
+                        onChange={(e) =>
+                          handleSectionChange("testimonials", "attribution", e.target.value)
+                        }
+                        fullWidth
+                        placeholder="— 2023 Louis Salgar Award Winner"
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Button
+                        component="label"
+                        variant="outlined"
+                        startIcon={<CloudUploadIcon />}
+                        fullWidth
+                      >
+                        Upload Image
+                        <input
+                          type="file"
+                          hidden
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              setImpactReportForm((prev) => ({
+                                ...prev,
+                                testimonials: {
+                                  ...prev.testimonials,
+                                  image: file,
+                                  imagePreview: reader.result as string,
+                                },
+                              }));
+                            };
+                            reader.readAsDataURL(file);
+                          }}
+                        />
+                      </Button>
+                    </Grid>
+                    {impactReportForm.testimonials.imagePreview && (
+                      <Grid item xs={12}>
+                        <Box
+                          component="img"
+                          src={impactReportForm.testimonials.imagePreview}
+                          alt="Preview"
+                          sx={{
+                            maxWidth: "100%",
+                            maxHeight: 400,
+                            borderRadius: 1,
+                          }}
+                        />
+                      </Grid>
+                    )}
+                  </Grid>
+                </Box>
+              )}
+
+              {/* Partners Section */}
+              {currentTab === 7 && (
+                <Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      mb: 3,
+                    }}
+                  >
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        fontFamily:
+                          "'Airwaves', 'Century Gothic', 'Arial', sans-serif",
+                      }}
+                    >
+                      Partners Section
+                    </Typography>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={impactReportForm.partners.enabled}
+                          onChange={(e) =>
+                            handleSectionChange(
+                              "partners",
+                              "enabled",
+                              e.target.checked,
+                            )
+                          }
+                          sx={{
+                            "& .MuiSwitch-switchBase.Mui-checked": {
+                              color: COLORS.gogo_green,
+                            },
+                            "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                            {
+                              backgroundColor: COLORS.gogo_green,
+                            },
+                          }}
+                        />
+                      }
+                      label={impactReportForm.partners.enabled ? "Enabled" : "Disabled"}
+                    />
+                  </Box>
+
+                  <Grid container spacing={{ xs: 2, md: 3 }}>
+                    <Grid item xs={12}>
+                      <CustomTextField
+                        label="Section Title"
+                        value={impactReportForm.partners.title}
+                        onChange={(e) =>
+                          handleSectionChange("partners", "title", e.target.value)
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <CustomTextField
+                        label="Subtitle"
+                        value={impactReportForm.partners.subtitle}
+                        onChange={(e) =>
+                          handleSectionChange("partners", "subtitle", e.target.value)
+                        }
+                        fullWidth
+                        multiline
+                        rows={2}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <CustomTextField
+                        label="Grid Label"
+                        value={impactReportForm.partners.gridLabel}
+                        onChange={(e) =>
+                          handleSectionChange("partners", "gridLabel", e.target.value)
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <CustomTextField
+                        label="Between Note"
+                        value={impactReportForm.partners.betweenNote}
+                        onChange={(e) =>
+                          handleSectionChange("partners", "betweenNote", e.target.value)
+                        }
+                        fullWidth
+                        multiline
+                        rows={3}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <CustomTextField
+                        label="View All Link"
+                        value={impactReportForm.partners.viewAllLink}
+                        onChange={(e) =>
+                          handleSectionChange("partners", "viewAllLink", e.target.value)
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <CustomTextField
+                        label="Donate Link"
+                        value={impactReportForm.partners.donateLink}
+                        onChange={(e) =>
+                          handleSectionChange("partners", "donateLink", e.target.value)
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+
+                    {/* Major Counts */}
+                    <Grid item xs={12}>
+                      <Typography variant="h6" sx={{ mb: 2, mt: 2 }}>
+                        Major Supporter Counts
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <CustomTextField
+                        label="Foundations"
+                        type="number"
+                        value={impactReportForm.partners.majorCounts.Foundations}
+                        onChange={(e) =>
+                          handleSectionChange("partners", "majorCounts", {
+                            ...impactReportForm.partners.majorCounts,
+                            Foundations: parseInt(e.target.value) || 0,
+                          })
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <CustomTextField
+                        label="Corporate & Individual"
+                        type="number"
+                        value={impactReportForm.partners.majorCounts['Corporate & Individual']}
+                        onChange={(e) =>
+                          handleSectionChange("partners", "majorCounts", {
+                            ...impactReportForm.partners.majorCounts,
+                            'Corporate & Individual': parseInt(e.target.value) || 0,
+                          })
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <CustomTextField
+                        label="Government"
+                        type="number"
+                        value={impactReportForm.partners.majorCounts.Government}
+                        onChange={(e) =>
+                          handleSectionChange("partners", "majorCounts", {
+                            ...impactReportForm.partners.majorCounts,
+                            Government: parseInt(e.target.value) || 0,
+                          })
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <CustomTextField
+                        label="Community & In‑Kind"
+                        type="number"
+                        value={impactReportForm.partners.majorCounts['Community & In‑Kind']}
+                        onChange={(e) =>
+                          handleSectionChange("partners", "majorCounts", {
+                            ...impactReportForm.partners.majorCounts,
+                            'Community & In‑Kind': parseInt(e.target.value) || 0,
+                          })
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+
+                    {/* Supporters List */}
+                    <Grid item xs={12}>
+                      <Divider sx={{ my: 3 }} />
+                      <Typography variant="h6" sx={{ mb: 2 }}>
+                        Supporters
+                      </Typography>
+                    </Grid>
+                    {impactReportForm.partners.supporters.map((supporter, idx) => (
+                      <Grid item xs={12} key={supporter.id}>
+                        <Card sx={{ bgcolor: "rgba(255,255,255,0.05)" }}>
+                          <CardContent>
+                            <Grid container spacing={2}>
+                              <Grid item xs={12} sm={6}>
+                                <CustomTextField
+                                  label="Name"
+                                  value={supporter.name}
+                                  onChange={(e) => {
+                                    const next = [...impactReportForm.partners.supporters];
+                                    next[idx] = { ...next[idx], name: e.target.value };
+                                    handleSectionChange("partners", "supporters", next);
+                                  }}
+                                  fullWidth
+                                />
+                              </Grid>
+                              <Grid item xs={12} sm={6}>
+                                <CustomTextField
+                                  label="Category"
+                                  select
+                                  value={supporter.category}
+                                  onChange={(e) => {
+                                    const next = [...impactReportForm.partners.supporters];
+                                    next[idx] = { ...next[idx], category: e.target.value as any };
+                                    handleSectionChange("partners", "supporters", next);
+                                  }}
+                                  fullWidth
+                                >
+                                  <MenuItem value="Foundations">Foundations</MenuItem>
+                                  <MenuItem value="Corporate & Individual">Corporate & Individual</MenuItem>
+                                  <MenuItem value="Government">Government</MenuItem>
+                                  <MenuItem value="Community & In‑Kind">Community & In‑Kind</MenuItem>
+                                </CustomTextField>
+                              </Grid>
+                              <Grid item xs={12} sm={6}>
+                                <CustomTextField
+                                  label="Descriptor (optional)"
+                                  value={supporter.descriptor || ""}
+                                  onChange={(e) => {
+                                    const next = [...impactReportForm.partners.supporters];
+                                    next[idx] = { ...next[idx], descriptor: e.target.value || undefined };
+                                    handleSectionChange("partners", "supporters", next);
+                                  }}
+                                  fullWidth
+                                />
+                              </Grid>
+                              <Grid item xs={12} sm={6}>
+                                <CustomTextField
+                                  label="URL (optional)"
+                                  value={supporter.url || ""}
+                                  onChange={(e) => {
+                                    const next = [...impactReportForm.partners.supporters];
+                                    next[idx] = { ...next[idx], url: e.target.value || undefined };
+                                    handleSectionChange("partners", "supporters", next);
+                                  }}
+                                  fullWidth
+                                />
+                              </Grid>
+                              <Grid item xs={12} sm={6}>
+                                <CustomTextField
+                                  label="Color"
+                                  value={supporter.color}
+                                  onChange={(e) => {
+                                    const next = [...impactReportForm.partners.supporters];
+                                    next[idx] = { ...next[idx], color: e.target.value };
+                                    handleSectionChange("partners", "supporters", next);
+                                  }}
+                                  fullWidth
+                                  InputProps={{
+                                    startAdornment: (
+                                      <Box
+                                        sx={{
+                                          width: 24,
+                                          height: 24,
+                                          borderRadius: 1,
+                                          bgcolor: supporter.color,
+                                          border: "1px solid rgba(255,255,255,0.2)",
+                                          mr: 1,
+                                        }}
+                                      />
+                                    ),
+                                  }}
+                                />
+                              </Grid>
+                              <Grid item xs={12} sm={6}>
+                                <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                                  <IconButton
+                                    onClick={() => {
+                                      const next = impactReportForm.partners.supporters.filter(
+                                        (_, i) => i !== idx,
+                                      );
+                                      handleSectionChange("partners", "supporters", next);
+                                    }}
+                                    color="error"
+                                  >
+                                    <DeleteIcon />
+                                  </IconButton>
+                                </Box>
+                              </Grid>
+                            </Grid>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                    <Grid item xs={12}>
+                      <Button
+                        startIcon={<AddIcon />}
+                        variant="outlined"
+                        onClick={() => {
+                          const next = [
+                            ...impactReportForm.partners.supporters,
+                            {
+                              id: uuidv4(),
+                              name: "",
+                              category: "Foundations" as const,
+                              color: COLORS.gogo_blue,
+                            },
+                          ];
+                          handleSectionChange("partners", "supporters", next);
+                        }}
+                      >
+                        Add Supporter
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </Box>
+              )}
+
 
               {/* Impact Stats Section removed */}
 
