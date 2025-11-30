@@ -345,37 +345,42 @@ export function MethodTabEditor({
           <Box
             sx={{
               display: 'flex',
+              flexDirection: 'column',
               gap: 2,
-              alignItems: 'flex-start',
               p: 2,
               bgcolor: 'rgba(255,255,255,0.03)',
               borderRadius: 2,
               border: '1px solid rgba(255,255,255,0.08)',
             }}
           >
-            <Box sx={{ width: 200 }}>
-              <IconSelector
-                label="Icon"
-                value={item.iconKey ?? ''}
-                onChange={(key) => updateMethodItem(idx, 'iconKey', key)}
-                allowNone={false}
-              />
+            {/* First row: Icon selector + delete button */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ width: 200 }}>
+                <IconSelector
+                  label="Icon"
+                  value={item.iconKey ?? ''}
+                  onChange={(key) => updateMethodItem(idx, 'iconKey', key)}
+                  allowNone={false}
+                />
+              </Box>
+              <Box sx={{ flex: 1 }} />
+              <IconButton
+                onClick={() => removeMethodItem(idx)}
+                sx={{ color: 'rgba(255,255,255,0.5)' }}
+                disabled={methodItems.length <= 1}
+              >
+                <DeleteIcon />
+              </IconButton>
             </Box>
+            {/* Second row: Text field */}
             <CustomTextField
               label="Text"
               value={item.text}
               onChange={(e) => updateMethodItem(idx, 'text', e.target.value)}
-              sx={{ flex: 1 }}
+              fullWidth
               multiline
               rows={2}
             />
-            <IconButton
-              onClick={() => removeMethodItem(idx)}
-              sx={{ color: 'rgba(255,255,255,0.5)' }}
-              disabled={methodItems.length <= 1}
-            >
-              <DeleteIcon />
-            </IconButton>
           </Box>
         </Grid>
       ))}
