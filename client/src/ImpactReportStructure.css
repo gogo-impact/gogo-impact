@@ -31,7 +31,7 @@ body {
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+  overflow-x: clip; /* Use clip instead of hidden to preserve sticky behavior */
   position: relative;
 }
 
@@ -58,7 +58,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible {
   margin: 0;
   padding: 0;
   background: linear-gradient(to bottom, #111111, var(--spotify-black) 20%);
-  overflow-x: hidden;
+  overflow-x: clip; /* Use clip instead of hidden to preserve sticky behavior */
   position: relative;
   min-height: 100vh;
   padding-bottom: 90px; /* Ensure content doesn't go behind the now playing bar */
@@ -1856,7 +1856,7 @@ body.has-spotify-header {
   ); /* 100vh - (header height + now-playing bar height) */
   position: relative;
   width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip; /* Use clip instead of hidden to preserve sticky behavior */
 }
 
 /* Add playlist track-like items */

@@ -11,9 +11,10 @@ import 'leaflet/dist/leaflet.css';
 import './EnhancedLeafletMap.css';
 import styled from 'styled-components';
 import COLORS from '../../../assets/colors.ts';
-import regions from './data/regions';
+import defaultRegions from './data/regions';
 import { darkenColor, lightenColor } from './utils/colorHelpers';
 import { Region, Sublocation } from './types';
+import { MapRegion as ApiMapRegion, MapLocation as ApiMapLocation } from '../../services/impact.api';
 
 // Import Leaflet images directly
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -85,8 +86,13 @@ const OverlayMessage = styled.div`
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 `;
 
-const OverlayButton = styled.button`
-  background: ${COLORS.gogo_blue};
+interface OverlayButtonProps {
+  $bgColor?: string;
+  $hoverBgColor?: string;
+}
+
+const OverlayButton = styled.button<OverlayButtonProps>`
+  background: ${(p) => p.$bgColor || COLORS.gogo_blue};
   color: white;
   border: none;
   padding: 10px 20px;
@@ -96,7 +102,7 @@ const OverlayButton = styled.button`
   transition: transform 0.2s ease, background-color 0.2s ease;
 
   &:hover {
-    background: ${COLORS.gogo_purple};
+    background: ${(p) => p.$hoverBgColor || COLORS.gogo_purple};
     transform: scale(1.05);
   }
 `;
@@ -187,8 +193,96 @@ const BoundaryMessage = styled.div`
   transition: opacity 0.3s ease;
 `;
 
+// Props interface
+interface EnhancedLeafletMapProps {
+  regions?: ApiMapRegion[];
+  overlayButtonBgColor?: string;
+  overlayButtonHoverBgColor?: string;
+}
+
+// Transform API regions to internal format with sublocations
+function transformApiRegions(apiRegions: ApiMapRegion[]): Region[] {
+  return apiRegions.map((region) => {
+    // Calculate center from locations
+    const locations = region.locations || [];
+    let centerCoordinates: [number, number] = [39.8283, -98.5795]; // Default US center
+    
+    if (locations.length > 0) {
+      const avgLat = locations.reduce((sum, loc) => sum + loc.coordinates[0], 0) / locations.length;
+      const avgLng = locations.reduce((sum, loc) => sum + loc.coordinates[1], 0) / locations.length;
+      centerCoordinates = [avgLat, avgLng];
+    }
+
+    // Calculate bounds and zoom from locations spread
+    let defaultZoom = 10;
+    let maxBounds: [[number, number], [number, number]] | undefined;
+    
+    if (locations.length > 1) {
+      const lats = locations.map(l => l.coordinates[0]);
+      const lngs = locations.map(l => l.coordinates[1]);
+      const minLat = Math.min(...lats);
+      const maxLat = Math.max(...lats);
+      const minLng = Math.min(...lngs);
+      const maxLng = Math.max(...lngs);
+      
+      // Add padding
+      const latPad = (maxLat - minLat) * 0.3 || 0.1;
+      const lngPad = (maxLng - minLng) * 0.3 || 0.1;
+      maxBounds = [
+        [minLat - latPad, minLng - lngPad],
+        [maxLat + latPad, maxLng + lngPad],
+      ];
+      
+      // Estimate zoom based on spread
+      const latSpread = maxLat - minLat;
+      const lngSpread = maxLng - minLng;
+      const maxSpread = Math.max(latSpread, lngSpread);
+      if (maxSpread > 5) defaultZoom = 6;
+      else if (maxSpread > 2) defaultZoom = 8;
+      else if (maxSpread > 1) defaultZoom = 9;
+      else if (maxSpread > 0.5) defaultZoom = 10;
+      else defaultZoom = 11;
+    }
+
+    // Transform locations to sublocations format
+    const sublocations: Sublocation[] = locations.map((loc) => ({
+      id: loc.id,
+      name: loc.name,
+      coordinates: loc.coordinates,
+      type: loc.type || 'default',
+      description: loc.description || undefined,
+      address: loc.showAddress !== false ? loc.address : undefined,
+      website: loc.website || undefined,
+    }));
+
+    return {
+      id: region.id,
+      name: region.name,
+      centerCoordinates,
+      defaultZoom,
+      minZoom: 5,
+      maxZoom: 18,
+      color: region.color || COLORS.gogo_blue,
+      maxBounds,
+      sublocations,
+    };
+  });
+}
+
 // Component that uses Leaflet directly without React Context
-function EnhancedLeafletMap() {
+function EnhancedLeafletMap({
+  regions: apiRegions,
+  overlayButtonBgColor,
+  overlayButtonHoverBgColor,
+}: EnhancedLeafletMapProps) {
+  // Transform API regions or use defaults
+  const regions = useMemo(() => {
+    if (apiRegions && apiRegions.length > 0) {
+      return transformApiRegions(apiRegions);
+    }
+    return defaultRegions;
+  }, [apiRegions]);
+
   // Create a ref to store the map DOM element
   const mapRef = useRef(null);
   // Create a ref to store the map instance
@@ -210,7 +304,7 @@ function EnhancedLeafletMap() {
       return count + region.sublocations.length;
     }, 0);
     setTotalLocations(countLocations);
-  }, []);
+  }, [regions]);
 
   // Function to create a region marker icon
   const createRegionMarkerIcon = (color = COLORS.gogo_blue, name = '') => {
@@ -328,14 +422,24 @@ function EnhancedLeafletMap() {
 
     container.appendChild(title);
 
-    if (location.type) {
+    if (location.type && location.type !== 'default') {
       const typeElem = document.createElement('div');
-      typeElem.textContent = location.type.replace('-', ' ');
+      typeElem.textContent = location.type.replace(/-/g, ' ');
       typeElem.style.color = '#aaa';
       typeElem.style.fontSize = '12px';
       typeElem.style.marginBottom = '8px';
       typeElem.style.textTransform = 'uppercase';
       container.appendChild(typeElem);
+    }
+
+    if (location.address) {
+      const addressElem = document.createElement('div');
+      addressElem.textContent = location.address;
+      addressElem.style.color = '#ccc';
+      addressElem.style.fontSize = '13px';
+      addressElem.style.marginBottom = '8px';
+      addressElem.style.lineHeight = '1.3';
+      container.appendChild(addressElem);
     }
 
     if (location.description) {
@@ -346,6 +450,7 @@ function EnhancedLeafletMap() {
       container.appendChild(descElem);
     }
 
+    // Legacy support for mediums (from old data format)
     if (location.mediums && location.mediums.length > 0) {
       const mediumsTitle = document.createElement('div');
       mediumsTitle.textContent = 'Mediums';
@@ -382,6 +487,7 @@ function EnhancedLeafletMap() {
       container.appendChild(websiteLink);
     }
 
+    // Legacy support for extraText (from old data format)
     if (location.extraText) {
       const extraTextElem = document.createElement('div');
       extraTextElem.textContent = location.extraText;
@@ -875,7 +981,12 @@ function EnhancedLeafletMap() {
       {/* Add the overlay that will blur the map until clicked */}
       <MapOverlay $isVisible={showOverlay} onClick={handleOverlayClick}>
         <OverlayMessage>Interactive Map Available</OverlayMessage>
-        <OverlayButton>Click to Explore</OverlayButton>
+        <OverlayButton
+          $bgColor={overlayButtonBgColor}
+          $hoverBgColor={overlayButtonHoverBgColor}
+        >
+          Click to Explore
+        </OverlayButton>
       </MapOverlay>
     </MapContainer>
   );

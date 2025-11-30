@@ -23,7 +23,6 @@ const SECTION_IDS: string[] = [
   'financial',
   'method',
   'curriculum',
-  'programs',
   'impact',
   'music',
   'quote',
@@ -100,34 +99,73 @@ function Header(): JSX.Element {
       return;
     }
 
+    // Track which sections are currently visible
+    const visibleSections = new Map<string, IntersectionObserverEntry>();
+
+    // Find the section that is closest to the target point in the viewport
+    // (40% from the top - a point where we consider a section "active")
+    const updateActiveSection = () => {
+      const viewportHeight = window.innerHeight;
+      const targetPoint = viewportHeight * 0.4; // 40% from top of viewport
+
+      let bestSection: string | null = null;
+      let bestDistance = Infinity;
+
+      for (const id of SECTION_IDS) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+
+        const rect = el.getBoundingClientRect();
+        // Check if section is at least partially visible
+        if (rect.bottom < 0 || rect.top > viewportHeight) continue;
+
+        // Calculate how close the section's top is to our target point
+        // Give preference to sections whose top is at or above the target point
+        let distance: number;
+        if (rect.top <= targetPoint && rect.bottom >= targetPoint) {
+          // Target point is inside this section - highest priority
+          distance = 0;
+        } else if (rect.top > targetPoint) {
+          // Section is below target point
+          distance = rect.top - targetPoint;
+        } else {
+          // Section is above target point (section's bottom is above target)
+          distance = targetPoint - rect.bottom + 1000; // Penalize sections that have scrolled past
+        }
+
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          bestSection = id;
+        }
+      }
+
+      if (bestSection) {
+        setActiveSectionId((prev) => (prev === bestSection ? prev : bestSection));
+      }
+    };
+
     const observer = new IntersectionObserver(
       (entries) => {
-        // Choose the entry with the greatest intersection ratio (most visible)
-        // that corresponds to one of our known sections.
-        let bestEntry: IntersectionObserverEntry | null = null;
+        // Update our visibility tracking
         for (const entry of entries) {
           const target = entry.target as HTMLElement;
           if (!SECTION_IDS.includes(target.id)) continue;
-          if (!entry.isIntersecting && entry.intersectionRatio <= 0) continue;
-          if (!bestEntry || entry.intersectionRatio > bestEntry.intersectionRatio) {
-            bestEntry = entry;
+
+          if (entry.isIntersecting) {
+            visibleSections.set(target.id, entry);
+          } else {
+            visibleSections.delete(target.id);
           }
         }
 
-        if (bestEntry) {
-          const el = bestEntry.target as HTMLElement;
-          if (el.id && SECTION_IDS.includes(el.id)) {
-            setActiveSectionId((prev) =>
-              prev === el.id ? prev : el.id,
-            );
-          }
-        }
+        // Determine the active section based on viewport position
+        updateActiveSection();
       },
       {
-        // Trigger when roughly the middle of the viewport intersects the section.
         root: null,
-        rootMargin: '-35% 0px -55% 0px',
-        threshold: [0.2, 0.4, 0.6],
+        // Observe when any part of the section enters the viewport
+        rootMargin: '0px 0px 0px 0px',
+        threshold: [0, 0.1, 0.25, 0.5, 0.75, 1],
       },
     );
 
@@ -136,7 +174,17 @@ function Header(): JSX.Element {
       if (el) observer.observe(el);
     });
 
-    return () => observer.disconnect();
+    // Also listen to scroll events for smoother updates
+    const handleScroll = () => {
+      requestAnimationFrame(updateActiveSection);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   // Whenever the active section changes (via scrolling), keep the URL hash in
@@ -160,7 +208,6 @@ function Header(): JSX.Element {
     { label: 'Financial Overview', id: 'financial' },
     { label: 'Our Method', id: 'method' },
     { label: 'Curriculum', id: 'curriculum' },
-    { label: 'Programs', id: 'programs' },
     { label: 'Impact', id: 'impact' },
     { label: 'Hear Our Impact', id: 'music' },
     { label: 'Stories of Impact', id: 'quote' },
@@ -188,8 +235,6 @@ function Header(): JSX.Element {
         return <EqualizerOutlinedIcon fontSize="small" />;
       case 'curriculum':
         return <MenuBookOutlinedIcon fontSize="small" />;
-      case 'programs':
-        return <QueueMusicOutlinedIcon fontSize="small" />;
       case 'quote':
         return <FormatQuoteOutlinedIcon fontSize="small" />;
       case 'locations':

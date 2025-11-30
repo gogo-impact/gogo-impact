@@ -318,7 +318,11 @@ const DEFAULT_GOES_TO: FinancialPieItem[] = [
 ];
 
 interface FinancialAnalysisSectionProps {
+  /** Data passed directly from parent - used for production */
+  financialData?: FinancialContent;
+  /** Preview mode for admin editor */
   previewMode?: boolean;
+  /** Override data for admin preview */
   financialOverride?: FinancialContent | null;
 }
 
@@ -410,25 +414,31 @@ function AxisLabels({ width, height, years, maxY, axisLineColor, axisLabelColor 
 }
 
 function FinancialAnalysisSection({
+  financialData: externalData,
   previewMode = false,
   financialOverride,
 }: FinancialAnalysisSectionProps): JSX.Element {
-  const [financialData, setFinancialData] = useState<FinancialContent | null>(null);
+  const [internalData, setInternalData] = useState<FinancialContent | null>(externalData || null);
 
-  // Fetch data from API when not in preview mode
+  // Fetch data from API when not in preview mode and no external data
   useEffect(() => {
-    if (previewMode) return;
-    (async () => {
-      const data = await fetchFinancialContent();
-      if (data) setFinancialData(data);
-    })();
-  }, [previewMode]);
+    if (externalData) {
+      // externalData was provided by parent - use it directly
+      setInternalData(externalData);
+    } else if (!previewMode) {
+      // Backward compatibility: fetch data if no externalData provided
+      (async () => {
+        const data = await fetchFinancialContent();
+        if (data) setInternalData(data);
+      })();
+    }
+  }, [externalData, previewMode]);
 
-  // Use override in preview mode, otherwise use fetched data
+  // Use override in preview mode, externalData, or fetched data
   const effectiveData = useMemo(() => {
     if (previewMode && financialOverride) return financialOverride;
-    return financialData ?? {};
-  }, [previewMode, financialOverride, financialData]);
+    return externalData ?? internalData ?? {};
+  }, [previewMode, financialOverride, externalData, internalData]);
 
   const sectionRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<SVGSVGElement>(null);

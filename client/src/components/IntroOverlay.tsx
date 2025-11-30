@@ -152,58 +152,70 @@ type IntroPhase = 'loading' | 'cutout';
 
 type IntroOverlayProps = {
   onFinish?: () => void;
-  minimumDurationMs?: number;
+  /** When true, the overlay will keep showing the loading state until this becomes false */
+  isLoading?: boolean;
+  /** Extra delay in ms after loading completes before starting the exit animation */
+  postLoadDelayMs?: number;
 };
 
 function IntroOverlay({
   onFinish,
-  minimumDurationMs = 2000,
+  isLoading = false,
+  postLoadDelayMs = 2000,
 }: IntroOverlayProps): JSX.Element | null {
   const [phase, setPhase] = useState<IntroPhase>('loading');
   const [done, setDone] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
+  const [readyToExit, setReadyToExit] = useState(false);
   const loadingTextRef = useRef<HTMLDivElement>(null);
   const logoGroupRef = useRef<SVGGElement>(null);
+  const hasStartedExitRef = useRef(false);
 
+  // Fade in the loading text on mount
   useEffect(() => {
+    const loadingText = loadingTextRef.current;
+    if (loadingText) {
+      loadingText.classList.add('fade-in');
+    }
+  }, []);
+
+  // When loading completes, wait for postLoadDelayMs before allowing exit
+  useEffect(() => {
+    if (!isLoading && !readyToExit) {
+      const timeout = window.setTimeout(() => {
+        setReadyToExit(true);
+      }, postLoadDelayMs);
+      return () => window.clearTimeout(timeout);
+    }
+  }, [isLoading, readyToExit, postLoadDelayMs]);
+
+  // Run the exit animation once ready
+  useEffect(() => {
+    if (!readyToExit || hasStartedExitRef.current) return;
+    hasStartedExitRef.current = true;
+
     const timeouts: number[] = [];
+    const loadingText = loadingTextRef.current;
 
     const prefersReduced =
       typeof window !== 'undefined' &&
       typeof window.matchMedia !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    const loadingText = loadingTextRef.current;
-
-    if (!loadingText) return;
-
-    // Phase 1: fade in loading text
-    loadingText.classList.add('fade-in');
-
     if (prefersReduced) {
-      // For reduced motion, keep a short static loading state then finish.
-      const tReduced = window.setTimeout(() => {
-        setDone(true);
-        onFinish && onFinish();
-      }, Math.max(800, minimumDurationMs));
-      timeouts.push(tReduced);
-      return () => {
-        timeouts.forEach((id) => window.clearTimeout(id));
-      };
+      // For reduced motion, finish immediately
+      setDone(true);
+      onFinish && onFinish();
+      return;
     }
 
-    // Phase 2: fade out the loading text after minimum duration
-    const fadeOutDelay = minimumDurationMs;
-    const t1 = window.setTimeout(() => {
+    // Fade out the loading text
+    if (loadingText) {
       loadingText.classList.add('fade-out');
-    }, fadeOutDelay);
-    timeouts.push(t1);
+    }
 
-    // Phase 3: start logo cutout zoom after text fade-out completes
-    const logoStartDelay = fadeOutDelay + 600; // 600ms ~= fade-out duration
-    const t2 = window.setTimeout(() => {
-      // Switch to the logo cutout phase and, on the next frame,
-      // start the zoom animation once the SVG group is mounted.
+    // Start logo cutout zoom after text fade-out completes (600ms)
+    const t1 = window.setTimeout(() => {
       setPhase('cutout');
       window.requestAnimationFrame(() => {
         const logoGroup = logoGroupRef.current;
@@ -214,7 +226,6 @@ function IntroOverlay({
 
           const handleSecondEnd = () => {
             // After the logo zoom finishes, fade the whole overlay out
-            // so there is no abrupt white flash when it unmounts.
             setIsFadingOut(true);
             const fadeTimeout = window.setTimeout(() => {
               setDone(true);
@@ -234,13 +245,13 @@ function IntroOverlay({
         });
         logoGroup.classList.add('grow-in');
       });
-    }, logoStartDelay);
-    timeouts.push(t2);
+    }, 600);
+    timeouts.push(t1);
 
     return () => {
       timeouts.forEach((id) => window.clearTimeout(id));
     };
-  }, [minimumDurationMs, onFinish]);
+  }, [readyToExit, onFinish]);
 
   if (done) {
     return null;

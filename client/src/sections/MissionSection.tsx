@@ -493,20 +493,24 @@ const ShineOverlay = styled.div`
   }
 `;
 
-function MissionSection(
-  props: {
-    previewMode?: boolean;
-    missionOverride?: Partial<MissionContent>;
-  } = {},
-): JSX.Element {
-  const { previewMode = false, missionOverride } = props;
+interface MissionSectionProps {
+  /** Data passed directly from parent - used for production */
+  missionData?: MissionContent;
+  /** Preview mode for admin editor */
+  previewMode?: boolean;
+  /** Override data for admin preview */
+  missionOverride?: Partial<MissionContent>;
+}
+
+function MissionSection(props: MissionSectionProps = {}): JSX.Element {
+  const { missionData, previewMode = false, missionOverride } = props;
   const [inView, setInView] = useState(true);
   const [showDisciplines, setShowDisciplines] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const modalGridRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const [mission, setMission] = useState<MissionContent | null>(null);
-  const [loading, setLoading] = useState(!previewMode);
+  const [mission, setMission] = useState<MissionContent | null>(missionData || null);
+  const [loading, setLoading] = useState(!previewMode && !missionData);
   const [error, setError] = useState(false);
 
   // Reveal immediately; no intersection gating for mission section
@@ -517,7 +521,12 @@ function MissionSection(
 
   // Load mission content (or apply preview override)
   useEffect(() => {
-    if (!previewMode) {
+    if (missionData) {
+      // missionData was provided by parent - use it directly
+      setMission(missionData);
+      setLoading(false);
+    } else if (!previewMode) {
+      // Backward compatibility: fetch data if no missionData provided
       fetchMissionContent().then((data) => {
         if (data) {
           setMission(data);
@@ -527,13 +536,14 @@ function MissionSection(
         setLoading(false);
       });
     } else if (missionOverride) {
+      // Preview mode with override
       setMission((prev) => ({
         ...(prev ?? {}),
         ...(missionOverride as MissionContent),
       }));
       setLoading(false);
     }
-  }, [previewMode, missionOverride]);
+  }, [missionData, previewMode, missionOverride]);
 
   // Artistic disciplines mapped to vector icons
   const disciplineNameIcons: Record<string, React.ReactNode> = {

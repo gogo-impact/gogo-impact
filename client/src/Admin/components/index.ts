@@ -5,6 +5,11 @@ export { MissionTabEditor } from './MissionTabEditor';
 export { PopulationTabEditor } from './PopulationTabEditor';
 export { FinancialTabEditor, validateFinancialPieCharts } from './FinancialTabEditor';
 export { MethodTabEditor } from './MethodTabEditor';
+export { CurriculumTabEditor } from './CurriculumTabEditor';
+export { ImpactSectionTabEditor } from './ImpactSectionTabEditor';
+export { HearOurImpactTabEditor } from './HearOurImpactTabEditor';
+export { TestimonialsTabEditor } from './TestimonialsTabEditor';
+export { NationalImpactTabEditor } from './NationalImpactTabEditor';
 export { 
   GradientEditor, 
   parseGradientString, 

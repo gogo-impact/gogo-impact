@@ -554,40 +554,48 @@ const photos = [Photo1, Photo2, Photo3, Photo4, Photo5, Photo6];
 
 interface PopulationProps {
   inline?: boolean;
+  /** Data passed directly from parent - used for production */
+  populationData?: PopulationContent;
+  /** Preview mode for admin editor */
   previewMode?: boolean;
+  /** Override data for admin preview */
   populationOverride?: PopulationContent | null;
 }
 
 function PopulationComponent({
   inline = false,
+  populationData: externalData,
   previewMode = false,
   populationOverride,
 }: PopulationProps) {
   const [activeSliceId, setActiveSliceId] = useState<string | null>(null);
   const [open, setOpen] = useState(true);
-  const [populationData, setPopulationData] =
-    useState<PopulationContent | null>(null);
+  const [internalData, setInternalData] = useState<PopulationContent | null>(externalData || null);
   const navigate = useNavigate();
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Fetch population content from backend when not in preview mode
+  // Fetch population content from backend when not in preview mode and no external data
   useEffect(() => {
-    if (!previewMode && !populationOverride) {
+    if (externalData) {
+      // externalData was provided by parent - use it directly
+      setInternalData(externalData);
+    } else if (!previewMode && !populationOverride) {
+      // Backward compatibility: fetch data if no externalData provided
       fetchPopulationContent().then((data) => {
         if (data) {
-          setPopulationData(data);
+          setInternalData(data);
         }
       });
     }
-  }, [previewMode, populationOverride]);
+  }, [externalData, previewMode, populationOverride]);
 
-  // Use override data in preview mode, fetched data otherwise
+  // Use override data in preview mode, externalData, or fetched data
   const effectiveData = previewMode
     ? populationOverride
-    : (populationOverride ?? populationData);
+    : (externalData ?? populationOverride ?? internalData);
 
   // --- Data Mapping ---
   const sectionBadge = effectiveData?.sectionBadge ?? "Who We Serve";

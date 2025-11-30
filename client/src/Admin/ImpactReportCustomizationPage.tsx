@@ -29,11 +29,26 @@ import {
   saveFinancialContent,
   fetchMethodContent,
   saveMethodContent,
+  fetchCurriculumContent,
+  saveCurriculumContent,
+  fetchImpactSectionContent,
+  saveImpactSectionContent,
+  fetchHearOurImpactContent,
+  saveHearOurImpactContent,
+  fetchTestimonialsContent,
+  saveTestimonialsContent,
+  fetchNationalImpactContent,
+  saveNationalImpactContent,
   fetchDefaults,
   saveDefaults,
   PopulationContent,
   FinancialContent,
   MethodContent,
+  CurriculumContent,
+  ImpactSectionContent,
+  HearOurImpactContent,
+  TestimonialsContent,
+  NationalImpactContent,
 } from '../services/impact.api';
 import '../../assets/fonts/fonts.css';
 import { useSnackbar } from 'notistack';
@@ -68,17 +83,32 @@ import {
   PopulationTabEditor,
   FinancialTabEditor,
   MethodTabEditor,
+  CurriculumTabEditor,
+  ImpactSectionTabEditor,
+  HearOurImpactTabEditor,
+  TestimonialsTabEditor,
+  NationalImpactTabEditor,
   validateFinancialPieCharts,
 } from './components';
 
 import FinancialAnalysisSection from '../components/FinancialAnalysisSection';
 import OurMethodSection from '../components/OurMethodSection';
+import CurriculumSection from '../components/CurriculumSection';
+import ImpactSection from '../components/ImpactSection';
+import SpotifyEmbedsSection from '../components/SpotifyEmbedsSection';
+import SingleQuoteSection from '../components/SingleQuoteSection';
+import LocationsSection from '../sections/LocationsSection';
 
 const MemoHeroSection = React.memo(HeroSection);
 const MemoMissionSection = React.memo(MissionSection);
+const MemoSpotifyEmbedsSection = React.memo(SpotifyEmbedsSection);
+const MemoSingleQuoteSection = React.memo(SingleQuoteSection);
+const MemoLocationsSection = React.memo(LocationsSection);
 const MemoPopulationComponent = React.memo(PopulationComponent);
 const MemoFinancialSection = React.memo(FinancialAnalysisSection);
 const MemoMethodSection = React.memo(OurMethodSection);
+const MemoCurriculumSection = React.memo(CurriculumSection);
+const MemoImpactSection = React.memo(ImpactSection);
 
 // Viewport configurations
 const VIEWPORTS = [
@@ -273,6 +303,11 @@ function getDefaultFormValues(): ImpactReportForm {
     },
     financial: {},
     method: {},
+    curriculum: {},
+    impactSection: {},
+    hearOurImpact: {},
+    testimonials: {},
+    nationalImpact: {},
     impact: {
       title: 'Our Impact',
       stats: [
@@ -444,7 +479,10 @@ function ImpactReportCustomizationPage() {
   useEffect(() => {
     (async () => {
       const hero = await fetchHeroContent();
-      if (!hero) return;
+      if (!hero) {
+        enqueueSnackbar('Failed to load hero section data from database. Using empty form.', { variant: 'warning' });
+        return;
+      }
       const g = parseGradient(hero.backgroundColor as string | null);
       const alphaMatch = (hero.backgroundColor as string | '').match(
         /rgba\([^,]+,[^,]+,[^,]+,\s*(\d*\.?\d+)\)/i
@@ -500,7 +538,10 @@ function ImpactReportCustomizationPage() {
   useEffect(() => {
     (async () => {
       const mission = await fetchMissionContent();
-      if (!mission) return;
+      if (!mission) {
+        enqueueSnackbar('Failed to load mission section data from database. Using empty form.', { variant: 'warning' });
+        return;
+      }
       const g = parseGradient(mission.backgroundColor as string | null);
       const titleGradientParsed = parseGradient(((mission as any)?.titleGradient as string) ?? null);
       const titleUnderlineParsed = parseGradient(
@@ -738,7 +779,10 @@ function ImpactReportCustomizationPage() {
   useEffect(() => {
     (async () => {
       const population = await fetchPopulationContent();
-      if (!population) return;
+      if (!population) {
+        enqueueSnackbar('Failed to load population section data from database. Using empty form.', { variant: 'warning' });
+        return;
+      }
       setImpactReportForm((prev) => ({
         ...prev,
         population: {
@@ -753,7 +797,10 @@ function ImpactReportCustomizationPage() {
   useEffect(() => {
     (async () => {
       const financial = await fetchFinancialContent();
-      if (!financial) return;
+      if (!financial) {
+        enqueueSnackbar('Failed to load financial section data from database. Using empty form.', { variant: 'warning' });
+        return;
+      }
       setImpactReportForm((prev) => ({
         ...prev,
         financial: {
@@ -768,12 +815,105 @@ function ImpactReportCustomizationPage() {
   useEffect(() => {
     (async () => {
       const method = await fetchMethodContent();
-      if (!method) return;
+      if (!method) {
+        enqueueSnackbar('Failed to load method section data from database. Using empty form.', { variant: 'warning' });
+        return;
+      }
       setImpactReportForm((prev) => ({
         ...prev,
         method: {
           ...prev.method,
           ...method,
+        },
+      }));
+    })();
+  }, []);
+
+  // Prefill curriculum from backend
+  useEffect(() => {
+    (async () => {
+      const curriculum = await fetchCurriculumContent();
+      if (!curriculum) {
+        enqueueSnackbar('Failed to load curriculum section data from database. Using empty form.', { variant: 'warning' });
+        return;
+      }
+      setImpactReportForm((prev) => ({
+        ...prev,
+        curriculum: {
+          ...prev.curriculum,
+          ...curriculum,
+        },
+      }));
+    })();
+  }, []);
+
+  // Prefill impactSection from backend
+  useEffect(() => {
+    (async () => {
+      const impactSection = await fetchImpactSectionContent();
+      if (!impactSection) {
+        enqueueSnackbar('Failed to load impact section data from database. Using empty form.', { variant: 'warning' });
+        return;
+      }
+      setImpactReportForm((prev) => ({
+        ...prev,
+        impactSection: {
+          ...prev.impactSection,
+          ...impactSection,
+        },
+      }));
+    })();
+  }, []);
+
+  // Prefill hearOurImpact from backend
+  useEffect(() => {
+    (async () => {
+      const hearOurImpact = await fetchHearOurImpactContent();
+      if (!hearOurImpact) {
+        enqueueSnackbar('Failed to load Hear Our Impact data from database. Using empty form.', { variant: 'warning' });
+        return;
+      }
+      setImpactReportForm((prev) => ({
+        ...prev,
+        hearOurImpact: {
+          ...prev.hearOurImpact,
+          ...hearOurImpact,
+        },
+      }));
+    })();
+  }, []);
+
+  // Prefill testimonials from backend
+  useEffect(() => {
+    (async () => {
+      const testimonials = await fetchTestimonialsContent();
+      if (!testimonials) {
+        enqueueSnackbar('Failed to load Testimonials data from database. Using empty form.', { variant: 'warning' });
+        return;
+      }
+      setImpactReportForm((prev) => ({
+        ...prev,
+        testimonials: {
+          ...prev.testimonials,
+          ...testimonials,
+        },
+      }));
+    })();
+  }, []);
+
+  // Prefill nationalImpact from backend
+  useEffect(() => {
+    (async () => {
+      const nationalImpact = await fetchNationalImpactContent();
+      if (!nationalImpact) {
+        enqueueSnackbar('Failed to load National Impact data from database. Using empty form.', { variant: 'warning' });
+        return;
+      }
+      setImpactReportForm((prev) => ({
+        ...prev,
+        nationalImpact: {
+          ...prev.nationalImpact,
+          ...nationalImpact,
         },
       }));
     })();
@@ -1002,6 +1142,46 @@ function ImpactReportCustomizationPage() {
         throw new Error('Failed to save changes. Please check your connection and try again.');
       }
 
+      // ======= Curriculum save =======
+      const curriculumPayload = { ...impactReportForm.curriculum };
+      console.log('[admin][curriculum] save payload', curriculumPayload);
+      const curriculumSaveResult = await saveCurriculumContent(curriculumPayload);
+      if (!curriculumSaveResult) {
+        throw new Error('Failed to save changes. Please check your connection and try again.');
+      }
+
+      // ======= Impact Section save =======
+      const impactSectionPayload = { ...impactReportForm.impactSection };
+      console.log('[admin][impactSection] save payload', impactSectionPayload);
+      const impactSectionSaveResult = await saveImpactSectionContent(impactSectionPayload);
+      if (!impactSectionSaveResult) {
+        throw new Error('Failed to save changes. Please check your connection and try again.');
+      }
+
+      // ======= Hear Our Impact save =======
+      const hearOurImpactPayload = { ...impactReportForm.hearOurImpact };
+      console.log('[admin][hearOurImpact] save payload', hearOurImpactPayload);
+      const hearOurImpactSaveResult = await saveHearOurImpactContent(hearOurImpactPayload);
+      if (!hearOurImpactSaveResult) {
+        throw new Error('Failed to save changes. Please check your connection and try again.');
+      }
+
+      // ======= Testimonials save =======
+      const testimonialsPayload = { ...impactReportForm.testimonials };
+      console.log('[admin][testimonials] save payload', testimonialsPayload);
+      const testimonialsSaveResult = await saveTestimonialsContent(testimonialsPayload);
+      if (!testimonialsSaveResult) {
+        throw new Error('Failed to save changes. Please check your connection and try again.');
+      }
+
+      // ======= National Impact save =======
+      const nationalImpactPayload = { ...impactReportForm.nationalImpact };
+      console.log('[admin][nationalImpact] save payload', nationalImpactPayload);
+      const nationalImpactSaveResult = await saveNationalImpactContent(nationalImpactPayload);
+      if (!nationalImpactSaveResult) {
+        throw new Error('Failed to save changes. Please check your connection and try again.');
+      }
+
       enqueueSnackbar('Impact report saved', { variant: 'success' });
       setIsDirty(false);
       setLastSavedAt(new Date());
@@ -1178,6 +1358,21 @@ function ImpactReportCustomizationPage() {
   const liveMethodOverride = useMemo(() => impactReportForm.method, [impactReportForm.method]);
   const debouncedMethodOverride = useDebouncedValue(liveMethodOverride, 300);
 
+  const liveCurriculumOverride = useMemo(() => impactReportForm.curriculum, [impactReportForm.curriculum]);
+  const debouncedCurriculumOverride = useDebouncedValue(liveCurriculumOverride, 300);
+
+  const liveImpactSectionOverride = useMemo(() => impactReportForm.impactSection, [impactReportForm.impactSection]);
+  const debouncedImpactSectionOverride = useDebouncedValue(liveImpactSectionOverride, 300);
+
+  const liveHearOurImpactOverride = useMemo(() => impactReportForm.hearOurImpact, [impactReportForm.hearOurImpact]);
+  const debouncedHearOurImpactOverride = useDebouncedValue(liveHearOurImpactOverride, 300);
+
+  const liveTestimonialsOverride = useMemo(() => impactReportForm.testimonials, [impactReportForm.testimonials]);
+  const debouncedTestimonialsOverride = useDebouncedValue(liveTestimonialsOverride, 300);
+
+  const liveNationalImpactOverride = useMemo(() => impactReportForm.nationalImpact, [impactReportForm.nationalImpact]);
+  const debouncedNationalImpactOverride = useDebouncedValue(liveNationalImpactOverride, 300);
+
   // Viewport simulator
   const [viewportIdx, setViewportIdx] = useState<number>(0);
   const artboardRef = useRef<HTMLDivElement | null>(null);
@@ -1231,6 +1426,16 @@ function ImpactReportCustomizationPage() {
         return <MemoFinancialSection previewMode financialOverride={debouncedFinancialOverride} />;
       case 5:
         return <MemoMethodSection previewMode methodOverride={debouncedMethodOverride} />;
+      case 6:
+        return <MemoCurriculumSection previewMode curriculumOverride={debouncedCurriculumOverride} />;
+      case 7:
+        return <MemoImpactSection previewMode impactSectionOverride={debouncedImpactSectionOverride} />;
+      case 8:
+        return <MemoSpotifyEmbedsSection previewMode hearOurImpactOverride={debouncedHearOurImpactOverride} />;
+      case 9:
+        return <MemoSingleQuoteSection previewMode testimonialsOverride={debouncedTestimonialsOverride} />;
+      case 10:
+        return <MemoLocationsSection previewMode nationalImpactOverride={debouncedNationalImpactOverride} />;
       default:
         return <MemoHeroSection previewMode heroOverride={debouncedHeroOverride} />;
     }
@@ -1288,6 +1493,46 @@ function ImpactReportCustomizationPage() {
             method={impactReportForm.method}
             defaultSwatch={defaultSwatch}
             onMethodChange={(field, value) => handleSectionChange('method', field, value)}
+          />
+        );
+      case 6:
+        return (
+          <CurriculumTabEditor
+            curriculum={impactReportForm.curriculum}
+            defaultSwatch={defaultSwatch}
+            onCurriculumChange={(field, value) => handleSectionChange('curriculum', field, value)}
+          />
+        );
+      case 7:
+        return (
+          <ImpactSectionTabEditor
+            impactSection={impactReportForm.impactSection}
+            defaultSwatch={defaultSwatch}
+            onImpactSectionChange={(field, value) => handleSectionChange('impactSection', field, value)}
+          />
+        );
+      case 8:
+        return (
+          <HearOurImpactTabEditor
+            hearOurImpact={impactReportForm.hearOurImpact}
+            defaultSwatch={defaultSwatch}
+            onHearOurImpactChange={(field, value) => handleSectionChange('hearOurImpact', field, value)}
+          />
+        );
+      case 9:
+        return (
+          <TestimonialsTabEditor
+            testimonials={impactReportForm.testimonials}
+            defaultSwatch={defaultSwatch}
+            onTestimonialsChange={(field, value) => handleSectionChange('testimonials', field, value)}
+          />
+        );
+      case 10:
+        return (
+          <NationalImpactTabEditor
+            nationalImpact={impactReportForm.nationalImpact}
+            defaultSwatch={defaultSwatch}
+            onNationalImpactChange={(field, value) => handleSectionChange('nationalImpact', field, value)}
           />
         );
       default:

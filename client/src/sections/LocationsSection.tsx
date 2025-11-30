@@ -1,11 +1,19 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import styled from 'styled-components';
 import EnhancedLeafletMap from '../components/map/EnhancedLeafletMap';
 import COLORS from '../../assets/colors.ts';
+import {
+  fetchNationalImpactContent,
+  NationalImpactContent,
+} from '../services/impact.api';
 
-const LocationsSectionWrapper = styled.div`
+interface LocationsSectionWrapperProps {
+  $bgColor?: string;
+}
+
+const LocationsSectionWrapper = styled.div<LocationsSectionWrapperProps>`
   padding: 4rem 0 6rem;
-  background: #121212;
+  background: ${(p) => p.$bgColor || '#121212'};
 `;
 
 const SectionContainer = styled.div`
@@ -14,12 +22,16 @@ const SectionContainer = styled.div`
   padding: 0 2rem;
 `;
 
-const SectionHeading = styled.h2`
+interface SectionHeadingProps {
+  $color?: string;
+}
+
+const SectionHeading = styled.h2<SectionHeadingProps>`
   font-size: 2.25rem;
   font-weight: 800;
   text-align: center;
   margin: 0 0 1.5rem;
-  color: #fff;
+  color: ${(p) => p.$color || '#fff'};
 `;
 
 const MapFrame = styled.div`
@@ -68,16 +80,55 @@ const MapContainer = styled.div`
   pointer-events: auto;
 `;
 
-function LocationsSection(): JSX.Element {
+export interface LocationsSectionProps {
+  nationalImpactData?: NationalImpactContent | null;
+  previewMode?: boolean;
+  nationalImpactOverride?: Partial<NationalImpactContent>;
+}
+
+function LocationsSection({
+  nationalImpactData: externalData,
+  previewMode = false,
+  nationalImpactOverride,
+}: LocationsSectionProps): JSX.Element {
   const sectionRef = useRef<HTMLDivElement>(null);
+  const [internalData, setInternalData] = useState<NationalImpactContent | null>(externalData || null);
+
+  // Fetch data if not provided externally
+  useEffect(() => {
+    if (externalData) {
+      setInternalData(externalData);
+    } else if (!previewMode) {
+      fetchNationalImpactContent().then((data) => {
+        if (data) setInternalData(data);
+      });
+    }
+  }, [externalData, previewMode]);
+
+  // Merge data
+  const effectiveData: NationalImpactContent = externalData
+    ? { ...externalData, ...(nationalImpactOverride || {}) }
+    : { ...(internalData || {}), ...(nationalImpactOverride || {}) };
+
+  // Extract values
+  const title = effectiveData.title || 'Our National Impact';
+  const titleColor = effectiveData.titleColor || '';
+  const sectionBgColor = effectiveData.sectionBgColor || '';
+  const overlayButtonBgColor = effectiveData.overlayButtonBgColor || '';
+  const overlayButtonHoverBgColor = effectiveData.overlayButtonHoverBgColor || '';
+  const regions = effectiveData.regions || [];
 
   return (
-    <LocationsSectionWrapper id="locations" ref={sectionRef}>
+    <LocationsSectionWrapper id="locations" ref={sectionRef} $bgColor={sectionBgColor}>
       <SectionContainer>
-        <SectionHeading>Our National Impact</SectionHeading>
+        <SectionHeading $color={titleColor}>{title}</SectionHeading>
         <MapFrame>
           <MapContainer>
-            <EnhancedLeafletMap />
+            <EnhancedLeafletMap
+              regions={regions}
+              overlayButtonBgColor={overlayButtonBgColor}
+              overlayButtonHoverBgColor={overlayButtonHoverBgColor}
+            />
           </MapContainer>
         </MapFrame>
       </SectionContainer>

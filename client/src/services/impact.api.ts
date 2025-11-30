@@ -368,6 +368,173 @@ export interface MethodContent {
 }
 
 // =========================
+// Curriculum content interfaces
+// =========================
+export interface CurriculumTimelineItem {
+  id: string;
+  title: string;
+  text: string;
+}
+
+export interface CurriculumPedalCard {
+  id: string;
+  title: string;
+  text: string;
+  accentColor: string;
+  badges: string[];
+}
+
+export interface CurriculumContent {
+  // Section visibility
+  visible?: boolean;
+  animationsEnabled?: boolean;
+
+  // Section background
+  sectionBgGradient?: string | null;
+  glowColor1?: string | null;
+  glowColor2?: string | null;
+
+  // Header
+  title?: string | null;
+  titleGradient?: string | null;
+  subtitle?: string | null;
+  subtitleColor?: string | null;
+
+  // Equalizer bar colors
+  eqColor1?: string | null;
+  eqColor2?: string | null;
+  eqColor3?: string | null;
+
+  // Pedal cards
+  pedalCards?: CurriculumPedalCard[] | null;
+  pedalBgColor?: string | null;
+  pedalBorderColor?: string | null;
+  cardTitleColor?: string | null;
+  cardTextColor?: string | null;
+
+  // Timeline section
+  timelineTitle?: string | null;
+  timelineTitleColor?: string | null;
+  timelineBgColor?: string | null;
+  timelineBorderColor?: string | null;
+  timelineItems?: CurriculumTimelineItem[] | null;
+  timelineItemTitleColor?: string | null;
+  timelineItemTextColor?: string | null;
+}
+
+// =========================
+// Impact Section content interfaces
+// =========================
+export interface ImpactTurntableStat {
+  id: string;
+  number: number;
+  label: string;
+  colorA: string;  // Gradient color A for record label
+  colorB: string;  // Gradient color B for record label
+}
+
+export interface ImpactHighlightChip {
+  id: string;
+  text: string;
+  iconKey: string;
+}
+
+export interface ImpactHighlightCard {
+  id: string;
+  title: string;
+  text: string;
+}
+
+export interface ImpactSectionContent {
+  // Section visibility
+  visible?: boolean;
+  animationsEnabled?: boolean;
+
+  // Section background
+  sectionBgGradient?: string | null;
+  topBorderGradient?: string | null;  // Top accent line gradient
+
+  // Top image carousel
+  topCarouselImages?: string[] | null;  // Array of image URLs (recommend 7+)
+
+  // Stats section
+  statsTitle?: string | null;
+  statsTitleColor?: string | null;
+  turntableStats?: ImpactTurntableStat[] | null;
+  turntableCardBgGradient?: string | null;
+  turntableCardBorderColor?: string | null;
+  statCaptionColor?: string | null;
+
+  // Highlights section
+  highlightsTitle?: string | null;
+  highlightsTitleColor?: string | null;
+  highlightsSubtitle?: string | null;
+  highlightsSubtitleColor?: string | null;
+  highlightChips?: ImpactHighlightChip[] | null;
+  highlightChipBgColor?: string | null;
+  highlightChipBorderColor?: string | null;
+  highlightChipTextColor?: string | null;
+  highlightCards?: ImpactHighlightCard[] | null;
+  highlightCardBgColor?: string | null;
+  highlightCardBorderColor?: string | null;
+  highlightCardTitleColor?: string | null;
+  highlightCardTextColor?: string | null;
+
+  // Bottom image carousel
+  bottomCarouselImages?: string[] | null;  // Array of image URLs (recommend 7+)
+
+  // Measurement section header
+  measureTitle?: string | null;
+  measureTitleHighlight?: string | null;  // The highlighted word
+  measureTitleColor?: string | null;
+  measureTitleHighlightColor?: string | null;
+  measureSubtitle?: string | null;
+  measureSubtitleColor?: string | null;
+
+  // "Our Method Provides" card (left column)
+  methodCardTitle?: string | null;
+  methodCardTitleColor?: string | null;
+  methodCardAccentGradient?: string | null;  // The underline gradient
+  methodCardBgColor?: string | null;
+  methodCardBorderColor?: string | null;
+  methodItems?: ImpactMethodItem[] | null;
+  methodItemBgColor?: string | null;
+  methodItemBorderColor?: string | null;
+  methodItemTitleColor?: string | null;
+  methodItemTextColor?: string | null;
+  methodCardFooterText?: string | null;
+  methodCardFooterTextColor?: string | null;
+
+  // "Measurement & Evaluation Tools" card (right column)
+  toolsCardTitle?: string | null;
+  toolsCardTitleColor?: string | null;
+  toolsCardBgColor?: string | null;
+  toolsCardBorderColor?: string | null;
+  toolItems?: ImpactToolItem[] | null;
+  toolIconBgGradient?: string | null;
+  toolNameColor?: string | null;
+  toolDescriptionColor?: string | null;
+  toolsFooterText?: string | null;
+  toolsFooterTextColor?: string | null;
+}
+
+// Method item for "Our Method Provides" section
+export interface ImpactMethodItem {
+  id: string;
+  iconKey?: string | null;
+  title: string;
+  text: string;
+}
+
+// Tool item for "Measurement & Evaluation Tools" section
+export interface ImpactToolItem {
+  id: string;
+  iconSvg?: string | null;  // Optional custom SVG
+  title: string;
+  description: string;
+}
+
+// =========================
 // Defaults content interfaces
 // =========================
 export interface DefaultsContent {
@@ -701,6 +868,458 @@ export async function saveMethodContent(
     // eslint-disable-next-line no-console
     console.error('[ImpactReport] Failed to save method content', error);
     return null;
+  }
+}
+
+// =========================
+// Curriculum content API
+// =========================
+export async function fetchCurriculumContent(): Promise<CurriculumContent | null> {
+  try {
+    const url = `${API_BASE_URL}/api/impact/curriculum`;
+    console.log('[client][curriculum] GET', { url });
+    const response = await fetch(url, {
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      console.warn('[client][curriculum] GET failed', { status: response.status });
+      return null;
+    }
+    const payload = (await response.json()) as HeroApiResponse<CurriculumContent>;
+    console.log('[client][curriculum] GET success', { fields: Object.keys(payload?.data || {}) });
+    return payload?.data ?? null;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('[ImpactReport] Failed to fetch curriculum content', error);
+    return null;
+  }
+}
+
+export async function saveCurriculumContent(
+  data: Record<string, unknown>,
+  options?: { slug?: string },
+): Promise<CurriculumContent | null> {
+  try {
+    const url = new URL(`${API_BASE_URL}/api/impact/curriculum`);
+    if (options?.slug) url.searchParams.set('slug', options.slug);
+    console.log('[client][curriculum] PUT', { url: url.toString(), keys: Object.keys(data || {}) });
+    const response = await fetch(url.toString(), {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      console.warn('[client][curriculum] PUT failed', { status: response.status });
+      return null;
+    }
+    const payload = (await response.json()) as HeroApiResponse<CurriculumContent>;
+    console.log('[client][curriculum] PUT success', { fields: Object.keys(payload?.data || {}) });
+    return payload?.data ?? null;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('[ImpactReport] Failed to save curriculum content', error);
+    return null;
+  }
+}
+
+// =========================
+// Impact Section content API
+// =========================
+export async function fetchImpactSectionContent(): Promise<ImpactSectionContent | null> {
+  try {
+    const url = `${API_BASE_URL}/api/impact/impact-section`;
+    console.log('[client][impact-section] GET', { url });
+    const response = await fetch(url, {
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      console.warn('[client][impact-section] GET failed', { status: response.status });
+      return null;
+    }
+    const payload = (await response.json()) as HeroApiResponse<ImpactSectionContent>;
+    console.log('[client][impact-section] GET success', { fields: Object.keys(payload?.data || {}) });
+    return payload?.data ?? null;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('[ImpactReport] Failed to fetch impact section content', error);
+    return null;
+  }
+}
+
+export async function saveImpactSectionContent(
+  data: Record<string, unknown>,
+  options?: { slug?: string },
+): Promise<ImpactSectionContent | null> {
+  try {
+    const url = new URL(`${API_BASE_URL}/api/impact/impact-section`);
+    if (options?.slug) url.searchParams.set('slug', options.slug);
+    console.log('[client][impact-section] PUT', { url: url.toString(), keys: Object.keys(data || {}) });
+    const response = await fetch(url.toString(), {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      console.warn('[client][impact-section] PUT failed', { status: response.status });
+      return null;
+    }
+    const payload = (await response.json()) as HeroApiResponse<ImpactSectionContent>;
+    console.log('[client][impact-section] PUT success', { fields: Object.keys(payload?.data || {}) });
+    return payload?.data ?? null;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('[ImpactReport] Failed to save impact section content', error);
+    return null;
+  }
+}
+
+// =========================
+// Hear Our Impact (Spotify Embeds) content interfaces
+// =========================
+export interface SpotifyEmbed {
+  id: string;
+  url: string;
+  type: 'album' | 'artist' | 'playlist' | 'track';
+}
+
+export interface HearOurImpactContent {
+  // Section visibility
+  visible?: boolean;
+  animationsEnabled?: boolean;
+
+  // Section background
+  sectionBgGradient?: string | null;
+
+  // Header
+  title?: string | null;
+  titleGradient?: string | null;
+  description?: string | null;
+  descriptionColor?: string | null;
+
+  // Embed card styling
+  embedWrapperBgColor?: string | null;
+  embedWrapperBorderColor?: string | null;
+
+  // Featured embeds (main grid)
+  featuredEmbeds?: SpotifyEmbed[] | null;
+
+  // Action buttons
+  mentorProfilesButtonText?: string | null;
+  allSongsButtonText?: string | null;
+  buttonBgGradient?: string | null;
+  buttonTextColor?: string | null;
+
+  // Mentor profiles modal
+  mentorProfilesModalTitle?: string | null;
+  mentorProfileEmbeds?: SpotifyEmbed[] | null;
+
+  // All songs modal
+  allSongsModalTitle?: string | null;
+  allSongsEmbeds?: SpotifyEmbed[] | null;
+
+  // Modal styling
+  modalBgGradient?: string | null;
+  modalBorderColor?: string | null;
+  modalTitleColor?: string | null;
+  modalCardBgColor?: string | null;
+  modalCardBorderColor?: string | null;
+}
+
+// =========================
+// Hear Our Impact content API
+// =========================
+export async function fetchHearOurImpactContent(): Promise<HearOurImpactContent | null> {
+  try {
+    const url = `${API_BASE_URL}/api/impact/hear-our-impact`;
+    console.log('[client][hear-our-impact] GET', { url });
+    const response = await fetch(url, {
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      console.warn('[client][hear-our-impact] GET failed', { status: response.status });
+      return null;
+    }
+    const payload = (await response.json()) as HeroApiResponse<HearOurImpactContent>;
+    console.log('[client][hear-our-impact] GET success', { fields: Object.keys(payload?.data || {}) });
+    return payload?.data ?? null;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('[ImpactReport] Failed to fetch hear our impact content', error);
+    return null;
+  }
+}
+
+export async function saveHearOurImpactContent(
+  data: Record<string, unknown>,
+  options?: { slug?: string },
+): Promise<HearOurImpactContent | null> {
+  try {
+    const url = new URL(`${API_BASE_URL}/api/impact/hear-our-impact`);
+    if (options?.slug) url.searchParams.set('slug', options.slug);
+    console.log('[client][hear-our-impact] PUT', { url: url.toString(), keys: Object.keys(data || {}) });
+    const response = await fetch(url.toString(), {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      console.warn('[client][hear-our-impact] PUT failed', { status: response.status });
+      return null;
+    }
+    const payload = (await response.json()) as HeroApiResponse<HearOurImpactContent>;
+    console.log('[client][hear-our-impact] PUT success', { fields: Object.keys(payload?.data || {}) });
+    return payload?.data ?? null;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('[ImpactReport] Failed to save hear our impact content', error);
+    return null;
+  }
+}
+
+// =========================
+// Testimonials (Single Quote) content interfaces
+// =========================
+export interface TestimonialsContent {
+  // Section visibility
+  visible?: boolean;
+  animationsEnabled?: boolean;
+
+  // Section background
+  sectionBgGradient?: string | null;
+  glowColor1?: string | null;
+  glowColor2?: string | null;
+
+  // Eyebrow
+  eyebrowText?: string | null;
+  eyebrowColor?: string | null;
+
+  // Name
+  name?: string | null;
+  nameGradient?: string | null;
+
+  // EQ bars
+  eqBarGradient?: string | null;
+  eqBgGradient?: string | null;
+  eqBorderColor?: string | null;
+
+  // Image
+  imageUrl?: string | null;
+  imageAlt?: string | null;
+  imageBorderColor?: string | null;
+
+  // Quote card
+  quoteCardBgGradient?: string | null;
+  quoteCardBorderColor?: string | null;
+
+  // Quote text
+  quoteText?: string | null;
+  quoteTextColor?: string | null;
+  quoteMarkColor?: string | null;
+
+  // Attribution
+  attributionText?: string | null;
+  attributionColor?: string | null;
+  attributionIconColor?: string | null;
+}
+
+// =========================
+// Testimonials content API
+// =========================
+export async function fetchTestimonialsContent(): Promise<TestimonialsContent | null> {
+  try {
+    const url = `${API_BASE_URL}/api/impact/testimonials`;
+    console.log('[client][testimonials] GET', { url });
+    const response = await fetch(url, {
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      console.warn('[client][testimonials] GET failed', { status: response.status });
+      return null;
+    }
+    const payload = (await response.json()) as HeroApiResponse<TestimonialsContent>;
+    console.log('[client][testimonials] GET success', { fields: Object.keys(payload?.data || {}) });
+    return payload?.data ?? null;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('[ImpactReport] Failed to fetch testimonials content', error);
+    return null;
+  }
+}
+
+export async function saveTestimonialsContent(
+  data: Record<string, unknown>,
+  options?: { slug?: string },
+): Promise<TestimonialsContent | null> {
+  try {
+    const url = new URL(`${API_BASE_URL}/api/impact/testimonials`);
+    if (options?.slug) url.searchParams.set('slug', options.slug);
+    console.log('[client][testimonials] PUT', { url: url.toString(), keys: Object.keys(data || {}) });
+    const response = await fetch(url.toString(), {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      console.warn('[client][testimonials] PUT failed', { status: response.status });
+      return null;
+    }
+    const payload = (await response.json()) as HeroApiResponse<TestimonialsContent>;
+    console.log('[client][testimonials] PUT success', { fields: Object.keys(payload?.data || {}) });
+    return payload?.data ?? null;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('[ImpactReport] Failed to save testimonials content', error);
+    return null;
+  }
+}
+
+// =========================
+// National Impact Map content interfaces
+// =========================
+export type MapLocationType =
+  | 'school'
+  | 'community-center'
+  | 'studio'
+  | 'academy'
+  | 'hub'
+  | 'program'
+  | 'office'
+  | 'summer-program'
+  | 'performance-venue'
+  | 'default';
+
+export interface MapLocation {
+  id: string;
+  name: string;                         // Required
+  address: string;                      // Required (for geocoding)
+  coordinates: [number, number];        // [lat, lng] - from geocoding
+  showAddress?: boolean;                // Whether to display address in popup
+  type?: MapLocationType | null;        // Icon type
+  description?: string | null;          // Optional
+  website?: string | null;              // Optional
+}
+
+export interface MapRegion {
+  id: string;
+  name: string;
+  color?: string | null;
+  locations: MapLocation[];
+}
+
+export interface NationalImpactContent {
+  // Section visibility
+  visible?: boolean;
+  animationsEnabled?: boolean;
+
+  // Section header
+  title?: string | null;
+  titleColor?: string | null;
+
+  // Section background
+  sectionBgColor?: string | null;
+
+  // Overlay button
+  overlayButtonBgColor?: string | null;
+  overlayButtonHoverBgColor?: string | null;
+
+  // Regions data
+  regions?: MapRegion[] | null;
+}
+
+// Address validation response
+export interface AddressValidationResult {
+  valid: boolean;
+  formattedAddress?: string;
+  coordinates?: [number, number];
+  error?: string;
+}
+
+// =========================
+// National Impact content API
+// =========================
+export async function fetchNationalImpactContent(): Promise<NationalImpactContent | null> {
+  try {
+    const url = `${API_BASE_URL}/api/impact/national-impact`;
+    console.log('[client][national-impact] GET', { url });
+    const response = await fetch(url, {
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      console.warn('[client][national-impact] GET failed', { status: response.status });
+      return null;
+    }
+    const payload = (await response.json()) as HeroApiResponse<NationalImpactContent>;
+    console.log('[client][national-impact] GET success', { fields: Object.keys(payload?.data || {}) });
+    return payload?.data ?? null;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('[ImpactReport] Failed to fetch national impact content', error);
+    return null;
+  }
+}
+
+export async function saveNationalImpactContent(
+  data: Record<string, unknown>,
+  options?: { slug?: string },
+): Promise<NationalImpactContent | null> {
+  try {
+    const url = new URL(`${API_BASE_URL}/api/impact/national-impact`);
+    if (options?.slug) url.searchParams.set('slug', options.slug);
+    console.log('[client][national-impact] PUT', { url: url.toString(), keys: Object.keys(data || {}) });
+    const response = await fetch(url.toString(), {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      console.warn('[client][national-impact] PUT failed', { status: response.status });
+      return null;
+    }
+    const payload = (await response.json()) as HeroApiResponse<NationalImpactContent>;
+    console.log('[client][national-impact] PUT success', { fields: Object.keys(payload?.data || {}) });
+    return payload?.data ?? null;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('[ImpactReport] Failed to save national impact content', error);
+    return null;
+  }
+}
+
+// Validate and geocode an address
+export async function validateAddress(address: string): Promise<AddressValidationResult> {
+  try {
+    const url = `${API_BASE_URL}/api/impact/validate-address`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ address }),
+    });
+    if (!response.ok) {
+      return { valid: false, error: 'Failed to validate address' };
+    }
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('[ImpactReport] Failed to validate address', error);
+    return { valid: false, error: 'Network error' };
   }
 }
 

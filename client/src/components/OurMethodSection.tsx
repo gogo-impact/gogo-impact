@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import COLORS from '../../assets/colors';
-import Reveal from '../../animations/components/Reveal';
 import { fetchMethodContent, MethodContent, MethodItem } from '../services/impact.api';
 import { getImpactIconByKey } from './IconSelector';
 
@@ -291,27 +290,38 @@ const SecondaryText = styled.div<SecondaryTextProps>`
 `;
 
 interface OurMethodSectionProps {
+  /** Data passed directly from parent - used for production */
+  methodData?: MethodContent;
+  /** Preview mode for admin editor */
   previewMode?: boolean;
+  /** Override data for admin preview */
   methodOverride?: Partial<MethodContent>;
 }
 
-function OurMethodSection({ previewMode = false, methodOverride }: OurMethodSectionProps): JSX.Element {
-  const [methodData, setMethodData] = useState<MethodContent | null>(null);
+function OurMethodSection({ 
+  methodData: externalData, 
+  previewMode = false, 
+  methodOverride 
+}: OurMethodSectionProps): JSX.Element {
+  const [internalData, setInternalData] = useState<MethodContent | null>(externalData || null);
 
   useEffect(() => {
-    if (!previewMode) {
+    if (externalData) {
+      // externalData was provided by parent - use it directly
+      setInternalData(externalData);
+    } else if (!previewMode) {
+      // Backward compatibility: fetch data if no externalData provided
       fetchMethodContent().then((data) => {
-        if (data) setMethodData(data);
+        if (data) setInternalData(data);
       });
     }
-  }, [previewMode]);
+  }, [externalData, previewMode]);
 
-  // Merge fetched data with override (for preview mode)
-  const effectiveData: MethodContent = {
-    ...DEFAULT_CONTENT,
-    ...(methodData || {}),
-    ...(methodOverride || {}),
-  };
+  // Use externalData, fetched data, or override (for preview mode)
+  // In production (with externalData), no defaults are applied
+  const effectiveData: MethodContent = externalData 
+    ? { ...externalData, ...(methodOverride || {}) }
+    : { ...DEFAULT_CONTENT, ...(internalData || {}), ...(methodOverride || {}) };
 
   // Extract values with defaults
   const title = effectiveData.title ?? DEFAULT_CONTENT.title;
@@ -350,39 +360,33 @@ function OurMethodSection({ previewMode = false, methodOverride }: OurMethodSect
       $glowColor2={glowColor2!}
     >
       <Container>
-        <Reveal variant="fade-up" duration={800}>
-          <Header>
-            <Title $gradient={titleGradient!}>{title}</Title>
-            <Subtitle $color={subtitleColor!}>{subtitle}</Subtitle>
-          </Header>
-        </Reveal>
+        <Header className="animate-child">
+          <Title $gradient={titleGradient!}>{title}</Title>
+          <Subtitle $color={subtitleColor!}>{subtitle}</Subtitle>
+        </Header>
 
-        <Reveal variant="stagger-up" staggerSelector=".method-card" delay={200}>
-          <Grid>
-            {methodItems!.map((item, index) => (
-              <Card
-                key={item.id || index}
-                className="method-card"
-                $bgColor={cardBgColor!}
-                $borderColor={cardBorderColor!}
-              >
-                <IconWrap $gradient={iconGradient!} aria-hidden>
-                  {renderIcon(item.iconKey)}
-                </IconWrap>
-                <CardTitle $color={cardTitleColor!}>{item.text}</CardTitle>
-              </Card>
-            ))}
-          </Grid>
-        </Reveal>
+        <Grid className="animate-child">
+          {methodItems!.map((item, index) => (
+            <Card
+              key={item.id || index}
+              className="method-card"
+              $bgColor={cardBgColor!}
+              $borderColor={cardBorderColor!}
+            >
+              <IconWrap $gradient={iconGradient!} aria-hidden>
+                {renderIcon(item.iconKey)}
+              </IconWrap>
+              <CardTitle $color={cardTitleColor!}>{item.text}</CardTitle>
+            </Card>
+          ))}
+        </Grid>
 
-        <Reveal variant="fade-up" delay={400} duration={800}>
-          <NarrativeContainer>
-            <LeadText $color={leadTextColor!}>{leadText}</LeadText>
-            <SecondaryText $color={secondaryTextColor!} $borderColor={secondaryBorderColor!}>
-              {secondaryText}
-            </SecondaryText>
-          </NarrativeContainer>
-        </Reveal>
+        <NarrativeContainer className="animate-child">
+          <LeadText $color={leadTextColor!}>{leadText}</LeadText>
+          <SecondaryText $color={secondaryTextColor!} $borderColor={secondaryBorderColor!}>
+            {secondaryText}
+          </SecondaryText>
+        </NarrativeContainer>
       </Container>
     </Section>
   );

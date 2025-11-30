@@ -33,15 +33,8 @@ type MethodColorPickerField =
   | 'glowColor1'
   | 'glowColor2';
 
-// Default method items
-const DEFAULT_METHOD_ITEMS: MethodItem[] = [
-  { id: '1', iconKey: 'handshakeOutlined', text: 'Trusting relationships with caring adults' },
-  { id: '2', iconKey: 'menuBook', text: 'High-quality, no-cost arts education during typically unsupervised hours' },
-  { id: '3', iconKey: 'lightbulb', text: 'Enriching, safe activities that foster self-esteem & creative self-expression' },
-  { id: '4', iconKey: 'tuneOutlined', text: 'Skill Development' },
-  { id: '5', iconKey: 'mic', text: 'Performance' },
-  { id: '6', iconKey: 'favoriteBorder', text: 'Trauma-informed mental health support' },
-];
+// Empty placeholder for method items (no defaults - data should come from DB)
+const EMPTY_METHOD_ITEMS: MethodItem[] = [];
 
 export function MethodTabEditor({
   method,
@@ -57,24 +50,25 @@ export function MethodTabEditor({
   const [gradientPickerColorIndex, setGradientPickerColorIndex] = useState<number>(0);
   const gradientPickerOpen = Boolean(gradientPickerAnchor);
 
-  // Get default gradients
-  const getDefaultGradient = (key: 'titleGradient' | 'sectionBgGradient' | 'iconGradient'): string => {
+  // Get gradient values (no defaults - data should come from DB)
+  const getGradientValue = (key: 'titleGradient' | 'sectionBgGradient' | 'iconGradient'): string => {
     switch (key) {
       case 'titleGradient':
-        return method.titleGradient || `linear-gradient(90deg, ${COLORS.gogo_blue}, ${COLORS.gogo_teal})`;
+        return method.titleGradient || '';
       case 'sectionBgGradient':
-        return method.sectionBgGradient || 'linear-gradient(180deg, #111111 0%, #0a0a0a 100%)';
+        return method.sectionBgGradient || '';
       case 'iconGradient':
-        return method.iconGradient || `linear-gradient(135deg, ${COLORS.gogo_blue}, ${COLORS.gogo_teal})`;
+        return method.iconGradient || '';
       default:
-        return `linear-gradient(90deg, ${COLORS.gogo_blue}, ${COLORS.gogo_teal})`;
+        return '';
     }
   };
 
   // Get current gradient color for the picker
   const getGradientPickerColor = (): string => {
     if (!gradientPickerKey) return '#000000';
-    const gradient = getDefaultGradient(gradientPickerKey);
+    const gradient = getGradientValue(gradientPickerKey);
+    if (!gradient) return '#000000';
     const parsed = parseGradientString(gradient);
     return parsed.colors[gradientPickerColorIndex] || '#000000';
   };
@@ -87,7 +81,13 @@ export function MethodTabEditor({
 
   const handleGradientColorChange = (color: string) => {
     if (!gradientPickerKey) return;
-    const currentGradient = getDefaultGradient(gradientPickerKey);
+    const currentGradient = getGradientValue(gradientPickerKey);
+    if (!currentGradient) {
+      // If no gradient exists yet, create a new one with the color
+      const newGradient = `linear-gradient(90deg, ${color}, ${color})`;
+      onMethodChange(gradientPickerKey, newGradient);
+      return;
+    }
     const parsed = parseGradientString(currentGradient);
     const newColors = [...parsed.colors];
     newColors[gradientPickerColorIndex] = color;
@@ -117,33 +117,34 @@ export function MethodTabEditor({
     setColorPickerField(null);
   };
 
+  // Get color value (no defaults - data should come from DB)
   const getColorValue = (field: MethodColorPickerField): string => {
     switch (field) {
       case 'subtitleColor':
-        return method.subtitleColor ?? 'rgba(255, 255, 255, 0.8)';
+        return method.subtitleColor || '';
       case 'cardBgColor':
-        return method.cardBgColor ?? 'rgba(255, 255, 255, 0.02)';
+        return method.cardBgColor || '';
       case 'cardBorderColor':
-        return method.cardBorderColor ?? 'rgba(255, 255, 255, 0.05)';
+        return method.cardBorderColor || '';
       case 'cardTitleColor':
-        return method.cardTitleColor ?? '#ffffff';
+        return method.cardTitleColor || '';
       case 'leadTextColor':
-        return method.leadTextColor ?? '#ffffff';
+        return method.leadTextColor || '';
       case 'secondaryTextColor':
-        return method.secondaryTextColor ?? 'rgba(255, 255, 255, 0.6)';
+        return method.secondaryTextColor || '';
       case 'secondaryBorderColor':
-        return method.secondaryBorderColor ?? COLORS.gogo_purple;
+        return method.secondaryBorderColor || '';
       case 'glowColor1':
-        return method.glowColor1 ?? COLORS.gogo_blue;
+        return method.glowColor1 || '';
       case 'glowColor2':
-        return method.glowColor2 ?? COLORS.gogo_teal;
+        return method.glowColor2 || '';
       default:
-        return '#ffffff';
+        return '';
     }
   };
 
-  // Method items helpers
-  const methodItems: MethodItem[] = method.methodItems ?? DEFAULT_METHOD_ITEMS;
+  // Method items helpers (no defaults - data should come from DB)
+  const methodItems: MethodItem[] = method.methodItems ?? EMPTY_METHOD_ITEMS;
 
   const addMethodItem = () => {
     const newItem: MethodItem = {
@@ -199,7 +200,7 @@ export function MethodTabEditor({
       <Grid item xs={12}>
         <GradientEditor
           label="Section Background Gradient"
-          value={getDefaultGradient('sectionBgGradient')}
+          value={getGradientValue('sectionBgGradient')}
           onChange={(gradient) => onMethodChange('sectionBgGradient', gradient)}
           showTypeSelector
           showThreeColorToggle
@@ -214,7 +215,7 @@ export function MethodTabEditor({
             onClick={(e) => openColorPicker(e.currentTarget, 'glowColor1')}
             sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
           >
-            <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: method.glowColor1 ?? COLORS.gogo_blue, border: '1px solid rgba(255,255,255,0.2)' }} />
+            <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: method.glowColor1 || 'transparent', border: '1px solid rgba(255,255,255,0.2)' }} />
             &nbsp;Left glow color
           </Button>
           <Button
@@ -223,7 +224,7 @@ export function MethodTabEditor({
             onClick={(e) => openColorPicker(e.currentTarget, 'glowColor2')}
             sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
           >
-            <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: method.glowColor2 ?? COLORS.gogo_teal, border: '1px solid rgba(255,255,255,0.2)' }} />
+            <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: method.glowColor2 || 'transparent', border: '1px solid rgba(255,255,255,0.2)' }} />
             &nbsp;Right glow color
           </Button>
         </Box>
@@ -242,16 +243,17 @@ export function MethodTabEditor({
       <Grid item xs={12} md={6}>
         <CustomTextField
           label="Title"
-          value={method.title ?? 'Our Method'}
+          value={method.title || ''}
           onChange={(e) => onMethodChange('title', e.target.value)}
           fullWidth
+          placeholder="Enter title..."
         />
       </Grid>
 
       <Grid item xs={12}>
         <GradientEditor
           label="Title Gradient"
-          value={getDefaultGradient('titleGradient')}
+          value={getGradientValue('titleGradient')}
           onChange={(gradient) => onMethodChange('titleGradient', gradient)}
           showTypeSelector
           showThreeColorToggle
@@ -261,11 +263,12 @@ export function MethodTabEditor({
       <Grid item xs={12}>
         <CustomTextField
           label="Subtitle"
-          value={method.subtitle ?? 'Our mentoring-centric approach is delivered by paid, professional musician mentors and helps alleviate primary challenges faced by youth in vulnerable communities by providing:'}
+          value={method.subtitle || ''}
           onChange={(e) => onMethodChange('subtitle', e.target.value)}
           fullWidth
           multiline
           rows={3}
+          placeholder="Enter subtitle..."
         />
       </Grid>
 
@@ -276,7 +279,7 @@ export function MethodTabEditor({
           onClick={(e) => openColorPicker(e.currentTarget, 'subtitleColor')}
           sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
         >
-          <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: method.subtitleColor ?? 'rgba(255, 255, 255, 0.8)', border: '1px solid rgba(255,255,255,0.2)' }} />
+          <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: method.subtitleColor || 'transparent', border: '1px solid rgba(255,255,255,0.2)' }} />
           &nbsp;Subtitle color
         </Button>
       </Grid>
@@ -294,7 +297,7 @@ export function MethodTabEditor({
       <Grid item xs={12}>
         <GradientEditor
           label="Icon Background Gradient"
-          value={getDefaultGradient('iconGradient')}
+          value={getGradientValue('iconGradient')}
           onChange={(gradient) => onMethodChange('iconGradient', gradient)}
           showTypeSelector
           showThreeColorToggle
@@ -309,7 +312,7 @@ export function MethodTabEditor({
             onClick={(e) => openColorPicker(e.currentTarget, 'cardBgColor')}
             sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
           >
-            <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: method.cardBgColor ?? 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255,255,255,0.2)' }} />
+            <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: method.cardBgColor || 'transparent', border: '1px solid rgba(255,255,255,0.2)' }} />
             &nbsp;Card background
           </Button>
           <Button
@@ -318,7 +321,7 @@ export function MethodTabEditor({
             onClick={(e) => openColorPicker(e.currentTarget, 'cardBorderColor')}
             sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
           >
-            <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: method.cardBorderColor ?? 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255,255,255,0.2)' }} />
+            <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: method.cardBorderColor || 'transparent', border: '1px solid rgba(255,255,255,0.2)' }} />
             &nbsp;Card border
           </Button>
           <Button
@@ -327,7 +330,7 @@ export function MethodTabEditor({
             onClick={(e) => openColorPicker(e.currentTarget, 'cardTitleColor')}
             sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
           >
-            <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: method.cardTitleColor ?? '#ffffff', border: '1px solid rgba(255,255,255,0.2)' }} />
+            <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: method.cardTitleColor || 'transparent', border: '1px solid rgba(255,255,255,0.2)' }} />
             &nbsp;Card text color
           </Button>
         </Box>
@@ -409,11 +412,12 @@ export function MethodTabEditor({
       <Grid item xs={12}>
         <CustomTextField
           label="Lead Text"
-          value={method.leadText ?? 'Our successful model pairs youth with a caring adult mentor, the unparalleled power of music, and trauma-informed mental health support.'}
+          value={method.leadText || ''}
           onChange={(e) => onMethodChange('leadText', e.target.value)}
           fullWidth
           multiline
           rows={3}
+          placeholder="Enter lead text..."
         />
       </Grid>
 
@@ -424,7 +428,7 @@ export function MethodTabEditor({
           onClick={(e) => openColorPicker(e.currentTarget, 'leadTextColor')}
           sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
         >
-          <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: method.leadTextColor ?? '#ffffff', border: '1px solid rgba(255,255,255,0.2)' }} />
+          <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: method.leadTextColor || 'transparent', border: '1px solid rgba(255,255,255,0.2)' }} />
           &nbsp;Lead text color
         </Button>
       </Grid>
@@ -432,11 +436,12 @@ export function MethodTabEditor({
       <Grid item xs={12}>
         <CustomTextField
           label="Secondary Text"
-          value={method.secondaryText ?? 'Separately, these interventions increase academic and social-emotional development as well as future employability and economic potential. We uniquely combine these to maximize their collective effectiveness. Through weekly after-school music and art instruction, mentoring, trauma-informed care, and performance opportunities across Miami, Chicago, Los Angeles, and New York, GOGO is a platform for youth to learn, grow and unleash their leadership potential.'}
+          value={method.secondaryText || ''}
           onChange={(e) => onMethodChange('secondaryText', e.target.value)}
           fullWidth
           multiline
           rows={4}
+          placeholder="Enter secondary text..."
         />
       </Grid>
 
@@ -448,7 +453,7 @@ export function MethodTabEditor({
             onClick={(e) => openColorPicker(e.currentTarget, 'secondaryTextColor')}
             sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
           >
-            <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: method.secondaryTextColor ?? 'rgba(255, 255, 255, 0.6)', border: '1px solid rgba(255,255,255,0.2)' }} />
+            <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: method.secondaryTextColor || 'transparent', border: '1px solid rgba(255,255,255,0.2)' }} />
             &nbsp;Secondary text color
           </Button>
           <Button
@@ -457,7 +462,7 @@ export function MethodTabEditor({
             onClick={(e) => openColorPicker(e.currentTarget, 'secondaryBorderColor')}
             sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
           >
-            <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: method.secondaryBorderColor ?? COLORS.gogo_purple, border: '1px solid rgba(255,255,255,0.2)' }} />
+            <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: method.secondaryBorderColor || 'transparent', border: '1px solid rgba(255,255,255,0.2)' }} />
             &nbsp;Secondary border color
           </Button>
         </Box>

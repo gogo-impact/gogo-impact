@@ -170,14 +170,15 @@ const mixHslColors = (base: string, accent: string, ratio: number): string => {
 
 const midiToFrequency = (midi: number) => 440 * Math.pow(2, (midi - 69) / 12);
 
-// Main container with Spotify-like gradient background
+// Main container with Spotify-like gradient background - now sticky full-page slide
 const HeroContainer = styled.section<{ $background?: string }>`
   width: 100%;
-  min-height: 85vh;
+  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  position: relative;
+  position: sticky;
+  top: 0;
   background: ${(props) => props.$background ?? "transparent"};
   background-size: cover;
   background-position: center;
@@ -186,6 +187,7 @@ const HeroContainer = styled.section<{ $background?: string }>`
   padding: 0;
   /* Ensure this container receives all mouse events */
   cursor: default;
+  z-index: 1;
 `;
 
 // Waveform container that spans the entire width of the page as a background element
@@ -813,10 +815,17 @@ const VisuallyHidden = styled.span`
   white-space: nowrap;
   border: 0;
 `;
-function HeroSection(
-  props: { previewMode?: boolean; heroOverride?: Partial<HeroContent> } = {},
-): JSX.Element {
-  const { previewMode = false, heroOverride } = props;
+interface HeroSectionProps {
+  /** Data passed directly from parent - used for production */
+  heroData?: HeroContent;
+  /** Preview mode for admin editor */
+  previewMode?: boolean;
+  /** Override data for admin preview */
+  heroOverride?: Partial<HeroContent>;
+}
+
+function HeroSection(props: HeroSectionProps = {}): JSX.Element {
+  const { heroData, previewMode = false, heroOverride } = props;
   // In preview mode, disable audio and sequencer but keep waveform animation running
   const disableAudio = previewMode;
   const disableSequencer = previewMode;
@@ -824,8 +833,9 @@ function HeroSection(
   const disableEntranceAnimations = previewMode;
   // Waveform animation should always run (unless reduced motion is preferred)
   const disableWaveformAnimation = false;
-  const [hero, setHero] = useState<HeroContent | null>(null);
-  const [loading, setLoading] = useState(!previewMode);
+  // Use heroData if provided (production), otherwise manage state internally (for backward compatibility)
+  const [hero, setHero] = useState<HeroContent | null>(heroData || null);
+  const [loading, setLoading] = useState(!previewMode && !heroData);
   const [error, setError] = useState(false);
   const padConfigMap = useMemo(
     () =>
@@ -1464,8 +1474,13 @@ function HeroSection(
 
   // Set up everything on mount and handle cleanup
   useEffect(() => {
-    // Load hero content unless disabled (admin preview can pass data instead)
-    if (!previewMode) {
+    // Load hero content unless heroData is provided or in preview mode
+    if (heroData) {
+      // heroData was provided by parent - use it directly
+      setHero(heroData);
+      setLoading(false);
+    } else if (!previewMode) {
+      // Backward compatibility: fetch data if no heroData provided
       fetchHeroContent().then((data) => {
         if (data) {
           setHero(data);
@@ -1475,6 +1490,7 @@ function HeroSection(
         setLoading(false);
       });
     } else if (heroOverride) {
+      // Preview mode with override
       setHero((prev) => ({
         ...(prev ?? ({} as HeroContent)),
         ...(heroOverride as HeroContent),
@@ -1652,6 +1668,7 @@ function HeroSection(
     handleMouseMove,
     mouseLeaveHandler,
     startAnimationLoop,
+    heroData,
     previewMode,
     heroOverride,
   ]);

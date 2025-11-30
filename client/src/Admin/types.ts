@@ -220,8 +220,8 @@ export interface TestimonialSectionForm {
   enabled: boolean;
 }
 
-// Re-export PopulationContent, FinancialContent, and MethodContent from impact.api for convenience
-export type { PopulationContent, FinancialContent, MethodContent } from '../services/impact.api';
+// Re-export PopulationContent, FinancialContent, MethodContent, CurriculumContent, and ImpactSectionContent from impact.api for convenience
+export type { PopulationContent, FinancialContent, MethodContent, CurriculumContent, ImpactSectionContent } from '../services/impact.api';
 
 export interface ImpactReportForm {
   hero: HeroSectionForm;
@@ -229,10 +229,14 @@ export interface ImpactReportForm {
   population: import('../services/impact.api').PopulationContent;
   financial: import('../services/impact.api').FinancialContent;
   method: import('../services/impact.api').MethodContent;
+  curriculum: import('../services/impact.api').CurriculumContent;
+  impactSection: import('../services/impact.api').ImpactSectionContent;
+  hearOurImpact: import('../services/impact.api').HearOurImpactContent;
+  testimonials: import('../services/impact.api').TestimonialsContent;
+  nationalImpact: import('../services/impact.api').NationalImpactContent;
   impact: ImpactSectionForm;
   programs: ProgramsSectionForm;
   locations: LocationsSectionForm;
-  testimonials: TestimonialSectionForm;
 }
 
 // Tab configuration
@@ -243,6 +247,11 @@ export const ADMIN_TABS = [
   { label: 'Population Section', value: 3, routeKey: 'population' as const },
   { label: 'Financial Section', value: 4, routeKey: 'financial' as const },
   { label: 'Method Section', value: 5, routeKey: 'method' as const },
+  { label: 'Curriculum Section', value: 6, routeKey: 'curriculum' as const },
+  { label: 'Impact Section', value: 7, routeKey: 'impactSection' as const },
+  { label: 'Hear Our Impact', value: 8, routeKey: 'hearOurImpact' as const },
+  { label: 'Testimonials', value: 9, routeKey: 'testimonials' as const },
+  { label: 'National Impact', value: 10, routeKey: 'nationalImpact' as const },
 ] as const;
 
 export type AdminTabRouteKey = (typeof ADMIN_TABS)[number]['routeKey'];

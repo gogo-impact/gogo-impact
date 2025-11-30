@@ -1,11 +1,16 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { animate, stagger } from 'animejs';
 import COLORS from '../../assets/colors';
+import { fetchCurriculumContent, CurriculumContent, CurriculumPedalCard, CurriculumTimelineItem } from '../services/impact.api';
 
-const Section = styled.section`
+interface SectionProps {
+  $bgGradient?: string;
+}
+
+const Section = styled.section<SectionProps>`
   padding: 6rem 0;
-  background: linear-gradient(180deg, #171717 0%, #121212 100%);
+  background: ${(p) => p.$bgGradient || 'linear-gradient(180deg, #171717 0%, #121212 100%)'};
   position: relative;
   overflow: hidden;
 `;
@@ -59,12 +64,14 @@ const Note = styled.span<{ $left: string; $delay: number; $color?: string }>`
   filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.2));
 `;
 
-const Glow = styled.div<{
+interface GlowProps {
   $color: string;
   $top: string;
   $left?: string;
   $right?: string;
-}>`
+}
+
+const Glow = styled.div<GlowProps>`
   position: absolute;
   width: 420px;
   height: 420px;
@@ -90,19 +97,27 @@ const Header = styled.div`
   margin-bottom: 3rem;
 `;
 
-const Title = styled.h2`
+interface TitleProps {
+  $gradient?: string;
+}
+
+const Title = styled.h2<TitleProps>`
   font-size: 2.6rem;
   font-weight: 900;
   margin: 0 0 1rem;
-  background: linear-gradient(90deg, ${COLORS.gogo_blue}, ${COLORS.gogo_teal});
+  background: ${(p) => p.$gradient || `linear-gradient(90deg, ${COLORS.gogo_blue}, ${COLORS.gogo_teal})`};
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   letter-spacing: 0.02em;
 `;
 
-const Subtitle = styled.p`
+interface SubtitleProps {
+  $color?: string;
+}
+
+const Subtitle = styled.p<SubtitleProps>`
   font-size: 1.2rem;
-  color: rgba(255, 255, 255, 0.78);
+  color: ${(p) => p.$color || 'rgba(255, 255, 255, 0.78)'};
   margin: 0 auto;
   max-width: 820px;
 `;
@@ -133,8 +148,13 @@ const Grid = styled.div`
   margin-top: 3rem;
 `;
 
-const Pedal = styled.div<{ $accentColor: string }>`
-  background: #1a1a1a;
+interface PedalProps {
+  $accentColor: string;
+  $bgColor?: string;
+}
+
+const Pedal = styled.div<PedalProps>`
+  background: ${(p) => p.$bgColor || '#1a1a1a'};
   border-radius: 12px;
   padding: 0 0 1.5rem 0;
   position: relative;
@@ -234,19 +254,27 @@ const Footswitch = styled.div`
   }
 `;
 
-const CardTitle = styled.h3`
+interface CardTitleProps {
+  $color?: string;
+}
+
+const CardTitle = styled.h3<CardTitleProps>`
   margin: 0 0 0.8rem;
   font-size: 1.4rem;
-  color: white;
+  color: ${(p) => p.$color || 'white'};
   font-weight: 800;
   font-family: 'Century Gothic', sans-serif;
   letter-spacing: -0.02em;
   text-transform: uppercase;
 `;
 
-const CardText = styled.p`
+interface CardTextProps {
+  $color?: string;
+}
+
+const CardText = styled.p<CardTextProps>`
   margin: 0 0 1.5rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: ${(p) => p.$color || 'rgba(255, 255, 255, 0.7)'};
   line-height: 1.6;
   font-size: 0.95rem;
 `;
@@ -273,12 +301,17 @@ const Badge = styled.span<{ $color?: string }>`
   color: ${(p) => p.$color ?? 'rgba(255, 255, 255, 0.9)'};
 `;
 
-const Timeline = styled.div`
+interface TimelineContainerProps {
+  $bgColor?: string;
+  $borderColor?: string;
+}
+
+const Timeline = styled.div<TimelineContainerProps>`
   margin-top: 4rem;
   position: relative;
   padding: 2rem;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: ${(p) => p.$bgColor || 'rgba(0, 0, 0, 0.3)'};
+  border: 1px solid ${(p) => p.$borderColor || 'rgba(255, 255, 255, 0.05)'};
   border-radius: 16px;
   backdrop-filter: blur(10px);
 `;
@@ -337,38 +370,114 @@ const TimelineContent = styled.div`
   padding-top: 0.4rem;
 `;
 
-const TimelineTitle = styled.h4`
+interface TimelineTitleProps {
+  $color?: string;
+}
+
+const TimelineTitle = styled.h4<TimelineTitleProps>`
   margin: 0 0 0.4rem;
   font-size: 1.1rem;
-  color: ${COLORS.gogo_teal};
+  color: ${(p) => p.$color || COLORS.gogo_teal};
   font-weight: 700;
   display: flex;
   align-items: center;
   gap: 0.8rem;
 `;
 
-const TimelineText = styled.p`
-  color: rgba(255, 255, 255, 0.6);
+interface TimelineTextProps {
+  $color?: string;
+}
+
+const TimelineText = styled.p<TimelineTextProps>`
+  color: ${(p) => p.$color || 'rgba(255, 255, 255, 0.6)'};
   margin: 0;
   font-size: 0.95rem;
   line-height: 1.5;
 `;
 
-function CurriculumSection(): JSX.Element {
+interface TimelineSectionTitleProps {
+  $color?: string;
+}
+
+const TimelineSectionTitle = styled.div<TimelineSectionTitleProps>`
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  color: ${(p) => p.$color || '#666'};
+  letter-spacing: 0.1em;
+`;
+
+interface CurriculumSectionProps {
+  /** Data passed directly from parent - used for production */
+  curriculumData?: CurriculumContent;
+  /** Preview mode for admin editor */
+  previewMode?: boolean;
+  /** Override data for admin preview */
+  curriculumOverride?: Partial<CurriculumContent>;
+}
+
+function CurriculumSection({ 
+  curriculumData: externalData, 
+  previewMode = false, 
+  curriculumOverride 
+}: CurriculumSectionProps): JSX.Element {
+  const [internalData, setInternalData] = useState<CurriculumContent | null>(externalData || null);
   const headerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<HTMLDivElement[]>([]);
+
+  useEffect(() => {
+    if (externalData) {
+      // externalData was provided by parent - use it directly
+      setInternalData(externalData);
+    } else if (!previewMode) {
+      // Backward compatibility: fetch data if no externalData provided
+      fetchCurriculumContent().then((data) => {
+        if (data) setInternalData(data);
+      });
+    }
+  }, [externalData, previewMode]);
+
+  // Use externalData, fetched data, or override (for preview mode)
+  // No defaults - all data should come from DB
+  const effectiveData: CurriculumContent = externalData 
+    ? { ...externalData, ...(curriculumOverride || {}) }
+    : { ...(internalData || {}), ...(curriculumOverride || {}) };
+
+  // Extract values (no defaults - data should come from DB)
+  const title = effectiveData.title || '';
+  const titleGradient = effectiveData.titleGradient || '';
+  const subtitle = effectiveData.subtitle || '';
+  const subtitleColor = effectiveData.subtitleColor || '';
+  const sectionBgGradient = effectiveData.sectionBgGradient || '';
+  const glowColor1 = effectiveData.glowColor1 || COLORS.gogo_blue;
+  const glowColor2 = effectiveData.glowColor2 || COLORS.gogo_purple;
+  const eqColor1 = effectiveData.eqColor1 || COLORS.gogo_blue;
+  const eqColor2 = effectiveData.eqColor2 || COLORS.gogo_purple;
+  const eqColor3 = effectiveData.eqColor3 || COLORS.gogo_teal;
+  const pedalCards = effectiveData.pedalCards || [];
+  const pedalBgColor = effectiveData.pedalBgColor || '';
+  const cardTitleColor = effectiveData.cardTitleColor || '';
+  const cardTextColor = effectiveData.cardTextColor || '';
+  const timelineTitle = effectiveData.timelineTitle || '';
+  const timelineTitleColor = effectiveData.timelineTitleColor || '';
+  const timelineBgColor = effectiveData.timelineBgColor || '';
+  const timelineBorderColor = effectiveData.timelineBorderColor || '';
+  const timelineItems = effectiveData.timelineItems || [];
+  const timelineItemTitleColor = effectiveData.timelineItemTitleColor || '';
+  const timelineItemTextColor = effectiveData.timelineItemTextColor || '';
+
   const notes = useMemo(
     () => [
-      { ch: '♪', left: '6%', delay: 0.1, color: `${COLORS.gogo_blue}aa` },
-      { ch: '♫', left: '18%', delay: 0.6, color: `${COLORS.gogo_teal}aa` },
+      { ch: '♪', left: '6%', delay: 0.1, color: `${glowColor1}aa` },
+      { ch: '♫', left: '18%', delay: 0.6, color: `${eqColor3}aa` },
       { ch: '♩', left: '28%', delay: 1.2 },
-      { ch: '♬', left: '38%', delay: 0.3, color: `${COLORS.gogo_purple}aa` },
+      { ch: '♬', left: '38%', delay: 0.3, color: `${glowColor2}aa` },
       { ch: '♪', left: '52%', delay: 0.9 },
       { ch: '♩', left: '63%', delay: 1.4, color: `${COLORS.gogo_pink}aa` },
       { ch: '♫', left: '74%', delay: 0.2 },
       { ch: '♬', left: '86%', delay: 1.1, color: `${COLORS.gogo_green}aa` },
     ],
-    [],
+    [glowColor1, glowColor2, eqColor3],
   );
 
   useEffect(() => {
@@ -394,7 +503,7 @@ function CurriculumSection(): JSX.Element {
         easing: 'easeOutCubic',
       });
     }
-  }, []);
+  }, [pedalCards]);
 
   const setCardRef = (el: HTMLDivElement | null, idx: number) => {
     if (el) {
@@ -403,8 +512,21 @@ function CurriculumSection(): JSX.Element {
     }
   };
 
+  // Determine EQ bar colors (cycle through 3 colors)
+  const getEqColor = (index: number): string => {
+    const mod = index % 3;
+    if (mod === 0) return eqColor1;
+    if (mod === 1) return eqColor2;
+    return eqColor3;
+  };
+
+  // If no data at all, don't render
+  if (!title && !subtitle && pedalCards.length === 0 && timelineItems.length === 0) {
+    return <></>;
+  }
+
   return (
-    <Section>
+    <Section $bgGradient={sectionBgGradient}>
       <StaffBlock $top="10%" />
       <StaffBlock $top="72%" />
       <NoteCloud>
@@ -419,157 +541,76 @@ function CurriculumSection(): JSX.Element {
           </Note>
         ))}
       </NoteCloud>
-      <Glow $color={COLORS.gogo_blue} $top="-10%" $left="-5%" />
-      <Glow $color={COLORS.gogo_purple} $top="60%" $right="-10%" />
+      <Glow $color={glowColor1} $top="-10%" $left="-5%" />
+      <Glow $color={glowColor2} $top="60%" $right="-10%" />
       <Container>
         <Header ref={headerRef}>
-          <Title className="animate">Curriculum & Program Model</Title>
-          <Subtitle className="animate">
-            Every session runs like a band practice: we soundcheck together,
-            pick from a shared setlist, and co‑arrange the music. Students lead
-            artistic choices—from song selection and structure to visuals and
-            performance planning.
-          </Subtitle>
+          {title && <Title className="animate" $gradient={titleGradient}>{title}</Title>}
+          {subtitle && <Subtitle className="animate" $color={subtitleColor}>{subtitle}</Subtitle>}
           <EqRow className="animate">
             {[5, 10, 16, 22, 18, 12, 8, 14, 20, 9, 6].map((h, i) => (
               <EqBar
                 key={`eq-${i}`}
                 $h={8 + h}
                 $d={i * 0.08}
-                $c={
-                  i % 3 === 0
-                    ? COLORS.gogo_blue
-                    : i % 3 === 1
-                    ? COLORS.gogo_purple
-                    : COLORS.gogo_teal
-                }
+                $c={getEqColor(i)}
               />
             ))}
           </EqRow>
         </Header>
 
-        <Grid>
-          <Pedal
-            ref={(el) => setCardRef(el, 0)}
-            $accentColor={COLORS.gogo_blue}
-          >
-            <PedalTop>
-              <Knob className="knob" />
-              <Knob className="knob" />
-              <Knob className="knob" />
-            </PedalTop>
-            <PedalBody>
-              <Led $color={COLORS.gogo_blue} />
-              <CardTitle>Opening Chorus</CardTitle>
-              <CardText>
-                We start with an opening circle and a shared song to tune the
-                room—building community, voice, and confidence. Mentors and
-                students shape the groove together.
-              </CardText>
-              <BadgeRow>
-                <Badge $color={COLORS.gogo_blue}>Soundcheck</Badge>
-                <Badge $color={COLORS.gogo_blue}>House Setlist</Badge>
-                <Badge $color={COLORS.gogo_blue}>Band‑Led</Badge>
-              </BadgeRow>
-              <Footswitch />
-            </PedalBody>
-          </Pedal>
+        {pedalCards.length > 0 && (
+          <Grid>
+            {pedalCards.map((card, idx) => (
+              <Pedal
+                key={card.id}
+                ref={(el) => setCardRef(el, idx)}
+                $accentColor={card.accentColor || COLORS.gogo_blue}
+                $bgColor={pedalBgColor}
+              >
+                <PedalTop>
+                  <Knob className="knob" />
+                  <Knob className="knob" />
+                  <Knob className="knob" />
+                </PedalTop>
+                <PedalBody>
+                  <Led $color={card.accentColor || COLORS.gogo_blue} />
+                  {card.title && <CardTitle $color={cardTitleColor}>{card.title}</CardTitle>}
+                  {card.text && <CardText $color={cardTextColor}>{card.text}</CardText>}
+                  {card.badges && card.badges.length > 0 && (
+                    <BadgeRow>
+                      {card.badges.map((badge, bidx) => (
+                        <Badge key={bidx} $color={card.accentColor}>{badge}</Badge>
+                      ))}
+                    </BadgeRow>
+                  )}
+                  <Footswitch />
+                </PedalBody>
+              </Pedal>
+            ))}
+          </Grid>
+        )}
 
-          <Pedal
-            ref={(el) => setCardRef(el, 1)}
-            $accentColor={COLORS.gogo_purple}
-          >
-            <PedalTop>
-              <Knob className="knob" />
-              <Knob className="knob" />
-              <Knob className="knob" />
-            </PedalTop>
-            <PedalBody>
-              <Led $color={COLORS.gogo_purple} />
-              <CardTitle>Weekly Setlist</CardTitle>
-              <CardText>
-                After‑school programs rehearse twice weekly; community sites run
-                3‑hour jam blocks. Instruments and backline are provided at no
-                cost.
-              </CardText>
-              <BadgeRow>
-                <Badge $color={COLORS.gogo_purple}>2 rehearsals/week</Badge>
-                <Badge $color={COLORS.gogo_purple}>3h jam blocks</Badge>
-                <Badge $color={COLORS.gogo_purple}>Backline provided</Badge>
-              </BadgeRow>
-              <Footswitch />
-            </PedalBody>
-          </Pedal>
-
-          <Pedal
-            ref={(el) => setCardRef(el, 2)}
-            $accentColor={COLORS.gogo_teal}
-          >
-            <PedalTop>
-              <Knob className="knob" />
-              <Knob className="knob" />
-              <Knob className="knob" />
-            </PedalTop>
-            <PedalBody>
-              <Led $color={COLORS.gogo_teal} />
-              <CardTitle>Culminating Releases</CardTitle>
-              <CardText>
-                Learning crescendos with live shows, studio sessions, exhibitions,
-                and drops— students take the lead on and off stage and celebrate
-                growth.
-              </CardText>
-              <BadgeRow>
-                <Badge $color={COLORS.gogo_teal}>Live Shows</Badge>
-                <Badge $color={COLORS.gogo_teal}>Studio Sessions</Badge>
-                <Badge $color={COLORS.gogo_teal}>Release Parties</Badge>
-              </BadgeRow>
-              <Footswitch />
-            </PedalBody>
-          </Pedal>
-        </Grid>
-
-        <Timeline>
-          <div style={{ marginBottom: '1.5rem', fontSize: '0.9rem', textTransform: 'uppercase', color: '#666', letterSpacing: '0.1em' }}>
-            Signal Flow
-          </div>
-          <SignalPath>
-            <TimelineItem>
-              <Jack />
-              <TimelineContent>
-                <TimelineTitle>
-                  Soundcheck & Opening Circle
-                </TimelineTitle>
-                <TimelineText>
-                  Community agreements, vibe check, and tuning into the space together.
-                </TimelineText>
-              </TimelineContent>
-            </TimelineItem>
-            
-            <TimelineItem>
-              <Jack />
-              <TimelineContent>
-                <TimelineTitle>
-                  Rehearsal & Groove
-                </TimelineTitle>
-                <TimelineText>
-                  Skill‑building through ensemble practice, jamming, and improvisation.
-                </TimelineText>
-              </TimelineContent>
-            </TimelineItem>
-
-            <TimelineItem>
-              <Jack />
-              <TimelineContent>
-                <TimelineTitle>
-                  Arrangement & Reflection
-                </TimelineTitle>
-                <TimelineText>
-                  Student‑led decisions, goal‑setting, and finalizing the track for performance.
-                </TimelineText>
-              </TimelineContent>
-            </TimelineItem>
-          </SignalPath>
-        </Timeline>
+        {timelineItems.length > 0 && (
+          <Timeline $bgColor={timelineBgColor} $borderColor={timelineBorderColor}>
+            {timelineTitle && (
+              <TimelineSectionTitle $color={timelineTitleColor}>
+                {timelineTitle}
+              </TimelineSectionTitle>
+            )}
+            <SignalPath>
+              {timelineItems.map((item) => (
+                <TimelineItem key={item.id}>
+                  <Jack />
+                  <TimelineContent>
+                    {item.title && <TimelineTitle $color={timelineItemTitleColor}>{item.title}</TimelineTitle>}
+                    {item.text && <TimelineText $color={timelineItemTextColor}>{item.text}</TimelineText>}
+                  </TimelineContent>
+                </TimelineItem>
+              ))}
+            </SignalPath>
+          </Timeline>
+        )}
       </Container>
     </Section>
   );

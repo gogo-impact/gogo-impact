@@ -3,35 +3,20 @@ import React, {
   useState,
   useRef,
   useCallback,
-  memo,
   FC,
 } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { animate, stagger } from 'animejs';
 import COLORS from '../../assets/colors';
-import photo1 from '../../assets/missionPhotos/Photo1.jpg';
-import photo2 from '../../assets/missionPhotos/Photo2.jpg';
-import photo3 from '../../assets/missionPhotos/Photo3.jpg';
-import photo4 from '../../assets/missionPhotos/Photo4.jpg';
-import photo5 from '../../assets/missionPhotos/Photo5.jpg';
-import photo6 from '../../assets/missionPhotos/Photo6.jpg';
-import photo7 from '../../assets/missionPhotos/Photo7.jpg';
-import photo8 from '../../assets/missionPhotos/Photo8.jpg';
-import photo9 from '../../assets/missionPhotos/Photo9.jpg';
-import photo10 from '../../assets/missionPhotos/Photo10.jpg';
-import photo11 from '../../assets/missionPhotos/Photo11.jpg';
-import photo12 from '../../assets/missionPhotos/Photo12.jpg';
-import photo13 from '../../assets/missionPhotos/Photo13.jpg';
-import photo14 from '../../assets/missionPhotos/Photo14.jpg';
-
-// Label colors for TurntableStat
-const TURNTABLE_LABEL_COLORS: Array<{ a: string; b: string }> = [
-  { a: COLORS.gogo_yellow, b: COLORS.gogo_pink },
-  { a: COLORS.gogo_teal, b: COLORS.gogo_blue },
-  { a: COLORS.gogo_purple, b: COLORS.gogo_green },
-  { a: COLORS.gogo_pink, b: COLORS.gogo_yellow },
-];
+import {
+  fetchImpactSectionContent,
+  ImpactSectionContent,
+  ImpactTurntableStat,
+  ImpactHighlightChip,
+  ImpactHighlightCard,
+} from '../services/impact.api';
+import { getImpactIconByKey } from './IconSelector';
 
 // Ambient gradient animation
 const ambientShift = keyframes`
@@ -46,9 +31,6 @@ const ambientShift = keyframes`
   }
 `;
 
-// (removed: pulse/countUp animations as stats were removed)
-
-// Add these new keyframes at the top with other animations
 const blobAnimation = keyframes`
   0% {
     transform: translate(0, 0) scale(1);
@@ -79,7 +61,6 @@ const blobAnimation2 = keyframes`
   }
 `;
 
-// Spotify-inspired audio wave animation
 const audioWave = keyframes`
   0% { height: 5px; }
   20% { height: 20px; }
@@ -89,17 +70,24 @@ const audioWave = keyframes`
   100% { height: 5px; }
 `;
 
-// Subtle rotating gradient animation for accents
-const gradientRotate = keyframes`
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+const spin = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 `;
 
-// New styled components for updated sections
-const ImpactContainer = styled.section`
+const beltScroll = keyframes`
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+`;
+
+interface SectionProps {
+  $bgGradient?: string;
+  $topBorderGradient?: string;
+}
+
+const ImpactContainer = styled.section<SectionProps>`
   padding: 3rem 0;
-  background: linear-gradient(180deg, #171717 0%, #121212 100%);
+  background: ${(p) => p.$bgGradient || 'linear-gradient(180deg, #171717 0%, #121212 100%)'};
   position: relative;
   overflow: hidden;
 
@@ -110,13 +98,7 @@ const ImpactContainer = styled.section`
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(
-      90deg,
-      ${COLORS.gogo_blue}88,
-      ${COLORS.gogo_pink}88,
-      ${COLORS.gogo_purple}88,
-      ${COLORS.gogo_green}88
-    );
+    background: ${(p) => p.$topBorderGradient || `linear-gradient(90deg, ${COLORS.gogo_blue}88, ${COLORS.gogo_pink}88, ${COLORS.gogo_purple}88, ${COLORS.gogo_green}88)`};
     z-index: 1;
   }
 
@@ -144,60 +126,33 @@ const SectionContainer = styled.div`
   z-index: 2;
 `;
 
-const GradientBg = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
+const BeltContainer = styled.div`
   width: 100%;
-  height: 100%;
-  background: radial-gradient(
-    circle at center,
-    ${COLORS.gogo_blue}22 0%,
-    ${COLORS.gogo_purple}22 30%,
-    ${COLORS.gogo_pink}22 60%,
-    transparent 90%
-  );
-  background-size: 100% 100%;
-  z-index: 0;
-  filter: blur(60px);
-  opacity: 0.5;
-  pointer-events: none;
-`;
-
-const SectionHeader = styled.div`
-  text-align: center;
-  margin-bottom: 2rem;
+  overflow: hidden;
   position: relative;
 `;
 
-const SectionTitle = styled.h2`
-  font-size: 3rem;
-  font-weight: 900;
-  color: white;
-  margin-bottom: 1.5rem;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-  letter-spacing: 0.02em;
+const BeltTrack = styled.div<{ $direction: 'left' | 'right' }>`
+  display: flex;
+  gap: 1rem;
+  width: max-content;
+  animation: ${beltScroll} 30s linear infinite;
+  animation-direction: ${(p) => (p.$direction === 'right' ? 'reverse' : 'normal')};
 `;
 
-const Subtitle = styled.div`
-  font-size: 1.3rem;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 2rem;
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
-`;
+const BeltCard = styled.div`
+  flex-shrink: 0;
+  width: 200px;
+  height: 140px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 
-const StatsTitle = styled.h3`
-  font-size: 2.2rem;
-  font-weight: 900;
-  color: white;
-  margin-bottom: 2.5rem;
-  text-align: center;
-  position: relative;
-  z-index: 1;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 `;
 
 const StatsGrid = styled.div`
@@ -220,7 +175,21 @@ const StatsGrid = styled.div`
   text-align: center;
 `;
 
-// Turntable stats styling
+interface StatsTitleProps {
+  $color?: string;
+}
+
+const StatsTitle = styled.h3<StatsTitleProps>`
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: ${(p) => p.$color || 'white'};
+  margin-bottom: 2.5rem;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+`;
+
 const TurntableGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -228,16 +197,17 @@ const TurntableGrid = styled.div`
   margin-top: 0.5rem;
 `;
 
-const TurntableCard = styled.div`
+interface TurntableCardProps {
+  $bgGradient?: string;
+  $borderColor?: string;
+}
+
+const TurntableCard = styled.div<TurntableCardProps>`
   position: relative;
   border-radius: 16px;
   padding: 1.25rem 1.25rem 1.5rem;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.06),
-    rgba(255, 255, 255, 0.03)
-  );
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: ${(p) => p.$bgGradient || 'linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03))'};
+  border: 1px solid ${(p) => p.$borderColor || 'rgba(255, 255, 255, 0.08)'};
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
   transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
   user-select: none;
@@ -245,146 +215,44 @@ const TurntableCard = styled.div`
   &:hover {
     transform: translateY(-6px);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
-    background: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.08),
-      rgba(255, 255, 255, 0.04)
-    );
   }
-`;
-
-// Outcomes highlights chips styling (under records)
-const HighlightsContainer = styled.div`
-  margin-top: 1.75rem;
-  padding: 1rem 1.25rem;
-  border-radius: 14px;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.03),
-    rgba(255, 255, 255, 0.02)
-  );
-  border: 1px solid rgba(255, 255, 255, 0.07);
-`;
-
-const HighlightsTitle = styled.div`
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  margin-bottom: 0.75rem;
-`;
-
-const HighlightsSubtitle = styled.div`
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.98rem;
-  margin-bottom: 1rem;
-`;
-
-const HighlightsRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-`;
-
-const HighlightChip = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.8rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  color: white;
-  font-weight: 700;
-  font-size: 0.92rem;
-  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
-
-  svg {
-    width: 16px;
-    height: 16px;
-    color: ${COLORS.gogo_blue};
-  }
-
-  &:hover {
-    transform: translateY(-2px);
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.14);
-  }
-`;
-
-const HighlightCardsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
-`;
-
-const HighlightCard = styled.div`
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 12px;
-  padding: 1rem 1.1rem;
-  transition: transform 0.25s ease, background 0.25s ease,
-    border-color 0.25s ease;
-
-  &:hover {
-    transform: translateY(-3px);
-    background: rgba(255, 255, 255, 0.07);
-    border-color: rgba(255, 255, 255, 0.14);
-  }
-`;
-
-const HighlightCardTitle = styled.div`
-  color: #fff;
-  font-weight: 800;
-  margin-bottom: 0.35rem;
-  letter-spacing: 0.01em;
-`;
-
-const HighlightCardText = styled.div`
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 0.95rem;
-  line-height: 1.5;
 `;
 
 const Deck = styled.div`
   position: relative;
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  height: auto;
-  border-radius: 14px;
-  background: linear-gradient(145deg, #1b1b1b, #101010);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  overflow: hidden;
-  display: grid;
-  place-items: center;
+  width: 180px;
+  height: 180px;
   margin: 0 auto;
-  max-width: 240px;
-`;
-
-const spin = keyframes`
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    #1a1a1a 0%,
+    #0f0f0f 100%
+  );
+  box-shadow:
+    inset 0 0 20px rgba(0, 0, 0, 0.5),
+    0 0 0 4px #2a2a2a,
+    0 0 0 5px #111;
 `;
 
 const Record = styled.div`
-  --spin-speed: 4.5s;
-  position: relative;
-  width: 150px;
-  height: 150px;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
   border-radius: 50%;
-  background: radial-gradient(
-      closest-side,
-      rgba(0, 0, 0, 0) 77%,
-      rgba(0, 0, 0, 0.6) 78%,
-      rgba(0, 0, 0, 0) 79%
-    ),
-    repeating-radial-gradient(
-      circle at center,
-      #121212 0px,
-      #121212 2px,
-      #0c0c0c 2px,
-      #0c0c0c 4px
-    );
+  background: repeating-radial-gradient(
+    circle at 50% 50%,
+    #111 0px,
+    #111 2px,
+    #1a1a1a 2px,
+    #1a1a1a 4px
+  );
+  box-shadow:
+    inset 0 0 20px rgba(0, 0, 0, 0.6),
+    0 0 5px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
   animation: ${spin} var(--spin-speed) linear infinite;
   animation-play-state: paused;
   will-change: transform;
@@ -404,8 +272,8 @@ const RecordLabel = styled.div<{ $colorA: string; $colorB: string }>`
   border-radius: 50%;
   background: radial-gradient(
     circle at 30% 30%,
-    ${(p) => p.$colorA},
-    ${(p) => p.$colorB}
+    ${(p) => p.$colorA || COLORS.gogo_yellow},
+    ${(p) => p.$colorB || COLORS.gogo_pink}
   );
   color: white;
   font-weight: 1100;
@@ -466,215 +334,148 @@ const Tonearm = styled.div<{ $engaged: boolean }>`
   }
 `;
 
-const StatCaption = styled.div`
+interface StatCaptionProps {
+  $color?: string;
+}
+
+const StatCaption = styled.div<StatCaptionProps>`
   margin-top: 0.9rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: ${(p) => p.$color || 'rgba(255, 255, 255, 0.85)'};
   text-align: center;
   font-weight: 700;
   font-size: 1.05rem;
   line-height: 1.4;
 `;
 
-// Removed confetti
+// Highlights section
+interface HighlightsContainerProps {
+  $bgColor?: string;
+}
 
-const StatItem = styled.div`
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 16px;
-  padding: 2.5rem 2rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  position: relative;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  z-index: 1;
-  text-align: center;
-
-  &:hover {
-    transform: translateY(-10px) scale(1.03);
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-`;
-
-// (removed: PercentageCircle/PercentageText as stats were removed)
-
-// (removed: vinyl stat visualization)
-
-const StatDescription = styled.p`
-  font-size: 1.1rem;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.9);
-  text-align: center;
-  z-index: 1;
-  position: relative;
-`;
-
-const SubsectionTitle = styled.h3`
-  font-size: 2rem;
-  color: white;
-  margin: 4rem 0 1.5rem;
-  position: relative;
-  padding-left: 1rem;
-  display: inline-block;
-
-  &:before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background: ${COLORS.gogo_blue};
-    border-radius: 4px;
-  }
-`;
-
-const SubsectionContent = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 2rem;
-  margin-bottom: 4rem;
-`;
-
-const MeasurementCard = styled.div`
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 16px;
+const HighlightsContainer = styled.div<HighlightsContainerProps>`
+  margin: 2rem 0;
   padding: 2rem;
-  height: 100%;
-  transition: all 0.3s ease;
+  background: ${(p) => p.$bgColor || 'rgba(255, 255, 255, 0.02)'};
+  border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.05);
+`;
+
+interface HighlightsTitleProps {
+  $color?: string;
+}
+
+const HighlightsTitle = styled.h3<HighlightsTitleProps>`
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: ${(p) => p.$color || 'white'};
+  margin-bottom: 0.5rem;
+  text-align: center;
+`;
+
+interface HighlightsSubtitleProps {
+  $color?: string;
+}
+
+const HighlightsSubtitle = styled.p<HighlightsSubtitleProps>`
+  color: ${(p) => p.$color || 'rgba(255, 255, 255, 0.7)'};
+  text-align: center;
+  margin-bottom: 1.5rem;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+`;
+
+const HighlightsRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+`;
+
+interface HighlightChipProps {
+  $bgColor?: string;
+  $borderColor?: string;
+  $textColor?: string;
+}
+
+const HighlightChip = styled.div<HighlightChipProps>`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: ${(p) => p.$bgColor || 'rgba(255, 255, 255, 0.05)'};
+  border: 1px solid ${(p) => p.$borderColor || 'rgba(255, 255, 255, 0.1)'};
+  border-radius: 20px;
+  color: ${(p) => p.$textColor || 'rgba(255, 255, 255, 0.9)'};
+  font-size: 0.9rem;
+  font-weight: 600;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+`;
+
+const HighlightCardsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+interface HighlightCardStyleProps {
+  $bgColor?: string;
+  $borderColor?: string;
+}
+
+const HighlightCardStyled = styled.div<HighlightCardStyleProps>`
+  background: ${(p) => p.$bgColor || 'rgba(255, 255, 255, 0.03)'};
+  border: 1px solid ${(p) => p.$borderColor || 'rgba(255, 255, 255, 0.08)'};
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: transform 0.3s ease;
 
   &:hover {
-    transform: translateY(-5px);
-    background: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-    border-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-4px);
   }
 `;
 
-const MeasurementTitle = styled.h4`
-  font-size: 1.3rem;
+interface HighlightCardTitleProps {
+  $color?: string;
+}
+
+const HighlightCardTitle = styled.h4<HighlightCardTitleProps>`
+  font-size: 1.1rem;
   font-weight: 700;
-  color: ${COLORS.gogo_yellow};
-  margin-bottom: 1.2rem;
-  position: relative;
-  padding-bottom: 1rem;
-
-  &:after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 40px;
-    height: 3px;
-    background: ${COLORS.gogo_yellow}66;
-    border-radius: 3px;
-  }
+  color: ${(p) => p.$color || 'white'};
+  margin-bottom: 0.5rem;
 `;
 
-const MeasurementList = styled.ul`
-  list-style-type: none;
-  padding: 0;
+interface HighlightCardTextProps {
+  $color?: string;
+}
+
+const HighlightCardText = styled.p<HighlightCardTextProps>`
+  color: ${(p) => p.$color || 'rgba(255, 255, 255, 0.7)'};
+  font-size: 0.95rem;
+  line-height: 1.5;
   margin: 0;
 `;
 
-const MeasurementItem = styled.li`
-  color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 0.8rem;
-  padding-left: 1.8rem;
-  position: relative;
-  line-height: 1.5;
-
-  &:before {
-    content: '•';
-    color: ${COLORS.gogo_teal};
-    position: absolute;
-    left: 0;
-    font-size: 1.5rem;
-    line-height: 1;
-  }
-
-  &:hover {
-    color: white;
-    transform: translateX(3px);
-    transition: all 0.2s ease;
-  }
-`;
-
-// Background shimmer effect
-const shimmerEffect = keyframes`
-  0% {
-    background-position: -100% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-`;
-
-const Blob = styled.div<{
-  color: string;
-  size: string;
-  top: string;
-  left: string;
-  delay: string;
-}>`
-  position: absolute;
-  width: ${(props) => props.size};
-  height: ${(props) => props.size};
-  background: ${(props) => props.color};
-  border-radius: 50%;
-  filter: blur(20px);
-  opacity: 0.3;
-  top: ${(props) => props.top};
-  left: ${(props) => props.left};
-  animation: ${blobAnimation} 15s ease-in-out infinite;
-  animation-delay: ${(props) => props.delay};
-  z-index: 0;
-`;
-
-const Blob2 = styled(Blob)`
-  animation: ${blobAnimation2} 20s ease-in-out infinite;
-`;
-
-// Update the MeasurementContainer with Spotify-like styling
+// Measurement section
 const MeasurementContainer = styled.section`
   padding: 6rem 0;
   background: linear-gradient(135deg, #1e1e1e 0%, #121212 100%);
   position: relative;
   overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(
-      circle at 20% 25%,
-      rgba(109, 174, 132, 0.15) 0%,
-      transparent 50%
-    );
-    z-index: 0;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(
-      circle at 80% 75%,
-      rgba(30, 215, 96, 0.15) 0%,
-      transparent 50%
-    );
-    z-index: 0;
-  }
 `;
 
 const MeasurementWrapper = styled.div`
@@ -685,140 +486,111 @@ const MeasurementWrapper = styled.div`
   z-index: 1;
 `;
 
-const SpotifyCard = styled.div`
-  border-radius: 12px;
-  background: linear-gradient(
-    135deg,
-    rgba(25, 25, 25, 0.9) 0%,
-    rgba(18, 18, 18, 0.8) 100%
-  );
-  padding: 2rem;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  overflow: hidden;
-  position: relative;
-
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-    border-color: rgba(30, 215, 96, 0.2);
-  }
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: linear-gradient(90deg, #1ed760, #169c46);
-    opacity: 0.7;
-    z-index: 1;
-  }
-`;
-
-// Change MeasurementHeader to have Spotify-like left alignment with accent bar
 const MeasurementHeader = styled.div`
-  text-align: left;
-  margin-top: -2rem;
-  margin-bottom: 1rem;
-  position: relative;
-  padding-left: 1rem;
-
-  &::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 4px;
-    height: 70%;
-    background: linear-gradient(180deg, #1ed760, #169c46);
-    border-radius: 4px;
-  }
+  text-align: center;
+  margin-bottom: 3rem;
 `;
 
-// Update MeasureTitle to have Spotify-like typography
-const MeasureTitle = styled.h2`
-  font-size: 3.5rem;
-  font-weight: 900;
-  color: white;
-  margin-bottom: 0.5rem;
-  position: relative;
-  display: inline-block;
-  line-height: 1.1;
+interface MeasureTitleProps {
+  $color?: string;
+  $highlightColor?: string;
+}
 
-  .highlight {
-    color: #1ed760;
-    position: relative;
-    z-index: 1;
-    font-style: italic;
-  }
+const MeasureTitle = styled.h2<MeasureTitleProps>`
+  font-size: 2.5rem;
+  font-weight: 900;
+  margin-bottom: 1rem;
 
   .regular {
-    opacity: 0.9;
+    color: ${(p) => p.$color || 'white'};
+  }
+
+  .highlight {
+    color: ${(p) => p.$highlightColor || COLORS.gogo_teal};
   }
 `;
 
-const SpotifySubtitle = styled.p`
-  font-size: 1.2rem;
-  color: rgba(255, 255, 255, 0.7);
-  max-width: 70vw;
-  margin-top: 0.5rem;
+interface SpotifySubtitleProps {
+  $color?: string;
+}
+
+const SpotifySubtitle = styled.p<SpotifySubtitleProps>`
+  color: ${(p) => p.$color || 'rgba(255, 255, 255, 0.7)'};
+  font-size: 1.1rem;
   line-height: 1.6;
+  max-width: 800px;
+  margin: 0 auto;
 `;
 
 const AudioWaveContainer = styled.div`
   display: flex;
+  justify-content: center;
   align-items: flex-end;
-  height: 30px;
   gap: 3px;
-  margin: 1.5rem 0;
+  height: 30px;
+  margin-top: 1.5rem;
 `;
 
 const AudioBar = styled.div<{ $index: number }>`
   width: 4px;
-  background: linear-gradient(to top, #1ed760, #169c46);
-  border-radius: 2px;
   height: 5px;
-  animation: ${audioWave} 1.5s ease infinite;
-  animation-delay: ${(props) => props.$index * 0.1}s;
-`;
-
-const FlexContainer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  gap: 3rem;
-  margin-top: 3rem;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-  }
+  background: ${COLORS.gogo_teal};
+  border-radius: 2px;
+  animation: ${audioWave} 1.2s ease-in-out infinite;
+  animation-delay: ${(p) => p.$index * 0.1}s;
 `;
 
 const SpotifyGrid = styled.div`
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
-  margin-top: 3rem;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
 `;
 
+const SpotifyCard = styled.div`
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+`;
+
+interface MethodTitleProps {
+  $color?: string;
+}
+
+const MethodTitle = styled.div<MethodTitleProps>`
+  font-size: 1rem;
+  font-weight: 700;
+  color: ${(p) => p.$color || COLORS.gogo_teal};
+  margin-bottom: 0.3rem;
+`;
+
+interface MethodTextProps {
+  $color?: string;
+}
+
+const MethodText = styled.div<MethodTextProps>`
+  color: ${(p) => p.$color || 'rgba(255, 255, 255, 0.7)'};
+  font-size: 0.95rem;
+  line-height: 1.5;
+`;
+
+// Spotify-style methods list
 const SpotifyMethodsList = styled.div`
   margin-bottom: 2rem;
 `;
 
-const SpotifyMethod = styled.div`
-  background: rgba(30, 30, 30, 0.5);
+interface SpotifyMethodProps {
+  $bgColor?: string;
+  $borderColor?: string;
+}
+
+const SpotifyMethod = styled.div<SpotifyMethodProps>`
+  background: ${(p) => p.$bgColor || 'rgba(30, 30, 30, 0.5)'};
   border-radius: 8px;
   padding: 1.2rem 1.5rem;
   margin-bottom: 1rem;
   transition: all 0.3s ease;
-  border-left: 3px solid rgba(30, 215, 96, 0.5);
+  border-left: 3px solid ${(p) => p.$borderColor || 'rgba(30, 215, 96, 0.5)'};
 
   &:hover {
     background: rgba(40, 40, 40, 0.6);
@@ -827,8 +599,12 @@ const SpotifyMethod = styled.div`
   }
 `;
 
-const MethodName = styled.h4`
-  color: white;
+interface MethodNameProps {
+  $color?: string;
+}
+
+const MethodName = styled.h4<MethodNameProps>`
+  color: ${(p) => p.$color || 'white'};
   margin: 0 0 0.5rem 0;
   font-size: 1.1rem;
   font-weight: 700;
@@ -842,20 +618,31 @@ const MethodName = styled.h4`
   }
 `;
 
-const MethodDescription = styled.p`
-  color: rgba(255, 255, 255, 0.7);
+interface MethodDescriptionProps {
+  $color?: string;
+}
+
+const MethodDescription = styled.p<MethodDescriptionProps>`
+  color: ${(p) => p.$color || 'rgba(255, 255, 255, 0.7)'};
   margin: 0;
   font-size: 0.9rem;
   line-height: 1.5;
 `;
 
-const ToolsSection = styled.div`
-  background: rgba(30, 30, 30, 0.5);
+interface ToolsSectionProps {
+  $bgColor?: string;
+  $borderColor?: string;
+  $titleColor?: string;
+}
+
+const ToolsSection = styled.div<ToolsSectionProps>`
+  background: ${(p) => p.$bgColor || 'rgba(30, 30, 30, 0.5)'};
   border-radius: 12px;
   padding: 1.5rem;
+  border: 1px solid ${(p) => p.$borderColor || 'transparent'};
 
   h3 {
-    color: white;
+    color: ${(p) => p.$titleColor || 'white'};
     font-size: 1.3rem;
     margin-top: 0;
     margin-bottom: 1.5rem;
@@ -881,10 +668,14 @@ const ToolItem = styled.div`
   }
 `;
 
-const ToolIcon = styled.div`
+interface ToolIconProps {
+  $bgGradient?: string;
+}
+
+const ToolIcon = styled.div<ToolIconProps>`
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, #1ed760, #169c46);
+  background: ${(p) => p.$bgGradient || 'linear-gradient(135deg, #1ed760, #169c46)'};
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -902,174 +693,40 @@ const ToolInfo = styled.div`
   flex: 1;
 `;
 
-const ToolName = styled.div`
-  color: white;
+interface ToolNameStyledProps {
+  $color?: string;
+}
+
+const ToolNameStyled = styled.div<ToolNameStyledProps>`
+  color: ${(p) => p.$color || 'white'};
   font-weight: 600;
   font-size: 1rem;
   transition: color 0.2s ease;
 `;
 
-const ToolDescription = styled.div`
-  color: rgba(255, 255, 255, 0.6);
+interface ToolDescriptionStyledProps {
+  $color?: string;
+}
+
+const ToolDescriptionStyled = styled.div<ToolDescriptionStyledProps>`
+  color: ${(p) => p.$color || 'rgba(255, 255, 255, 0.6)'};
   font-size: 0.85rem;
   margin-top: 0.2rem;
 `;
 
-// Top/bottom image belts with brand duotone treatment
-const BeltContainer = styled.div`
-  overflow: hidden;
-  position: relative;
-  padding: 1.25rem 0;
-  z-index: 0;
-`;
+interface MethodCardProps {
+  $bgColor?: string;
+  $borderColor?: string;
+}
 
-const BeltTrack = styled.div<{ $direction: 'left' | 'right' }>`
-  display: inline-flex;
-  width: max-content;
-  will-change: transform;
-  animation: ${(p) =>
-      p.$direction === 'left' ? 'scroll-left' : 'scroll-right'}
-    28s linear infinite;
-
-  @keyframes scroll-left {
-    from {
-      transform: translateX(0);
-    }
-    to {
-      transform: translateX(-50%);
-    }
-  }
-  @keyframes scroll-right {
-    from {
-      transform: translateX(-50%);
-    }
-    to {
-      transform: translateX(0);
-    }
-  }
-`;
-
-const BeltCard = styled.div`
-  position: relative;
-  width: 140px;
-  height: 140px;
-  margin: 0 0.8rem;
-  flex-shrink: 0;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #111;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    filter: grayscale(100%) contrast(1.05) brightness(0.9) sepia(12%)
-      hue-rotate(320deg) saturate(110%);
-    mix-blend-mode: screen;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      135deg,
-      ${COLORS.gogo_blue}33,
-      ${COLORS.gogo_purple}22
-    );
-    pointer-events: none;
-  }
-`;
-
-// Outcomes and PYD capacities
-const OutcomesContainer = styled.section`
-  background: linear-gradient(180deg, #121212 0%, #0e0e0e 100%);
-  position: relative;
-  padding: 4rem 0 1rem;
-  overflow: hidden;
-
-  &:before {
-    content: '';
-    position: absolute;
-    top: -20%;
-    right: -10%;
-    width: 50%;
-    height: 70%;
-    background: radial-gradient(circle, ${COLORS.gogo_blue}22, transparent 70%);
-  }
-`;
-
-const CapacitiesGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.25rem;
-`;
-
-const CapacityCard = styled.div`
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 1.25rem;
-  min-height: 130px;
-  transition: transform 0.25s ease, background 0.25s ease;
-
-  &:hover {
-    transform: translateY(-4px);
-    background: rgba(255, 255, 255, 0.08);
-  }
-`;
-
-const CapacityTitle = styled.h4`
-  margin: 0 0 0.5rem 0;
-  color: white;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-`;
-
-const CapacityText = styled.p`
-  margin: 0;
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 0.95rem;
-  line-height: 1.5;
-`;
-
-const OutcomesGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1.5rem;
-  margin-top: 1.5rem;
-`;
-
-const OutcomeCard = styled.div`
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+const MethodCard = styled.div<MethodCardProps>`
+  background: ${(p) => p.$bgColor || 'rgba(255, 255, 255, 0.05)'};
   border-radius: 16px;
-  padding: 1.5rem;
-  text-align: center;
-  transition: transform 0.25s ease, background 0.25s ease;
-
-  &:hover {
-    transform: translateY(-6px);
-    background: rgba(255, 255, 255, 0.08);
-  }
+  padding: 2rem;
+  border: 1px solid ${(p) => p.$borderColor || 'rgba(255, 255, 255, 0.08)'};
 `;
 
-const OutcomeNumber = styled.div`
-  font-size: 2.4rem;
-  font-weight: 900;
-  color: white;
-  margin-bottom: 0.5rem;
-`;
-
-const OutcomeLabel = styled.div`
-  color: rgba(255, 255, 255, 0.8);
-  font-weight: 600;
-`;
-
-// (removed guitar-specific styled components)
-
-// SVG Icon components for method icons
+// Icon components for methods
 function InsightIcon() {
   return (
     <svg
@@ -1164,122 +821,209 @@ function TrackingIcon() {
   );
 }
 
-// Hoisted out of ImpactSection to satisfy react/no-unstable-nested-components
-const TurntableStat: FC<{ n: number; l: string; i: number }> =
-  function TurntableStat({ n, l, i }) {
-    const storageKey = `turntable:${l}`;
-    const [playing, setPlaying] = useState(false);
-    const recordRef = useRef<HTMLDivElement | null>(null);
-    const [speedMs, setSpeedMs] = useState(4500);
-    const [hovered, setHovered] = useState(false);
+// TurntableStat component
+interface TurntableStatProps {
+  stat: ImpactTurntableStat;
+  index: number;
+  cardBgGradient?: string;
+  cardBorderColor?: string;
+  captionColor?: string;
+}
 
-    const toggle = useCallback(() => setPlaying((p) => !p), []);
+const TurntableStatComponent: FC<TurntableStatProps> = function TurntableStatComponent({
+  stat,
+  index,
+  cardBgGradient,
+  cardBorderColor,
+  captionColor,
+}) {
+  const storageKey = `turntable:${stat.label}`;
+  const [playing, setPlaying] = useState(false);
+  const recordRef = useRef<HTMLDivElement | null>(null);
+  const [speedMs, setSpeedMs] = useState(4500);
+  const [hovered, setHovered] = useState(false);
 
-    const onHover = useCallback(() => {
-      setHovered(true);
-      setPlaying(true);
-    }, []);
-    const onLeave = useCallback(() => {
-      setHovered(false);
-      setPlaying(false);
-    }, []);
+  const toggle = useCallback(() => setPlaying((p) => !p), []);
 
-    const onWheel = useCallback((e: React.WheelEvent) => {
-      setSpeedMs((prev) => {
-        const next = Math.min(
-          7000,
-          Math.max(1200, prev + (e.deltaY > 0 ? 350 : -350)),
-        );
-        return next;
-      });
-    }, []);
+  const onHover = useCallback(() => {
+    setHovered(true);
+    setPlaying(true);
+  }, []);
+  const onLeave = useCallback(() => {
+    setHovered(false);
+    setPlaying(false);
+  }, []);
 
-    useEffect(() => {
-      if (recordRef.current) {
-        recordRef.current.style.setProperty('--spin-speed', `${speedMs}ms`);
+  const onWheel = useCallback((e: React.WheelEvent) => {
+    setSpeedMs((prev) => {
+      const next = Math.min(
+        7000,
+        Math.max(1200, prev + (e.deltaY > 0 ? 350 : -350)),
+      );
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (recordRef.current) {
+      recordRef.current.style.setProperty('--spin-speed', `${speedMs}ms`);
+    }
+  }, [speedMs]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { speedMs?: number };
+        if (typeof parsed.speedMs === 'number') setSpeedMs(parsed.speedMs);
       }
-    }, [speedMs]);
+    } catch {
+      /* no-op */
+    }
+  }, [storageKey]);
 
-    // Load persisted state (speed only)
-    useEffect(() => {
-      try {
-        const raw = localStorage.getItem(storageKey);
-        if (raw) {
-          const parsed = JSON.parse(raw) as { speedMs?: number };
-          if (typeof parsed.speedMs === 'number') setSpeedMs(parsed.speedMs);
-        }
-      } catch {
-        /* no-op */
-      }
-    }, [storageKey]);
+  useEffect(() => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify({ speedMs }));
+    } catch {
+      /* no-op */
+    }
+  }, [speedMs, storageKey]);
 
-    // Persist on change (speed only)
-    useEffect(() => {
-      try {
-        localStorage.setItem(storageKey, JSON.stringify({ speedMs }));
-      } catch {
-        /* no-op */
-      }
-    }, [speedMs, storageKey]);
-
-    return (
-      <TurntableCard
-        role="group"
-        aria-label={`${n}% ${l}`}
-        onMouseEnter={onHover}
-        onMouseLeave={onLeave}
-      >
-        <Deck onWheel={onWheel}>
-          <Record
-            ref={recordRef}
-            className={playing ? 'playing' : ''}
-            onClick={toggle}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') toggle();
-            }}
-            aria-pressed={playing}
+  return (
+    <TurntableCard
+      $bgGradient={cardBgGradient}
+      $borderColor={cardBorderColor}
+      role="group"
+      aria-label={`${stat.number}% ${stat.label}`}
+      onMouseEnter={onHover}
+      onMouseLeave={onLeave}
+    >
+      <Deck onWheel={onWheel}>
+        <Record
+          ref={recordRef}
+          className={playing ? 'playing' : ''}
+          onClick={toggle}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') toggle();
+          }}
+          aria-pressed={playing}
+        >
+          <RecordLabel
+            $colorA={stat.colorA || COLORS.gogo_yellow}
+            $colorB={stat.colorB || COLORS.gogo_pink}
           >
-            <RecordLabel
-              $colorA={
-                TURNTABLE_LABEL_COLORS[i % TURNTABLE_LABEL_COLORS.length].a
-              }
-              $colorB={
-                TURNTABLE_LABEL_COLORS[i % TURNTABLE_LABEL_COLORS.length].b
-              }
-            >
-              {n}
-              <span style={{ fontSize: '0.7rem', marginLeft: 2 }}>%</span>
-            </RecordLabel>
-            <Spindle />
-          </Record>
-          <Tonearm $engaged={hovered || playing} />
-        </Deck>
-        <StatCaption>{l}</StatCaption>
-      </TurntableCard>
-    );
-  };
+            {stat.number}
+            <span style={{ fontSize: '0.7rem', marginLeft: 2 }}>%</span>
+          </RecordLabel>
+          <Spindle />
+        </Record>
+        <Tonearm $engaged={hovered || playing} />
+      </Deck>
+      <StatCaption $color={captionColor}>{stat.label}</StatCaption>
+    </TurntableCard>
+  );
+};
 
-function ImpactSection(): JSX.Element {
+interface ImpactSectionProps {
+  /** Data passed directly from parent - used for production */
+  impactSectionData?: ImpactSectionContent;
+  /** Preview mode for admin editor */
+  previewMode?: boolean;
+  /** Override data for admin preview */
+  impactSectionOverride?: Partial<ImpactSectionContent>;
+}
+
+function ImpactSection({
+  impactSectionData: externalData,
+  previewMode = false,
+  impactSectionOverride,
+}: ImpactSectionProps): JSX.Element {
+  const [internalData, setInternalData] = useState<ImpactSectionContent | null>(externalData || null);
   const [inView, setInView] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const navigate = useNavigate();
 
-  // Create refs for each impact stat
   const sectionRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef(null);
-  const stringsRef = useRef<HTMLDivElement[] | null[]>([]);
 
-  // (removed guitar refs/geometry)
+  useEffect(() => {
+    if (externalData) {
+      setInternalData(externalData);
+    } else if (!previewMode) {
+      fetchImpactSectionContent().then((data) => {
+        if (data) setInternalData(data);
+      });
+    }
+  }, [externalData, previewMode]);
 
-  // (removed impactData)
+  // Merge data
+  const effectiveData: ImpactSectionContent = externalData
+    ? { ...externalData, ...(impactSectionOverride || {}) }
+    : { ...(internalData || {}), ...(impactSectionOverride || {}) };
 
-  // Function to animate progress circles - wrap in useCallback
-  // (removed animateProgress)
+  // Extract values (no defaults - data should come from DB)
+  const sectionBgGradient = effectiveData.sectionBgGradient || '';
+  const topBorderGradient = effectiveData.topBorderGradient || '';
+  const topCarouselImages = effectiveData.topCarouselImages || [];
+  const statsTitle = effectiveData.statsTitle || '';
+  const statsTitleColor = effectiveData.statsTitleColor || '';
+  const turntableStats = effectiveData.turntableStats || [];
+  const turntableCardBgGradient = effectiveData.turntableCardBgGradient || '';
+  const turntableCardBorderColor = effectiveData.turntableCardBorderColor || '';
+  const statCaptionColor = effectiveData.statCaptionColor || '';
+  const highlightsTitle = effectiveData.highlightsTitle || '';
+  const highlightsTitleColor = effectiveData.highlightsTitleColor || '';
+  const highlightsSubtitle = effectiveData.highlightsSubtitle || '';
+  const highlightsSubtitleColor = effectiveData.highlightsSubtitleColor || '';
+  const highlightChips = effectiveData.highlightChips || [];
+  const highlightChipBgColor = effectiveData.highlightChipBgColor || '';
+  const highlightChipBorderColor = effectiveData.highlightChipBorderColor || '';
+  const highlightChipTextColor = effectiveData.highlightChipTextColor || '';
+  const highlightCards = effectiveData.highlightCards || [];
+  const highlightCardBgColor = effectiveData.highlightCardBgColor || '';
+  const highlightCardBorderColor = effectiveData.highlightCardBorderColor || '';
+  const highlightCardTitleColor = effectiveData.highlightCardTitleColor || '';
+  const highlightCardTextColor = effectiveData.highlightCardTextColor || '';
+  const bottomCarouselImages = effectiveData.bottomCarouselImages || [];
 
-  // Intersection observer to trigger header animation when section is in view
+  // Measurement section header
+  const measureTitle = effectiveData.measureTitle || '';
+  const measureTitleHighlight = effectiveData.measureTitleHighlight || '';
+  const measureTitleColor = effectiveData.measureTitleColor || '';
+  const measureTitleHighlightColor = effectiveData.measureTitleHighlightColor || '';
+  const measureSubtitle = effectiveData.measureSubtitle || '';
+  const measureSubtitleColor = effectiveData.measureSubtitleColor || '';
+
+  // "Our Method Provides" card (left column)
+  const methodCardTitle = effectiveData.methodCardTitle || '';
+  const methodCardTitleColor = effectiveData.methodCardTitleColor || '';
+  const methodCardAccentGradient = effectiveData.methodCardAccentGradient || '';
+  const methodCardBgColor = effectiveData.methodCardBgColor || '';
+  const methodCardBorderColor = effectiveData.methodCardBorderColor || '';
+  const methodItems = effectiveData.methodItems || [];
+  const methodItemBgColor = effectiveData.methodItemBgColor || '';
+  const methodItemBorderColor = effectiveData.methodItemBorderColor || '';
+  const methodItemTitleColor = effectiveData.methodItemTitleColor || '';
+  const methodItemTextColor = effectiveData.methodItemTextColor || '';
+  const methodCardFooterText = effectiveData.methodCardFooterText || '';
+  const methodCardFooterTextColor = effectiveData.methodCardFooterTextColor || '';
+
+  // "Measurement & Evaluation Tools" card (right column)
+  const toolsCardTitle = effectiveData.toolsCardTitle || '';
+  const toolsCardTitleColor = effectiveData.toolsCardTitleColor || '';
+  const toolsCardBgColor = effectiveData.toolsCardBgColor || '';
+  const toolsCardBorderColor = effectiveData.toolsCardBorderColor || '';
+  const toolItems = effectiveData.toolItems || [];
+  const toolIconBgGradient = effectiveData.toolIconBgGradient || '';
+  const toolNameColor = effectiveData.toolNameColor || '';
+  const toolDescriptionColor = effectiveData.toolDescriptionColor || '';
+  const toolsFooterText = effectiveData.toolsFooterText || '';
+  const toolsFooterTextColor = effectiveData.toolsFooterTextColor || '';
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -1287,7 +1031,6 @@ function ImpactSection(): JSX.Element {
           setInView(true);
           observer.unobserve(entries[0].target);
 
-          // Animate header with staggered entrance
           if (headerRef.current) {
             const items = headerRef.current.querySelectorAll('.animate-item');
             if (items && items.length > 0) {
@@ -1305,9 +1048,7 @@ function ImpactSection(): JSX.Element {
       { threshold: 0.2 },
     );
 
-    // Save current section reference to avoid issues in cleanup
     const currentSection = sectionRef.current;
-
     if (currentSection) {
       observer.observe(currentSection);
     }
@@ -1318,8 +1059,6 @@ function ImpactSection(): JSX.Element {
       }
     };
   }, []);
-
-  // (removed count up logic)
 
   useEffect(() => {
     const observer = new window.IntersectionObserver(
@@ -1332,480 +1071,381 @@ function ImpactSection(): JSX.Element {
     return () => observer.disconnect();
   }, []);
 
-  // Build a sine-like path for a string with damping over time
-  /* const buildSinePath = useCallback(
-    (y0: number, amp: number, tSeconds: number, freqHz: number): string => {
-      const damping = 3.2; // exponential damping factor
-      const width = endX - startX;
-      const wavesAlong = 2; // number of spatial waves along the length
-      const samples = 40;
-      const A = amp * Math.exp(-damping * tSeconds);
-      let d = `M ${startX} ${y0}`;
-      for (let i = 1; i <= samples; i += 1) {
-        const x = startX + (i * width) / samples;
-        const kx = 2 * Math.PI * wavesAlong * ((x - startX) / width);
-        const y = y0 + A * Math.sin(kx - 2 * Math.PI * freqHz * tSeconds);
-        d += ` L ${x} ${y}`;
-      }
-      return d;
-    },
-    [endX, startX],
-  ); */
+  // If no data at all, don't render
+  const hasContent = statsTitle || turntableStats.length > 0 || highlightsTitle || measureTitle;
+  if (!hasContent) {
+    return <></>;
+  }
 
-  /* const animateString = useCallback(
-    (index: number, intensity: number = 14) => {
-      const path = stringPathRefs.current[index];
-      if (!path) return;
-
-      // Cancel previous animation for this string
-      const prev = stringAnimsRef.current[index];
-      if (prev && typeof prev.pause === 'function') prev.pause();
-
-      const baseY = stringY[index] ?? 140;
-      const freqHz = 5 - index * 0.5; // higher strings vibrate faster
-      const duration = 1400;
-      const animState = { elapsedMs: 0 } as { elapsedMs: number };
-      const anim = animate(animState, {
-        elapsedMs: [0, duration],
-        duration,
-        easing: 'linear',
-        update: () => {
-          const tSeconds = animState.elapsedMs / 1000;
-          const d = buildSinePath(baseY, intensity, tSeconds, freqHz);
-          path.setAttribute('d', d);
-        },
-        complete: () => {
-          // settle back to straight line
-          path.setAttribute('d', `M ${startX} ${baseY} L ${endX} ${baseY}`);
-        },
-      });
-      stringAnimsRef.current[index] = anim as any;
-    },
-    [buildSinePath, endX, startX, stringY],
-  ); */
-
-  /* const handleGuitarMouseMove = useCallback(
-    (e: React.MouseEvent<SVGSVGElement>) => {
-      if (!guitarSvgRef.current) return;
-      const rect = guitarSvgRef.current.getBoundingClientRect();
-      const mouseY = e.clientY - rect.top;
-      const prevY = lastMouseYRef.current;
-      const now = performance.now();
-      if (prevY != null) {
-        stringY.forEach((y, i) => {
-          const crossed =
-            (prevY - y) * (mouseY - y) <= 0 && Math.abs(mouseY - y) < 16;
-          if (crossed && now - lastTriggerTimesRef.current[i] > 180) {
-            lastTriggerTimesRef.current[i] = now;
-            animateString(i, 12);
-          }
-        });
-      }
-      lastMouseYRef.current = mouseY;
-    },
-    [animateString, stringY],
-  ); */
-
-  /* const handleStringVibrate = useCallback(() => {
-    // apply a quick wobble to all strings
-    stringsRef.current.forEach((el, i) => {
-      if (!el) return;
-      animate(el, {
-        rotateZ: [0, i % 2 === 0 ? 4 : -4, 0],
-        duration: 240,
-        easing: 'easeOutSine',
-      });
-    });
-  }, []); */
-
-  const impactStats = [
-    { n: 94, l: 'made or maintained academic gains' },
-    { n: 85, l: 'showed measurable growth across PYD capacities' },
-    { n: 90, l: 'felt their mentor can be counted on for help' },
-    { n: 87, l: 'felt encouraged to work through difficult challenges' },
-  ];
+  // Duplicate carousel images for seamless loop
+  const topImagesForBelt = topCarouselImages.length > 0 ? [...topCarouselImages, ...topCarouselImages] : [];
+  const bottomImagesForBelt = bottomCarouselImages.length > 0 ? [...bottomCarouselImages, ...bottomCarouselImages] : [];
 
   return (
     <>
-      <ImpactContainer ref={sectionRef}>
+      <ImpactContainer ref={sectionRef} $bgGradient={sectionBgGradient} $topBorderGradient={topBorderGradient}>
         <SectionContainer>
-          <BeltContainer style={{ marginBottom: '1.5rem' }}>
-            <BeltTrack $direction="left">
-              {[photo1, photo2, photo3, photo4, photo5, photo6, photo7]
-                .concat([
-                  photo1,
-                  photo2,
-                  photo3,
-                  photo4,
-                  photo5,
-                  photo6,
-                  photo7,
-                ])
-                .map((src, i) => (
-                  <BeltCard
-                    key={`top-belt-${src}-${String(i).padStart(2, '0')}`}
-                  >
-                    <img
-                      src={src}
-                      alt="Program"
-                      loading="lazy"
-                      decoding="async"
-                    />
+          {topImagesForBelt.length > 0 && (
+            <BeltContainer style={{ marginBottom: '1.5rem' }}>
+              <BeltTrack $direction="left">
+                {topImagesForBelt.map((src, i) => (
+                  <BeltCard key={`top-belt-${i}`}>
+                    <img src={src} alt="Program" loading="lazy" decoding="async" />
                   </BeltCard>
                 ))}
-            </BeltTrack>
-          </BeltContainer>
+              </BeltTrack>
+            </BeltContainer>
+          )}
 
-          <StatsGrid
-            style={{
-              background: 'transparent',
-              border: 'none',
-              boxShadow: 'none',
-              padding: 0,
-              margin: '0.5rem 0 1rem',
-            }}
-          >
-            <StatsTitle style={{ margin: '0.25rem 0 0.75rem' }}>
-              IN 2024-2025...
-            </StatsTitle>
-          </StatsGrid>
-          <TurntableGrid>
-            {impactStats.map(({ n, l }, idx) => (
-              <TurntableStat key={l} n={n} l={l} i={idx} />
-            ))}
-          </TurntableGrid>
-          <HighlightsContainer aria-label="Program capacities">
-            <HighlightsTitle>Core Capacities We Build</HighlightsTitle>
-            <HighlightsSubtitle>
-              Growth we cultivate through mentorship, music-making, and
-              healing-centered practice.
-            </HighlightsSubtitle>
-            <HighlightsRow>
-              {[
-                { t: 'Academic Self‑Efficacy', Icon: AcademicIcon },
-                { t: 'Positive Identity', Icon: InsightIcon },
-                { t: 'Self‑Management', Icon: TrackingIcon },
-                { t: 'Social Skills', Icon: InsightIcon },
-                { t: 'Contribution', Icon: ArtisticIcon },
-              ].map(({ t, Icon }) => (
-                <HighlightChip key={t}>
-                  <Icon />
-                  <span>{t}</span>
-                </HighlightChip>
+          {statsTitle && (
+            <StatsGrid
+              style={{
+                background: 'transparent',
+                border: 'none',
+                boxShadow: 'none',
+                padding: 0,
+                margin: '0.5rem 0 1rem',
+              }}
+            >
+              <StatsTitle $color={statsTitleColor} style={{ margin: '0.25rem 0 0.75rem' }}>
+                {statsTitle}
+              </StatsTitle>
+            </StatsGrid>
+          )}
+
+          {turntableStats.length > 0 && (
+            <TurntableGrid>
+              {turntableStats.map((stat, idx) => (
+                <TurntableStatComponent
+                  key={stat.id}
+                  stat={stat}
+                  index={idx}
+                  cardBgGradient={turntableCardBgGradient}
+                  cardBorderColor={turntableCardBorderColor}
+                  captionColor={statCaptionColor}
+                />
               ))}
-            </HighlightsRow>
-            <HighlightCardsGrid>
-              {[
-                {
-                  title: 'Trusting Relationships',
-                  text: 'Caring adult mentors expand students’ support networks and sense of belonging.',
-                },
-                {
-                  title: 'Creative Mastery',
-                  text: 'High-quality arts education builds persistence, collaboration, and leadership.',
-                },
-                {
-                  title: 'Skill Development',
-                  text: 'Goal-setting and feedback translate into academic confidence and achievement.',
-                },
-                {
-                  title: 'Healing-Centered Practice',
-                  text: 'Trauma-informed approaches help students regulate, reflect, and thrive.',
-                },
-              ].map(({ title, text }) => (
-                <HighlightCard key={title}>
-                  <HighlightCardTitle>{title}</HighlightCardTitle>
-                  <HighlightCardText>{text}</HighlightCardText>
-                </HighlightCard>
-              ))}
-            </HighlightCardsGrid>
-          </HighlightsContainer>
-          <BeltContainer style={{ marginTop: '1.5rem' }}>
-            <BeltTrack $direction="right">
-              {[photo8, photo9, photo10, photo11, photo12, photo13, photo14]
-                .concat([
-                  photo8,
-                  photo9,
-                  photo10,
-                  photo11,
-                  photo12,
-                  photo13,
-                  photo14,
-                ])
-                .map((src, i) => (
-                  <BeltCard
-                    key={`bottom-belt-${src}-${String(i).padStart(2, '0')}`}
-                  >
-                    <img
-                      src={src}
-                      alt="Program"
-                      loading="lazy"
-                      decoding="async"
-                    />
+            </TurntableGrid>
+          )}
+
+          {(highlightsTitle || highlightChips.length > 0 || highlightCards.length > 0) && (
+            <HighlightsContainer aria-label="Program capacities">
+              {highlightsTitle && <HighlightsTitle $color={highlightsTitleColor}>{highlightsTitle}</HighlightsTitle>}
+              {highlightsSubtitle && <HighlightsSubtitle $color={highlightsSubtitleColor}>{highlightsSubtitle}</HighlightsSubtitle>}
+              {highlightChips.length > 0 && (
+                <HighlightsRow>
+                  {highlightChips.map((chip) => {
+                    const iconEntry = chip.iconKey ? getImpactIconByKey(chip.iconKey) : null;
+                    const IconComponent = iconEntry?.Icon;
+                    return (
+                      <HighlightChip
+                        key={chip.id}
+                        $bgColor={highlightChipBgColor}
+                        $borderColor={highlightChipBorderColor}
+                        $textColor={highlightChipTextColor}
+                      >
+                        {IconComponent && <IconComponent />}
+                        <span>{chip.text}</span>
+                      </HighlightChip>
+                    );
+                  })}
+                </HighlightsRow>
+              )}
+              {highlightCards.length > 0 && (
+                <HighlightCardsGrid>
+                  {highlightCards.map((card) => (
+                    <HighlightCardStyled
+                      key={card.id}
+                      $bgColor={highlightCardBgColor}
+                      $borderColor={highlightCardBorderColor}
+                    >
+                      <HighlightCardTitle $color={highlightCardTitleColor}>{card.title}</HighlightCardTitle>
+                      <HighlightCardText $color={highlightCardTextColor}>{card.text}</HighlightCardText>
+                    </HighlightCardStyled>
+                  ))}
+                </HighlightCardsGrid>
+              )}
+            </HighlightsContainer>
+          )}
+
+          {bottomImagesForBelt.length > 0 && (
+            <BeltContainer style={{ marginTop: '1.5rem' }}>
+              <BeltTrack $direction="right">
+                {bottomImagesForBelt.map((src, i) => (
+                  <BeltCard key={`bottom-belt-${i}`}>
+                    <img src={src} alt="Program" loading="lazy" decoding="async" />
                   </BeltCard>
                 ))}
-            </BeltTrack>
-          </BeltContainer>
+              </BeltTrack>
+            </BeltContainer>
+          )}
         </SectionContainer>
       </ImpactContainer>
 
-      {/* Outcomes section replaced by expanded highlights in Impact */}
-
-      {/* New Spotify-inspired measurement section */}
+      {/* Measurement Section - data-driven */}
       <MeasurementContainer ref={measureRef}>
         <MeasurementWrapper>
           <MeasurementHeader>
-            <MeasureTitle>
-              <span className="regular">How do we </span>
-              <span className="highlight">measure impact</span>
-              <span className="regular">?</span>
+            <MeasureTitle $color={measureTitleColor} $highlightColor={measureTitleHighlightColor}>
+              {measureTitle && <span className="regular">{measureTitle} </span>}
+              {measureTitleHighlight && <span className="highlight">{measureTitleHighlight}</span>}
+              {!measureTitle && !measureTitleHighlight && (
+                <>
+                  <span className="regular">How do we </span>
+                  <span className="highlight">measure impact</span>
+                  <span className="regular">?</span>
+                </>
+              )}
             </MeasureTitle>
-            <SpotifySubtitle style={{ marginTop: '0.1rem' }}>
-              We use Hello Insight, a nationally recognized evaluation tool, to
-              track students&apos; self-reported growth across 6 Positive Youth
-              Development (PYD) pillars. Guitars Over Guns mentors use
-              healing-centered, culturally affirming PYD practices in program
-              sessions.
+            <SpotifySubtitle $color={measureSubtitleColor} style={{ marginTop: '0.1rem' }}>
+              {measureSubtitle || `We use Hello Insight, a nationally recognized evaluation tool, to track students' self-reported growth across 6 Positive Youth Development (PYD) pillars. Guitars Over Guns mentors use healing-centered, culturally affirming PYD practices in program sessions.`}
             </SpotifySubtitle>
 
             <AudioWaveContainer>
-              {[...Array(18)].map((_, i) => {
-                const position = i.toString().padStart(2, '0');
-                return (
-                  <AudioBar
-                    key={`audio-bar-position-${position}`}
-                    $index={i}
-                  />
-                );
-              })}
+              {[...Array(18)].map((_, i) => (
+                <AudioBar key={`audio-bar-${i}`} $index={i} />
+              ))}
             </AudioWaveContainer>
           </MeasurementHeader>
 
           <SpotifyGrid>
             <div>
-              <SpotifyCard>
+              <MethodCard $bgColor={methodCardBgColor} $borderColor={methodCardBorderColor}>
                 <h4
                   style={{
-                    color: 'white',
+                    color: methodCardTitleColor || 'white',
                     fontWeight: 700,
                     fontSize: '1.5rem',
                     margin: '0 0 0.4rem 0',
                     letterSpacing: '0.02em',
                   }}
                 >
-                  Our Method Provides
+                  {methodCardTitle || 'Our Method Provides'}
                 </h4>
                 <div
                   style={{
                     width: '80px',
                     height: '2.5px',
-                    background:
-                      'linear-gradient(90deg, #1ed760,rgb(20, 105, 50))',
+                    background: methodCardAccentGradient || 'linear-gradient(90deg, #1ed760, rgb(20, 105, 50))',
                     borderRadius: '2px',
                     marginBottom: '1.3rem',
                   }}
                 />
                 <SpotifyMethodsList>
-                  <SpotifyMethod>
-                    <MethodName>
-                      <InsightIcon /> Trusting relationships with caring adults
-                    </MethodName>
-                    <MethodDescription>
-                      Our model pairs youth with a caring adult mentor. Mentees
-                      self-report the number of supportive adults in their lives
-                      who support their growth and expand their interests
-                    </MethodDescription>
-                  </SpotifyMethod>
+                  {methodItems.length > 0 ? (
+                    methodItems.map((item) => {
+                      const iconEntry = item.iconKey ? getImpactIconByKey(item.iconKey) : null;
+                      const IconComponent = iconEntry?.Icon;
+                      return (
+                        <SpotifyMethod
+                          key={item.id}
+                          $bgColor={methodItemBgColor}
+                          $borderColor={methodItemBorderColor}
+                        >
+                          <MethodName $color={methodItemTitleColor}>
+                            {IconComponent && <IconComponent />}
+                            {item.title}
+                          </MethodName>
+                          <MethodDescription $color={methodItemTextColor}>
+                            {item.text}
+                          </MethodDescription>
+                        </SpotifyMethod>
+                      );
+                    })
+                  ) : (
+                    <>
+                      <SpotifyMethod $bgColor={methodItemBgColor} $borderColor={methodItemBorderColor}>
+                        <MethodName $color={methodItemTitleColor}>
+                          <InsightIcon /> Trusting relationships with caring adults
+                        </MethodName>
+                        <MethodDescription $color={methodItemTextColor}>
+                          Our model pairs youth with a caring adult mentor. Mentees
+                          self-report the number of supportive adults in their lives
+                          who support their growth and expand their interests
+                        </MethodDescription>
+                      </SpotifyMethod>
 
-                  <SpotifyMethod>
-                    <MethodName>
-                      <ArtisticIcon /> High-quality, no-cost arts education
-                      during typically unsupervised hours
-                    </MethodName>
-                    <MethodDescription>
-                      Custom assessment tools that track students&apos; artistic
-                      growth across multiple dimensions including technical
-                      skills, creativity, and performance abilities.
-                    </MethodDescription>
-                  </SpotifyMethod>
+                      <SpotifyMethod $bgColor={methodItemBgColor} $borderColor={methodItemBorderColor}>
+                        <MethodName $color={methodItemTitleColor}>
+                          <ArtisticIcon /> High-quality, no-cost arts education
+                          during typically unsupervised hours
+                        </MethodName>
+                        <MethodDescription $color={methodItemTextColor}>
+                          Custom assessment tools that track students&apos; artistic
+                          growth across multiple dimensions including technical
+                          skills, creativity, and performance abilities.
+                        </MethodDescription>
+                      </SpotifyMethod>
 
-                  <SpotifyMethod>
-                    <MethodName>
-                      <AcademicIcon /> Skill Development
-                    </MethodName>
-                    <MethodDescription>
-                      Tracking academic performance metrics in collaboration
-                      with schools to measure the program&apos;s impact on
-                      educational outcomes.
-                    </MethodDescription>
-                  </SpotifyMethod>
+                      <SpotifyMethod $bgColor={methodItemBgColor} $borderColor={methodItemBorderColor}>
+                        <MethodName $color={methodItemTitleColor}>
+                          <AcademicIcon /> Skill Development
+                        </MethodName>
+                        <MethodDescription $color={methodItemTextColor}>
+                          Tracking academic performance metrics in collaboration
+                          with schools to measure the program&apos;s impact on
+                          educational outcomes.
+                        </MethodDescription>
+                      </SpotifyMethod>
 
-                  <SpotifyMethod>
-                    <MethodName>
-                      <TrackingIcon /> Trauma-informed mental health support
-                    </MethodName>
-                    <MethodDescription>
-                      Following students&apos; progress over multiple years to
-                      assess long-term program impact and personal development
-                      trajectories.
-                    </MethodDescription>
-                  </SpotifyMethod>
+                      <SpotifyMethod $bgColor={methodItemBgColor} $borderColor={methodItemBorderColor}>
+                        <MethodName $color={methodItemTitleColor}>
+                          <TrackingIcon /> Trauma-informed mental health support
+                        </MethodName>
+                        <MethodDescription $color={methodItemTextColor}>
+                          Following students&apos; progress over multiple years to
+                          assess long-term program impact and personal development
+                          trajectories.
+                        </MethodDescription>
+                      </SpotifyMethod>
+                    </>
+                  )}
                 </SpotifyMethodsList>
 
                 <SpotifySubtitle
+                  $color={methodCardFooterTextColor}
                   style={{
                     fontSize: '1rem',
                     marginTop: '2rem',
                     maxWidth: '100%',
                   }}
                 >
-                  By investing in the mental health and creative capacities of
-                  our young people, we create space for each student to work
-                  hard and own their path in life.
+                  {methodCardFooterText || `By investing in the mental health and creative capacities of our young people, we create space for each student to work hard and own their path in life.`}
                 </SpotifySubtitle>
-              </SpotifyCard>
+              </MethodCard>
             </div>
 
             <div>
-              <ToolsSection>
-                <h3>Measurement & Evaluation Tools</h3>
+              <ToolsSection
+                $bgColor={toolsCardBgColor}
+                $borderColor={toolsCardBorderColor}
+                $titleColor={toolsCardTitleColor}
+              >
+                <h3>{toolsCardTitle || 'Measurement & Evaluation Tools'}</h3>
 
-                <ToolItem>
-                  <ToolIcon>
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M3 7.8C3 6.11984 3 5.27976 3.32698 4.63803C3.6146 4.07354 4.07354 3.6146 4.63803 3.32698C5.27976 3 6.11984 3 7.8 3H16.2C17.8802 3 18.7202 3 19.362 3.32698C19.9265 3.6146 20.3854 4.07354 20.673 4.63803C21 5.27976 21 6.11984 21 7.8V16.2C21 17.8802 21 18.7202 20.673 19.362C20.3854 19.9265 19.9265 20.3854 19.362 20.673C18.7202 21 17.8802 21 16.2 21H7.8C6.11984 21 5.27976 21 4.63803 20.673C4.07354 20.3854 3.6146 19.9265 3.32698 19.362C3 18.7202 3 17.8802 3 16.2V7.8Z"
-                        stroke="white"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M8.5 11L11.5 14L16 9"
-                        stroke="white"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </ToolIcon>
-                  <ToolInfo>
-                    <ToolName className="tool-name">
-                      Hello Insight SEL & PYD Evaluation Platform
-                    </ToolName>
-                    <ToolDescription>
-                      Primary assessment tool for all students
-                    </ToolDescription>
-                  </ToolInfo>
-                </ToolItem>
+                {toolItems.length > 0 ? (
+                  toolItems.map((tool) => (
+                    <ToolItem key={tool.id}>
+                      <ToolIcon $bgGradient={toolIconBgGradient}>
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M3 7.8C3 6.11984 3 5.27976 3.32698 4.63803C3.6146 4.07354 4.07354 3.6146 4.63803 3.32698C5.27976 3 6.11984 3 7.8 3H16.2C17.8802 3 18.7202 3 19.362 3.32698C19.9265 3.6146 20.3854 4.07354 20.673 4.63803C21 5.27976 21 6.11984 21 7.8V16.2C21 17.8802 21 18.7202 20.673 19.362C20.3854 19.9265 19.9265 20.3854 19.362 20.673C18.7202 21 17.8802 21 16.2 21H7.8C6.11984 21 5.27976 21 4.63803 20.673C4.07354 20.3854 3.6146 19.9265 3.32698 19.362C3 18.7202 3 17.8802 3 16.2V7.8Z"
+                            stroke="white"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M8.5 11L11.5 14L16 9"
+                            stroke="white"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </ToolIcon>
+                      <ToolInfo>
+                        <ToolNameStyled className="tool-name" $color={toolNameColor}>
+                          {tool.title}
+                        </ToolNameStyled>
+                        <ToolDescriptionStyled $color={toolDescriptionColor}>
+                          {tool.description}
+                        </ToolDescriptionStyled>
+                      </ToolInfo>
+                    </ToolItem>
+                  ))
+                ) : (
+                  <>
+                    <ToolItem>
+                      <ToolIcon $bgGradient={toolIconBgGradient}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M3 7.8C3 6.11984 3 5.27976 3.32698 4.63803C3.6146 4.07354 4.07354 3.6146 4.63803 3.32698C5.27976 3 6.11984 3 7.8 3H16.2C17.8802 3 18.7202 3 19.362 3.32698C19.9265 3.6146 20.3854 4.07354 20.673 4.63803C21 5.27976 21 6.11984 21 7.8V16.2C21 17.8802 21 18.7202 20.673 19.362C20.3854 19.9265 19.9265 20.3854 19.362 20.673C18.7202 21 17.8802 21 16.2 21H7.8C6.11984 21 5.27976 21 4.63803 20.673C4.07354 20.3854 3.6146 19.9265 3.32698 19.362C3 18.7202 3 17.8802 3 16.2V7.8Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M8.5 11L11.5 14L16 9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </ToolIcon>
+                      <ToolInfo>
+                        <ToolNameStyled className="tool-name" $color={toolNameColor}>
+                          Hello Insight SEL & PYD Evaluation Platform
+                        </ToolNameStyled>
+                        <ToolDescriptionStyled $color={toolDescriptionColor}>
+                          Primary assessment tool for all students
+                        </ToolDescriptionStyled>
+                      </ToolInfo>
+                    </ToolItem>
 
-                <ToolItem>
-                  <ToolIcon>
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M8 10H5V18H8M8 10V18M8 10V6C8 4.89543 8.89543 4 10 4H11.5C12.6046 4 13.5 4.89543 13.5 6V10M8 14H13.5M13.5 10H16.5M13.5 10V14M16.5 10H19.5V14M16.5 10V6C16.5 4.89543 17.3954 4 18.5 4H20C21.1046 4 22 4.89543 22 6V10M19.5 14H16.5M19.5 14V18H16.5V14"
-                        stroke="white"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </ToolIcon>
-                  <ToolInfo>
-                    <ToolName className="tool-name">
-                      Satisfaction Surveys
-                    </ToolName>
-                    <ToolDescription>
-                      Student, parent, and partner feedback
-                    </ToolDescription>
-                  </ToolInfo>
-                </ToolItem>
+                    <ToolItem>
+                      <ToolIcon $bgGradient={toolIconBgGradient}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M8 10H5V18H8M8 10V18M8 10V6C8 4.89543 8.89543 4 10 4H11.5C12.6046 4 13.5 4.89543 13.5 6V10M8 14H13.5M13.5 10H16.5M13.5 10V14M16.5 10H19.5V14M16.5 10V6C16.5 4.89543 17.3954 4 18.5 4H20C21.1046 4 22 4.89543 22 6V10M19.5 14H16.5M19.5 14V18H16.5V14" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                      </ToolIcon>
+                      <ToolInfo>
+                        <ToolNameStyled className="tool-name" $color={toolNameColor}>
+                          Satisfaction Surveys
+                        </ToolNameStyled>
+                        <ToolDescriptionStyled $color={toolDescriptionColor}>
+                          Student, parent, and partner feedback
+                        </ToolDescriptionStyled>
+                      </ToolInfo>
+                    </ToolItem>
 
-                <ToolItem>
-                  <ToolIcon>
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M3 16.5L12 21.5L21 16.5M3 12L12 17L21 12M3 7.5L12 12.5L21 7.5L12 2.5L3 7.5Z"
-                        stroke="white"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </ToolIcon>
-                  <ToolInfo>
-                    <ToolName className="tool-name">
-                      Artistic Progress Reports
-                    </ToolName>
-                    <ToolDescription>
-                      Quarterly assessments using the artistic scale measurement
-                    </ToolDescription>
-                  </ToolInfo>
-                </ToolItem>
+                    <ToolItem>
+                      <ToolIcon $bgGradient={toolIconBgGradient}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M3 16.5L12 21.5L21 16.5M3 12L12 17L21 12M3 7.5L12 12.5L21 7.5L12 2.5L3 7.5Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </ToolIcon>
+                      <ToolInfo>
+                        <ToolNameStyled className="tool-name" $color={toolNameColor}>
+                          Artistic Progress Reports
+                        </ToolNameStyled>
+                        <ToolDescriptionStyled $color={toolDescriptionColor}>
+                          Quarterly assessments using the artistic scale measurement
+                        </ToolDescriptionStyled>
+                      </ToolInfo>
+                    </ToolItem>
 
-                <ToolItem>
-                  <ToolIcon>
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M8.4 8.5H15.6M8.4 11.5H12M15 16H9C7.34315 16 6 14.6569 6 13V7C6 5.34315 7.34315 4 9 4H15C16.6569 4 18 5.34315 18 7V13C18 14.6569 16.6569 16 15 16ZM13.5 16V19.5C13.5 19.7761 13.2761 20 13 20H11C10.7239 20 10.5 19.7761 10.5 19.5V16H13.5Z"
-                        stroke="white"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </ToolIcon>
-                  <ToolInfo>
-                    <ToolName className="tool-name">
-                      Academic Achievement Data
-                    </ToolName>
-                    <ToolDescription>
-                      As observed from school records
-                    </ToolDescription>
-                  </ToolInfo>
-                </ToolItem>
+                    <ToolItem>
+                      <ToolIcon $bgGradient={toolIconBgGradient}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M8.4 8.5H15.6M8.4 11.5H12M15 16H9C7.34315 16 6 14.6569 6 13V7C6 5.34315 7.34315 4 9 4H15C16.6569 4 18 5.34315 18 7V13C18 14.6569 16.6569 16 15 16ZM13.5 16V19.5C13.5 19.7761 13.2761 20 13 20H11C10.7239 20 10.5 19.7761 10.5 19.5V16H13.5Z" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                      </ToolIcon>
+                      <ToolInfo>
+                        <ToolNameStyled className="tool-name" $color={toolNameColor}>
+                          Academic Achievement Data
+                        </ToolNameStyled>
+                        <ToolDescriptionStyled $color={toolDescriptionColor}>
+                          As observed from school records
+                        </ToolDescriptionStyled>
+                      </ToolInfo>
+                    </ToolItem>
+                  </>
+                )}
               </ToolsSection>
 
               <SpotifySubtitle
+                $color={toolsFooterTextColor}
                 style={{
                   fontSize: '0.95rem',
                   margin: '1.5rem 0',
                   textAlign: 'center',
                 }}
               >
-                GOGO largely supports kids affected by systemic challenges that
-                reduce their access to opportunities
+                {toolsFooterText || `GOGO largely supports kids affected by systemic challenges that reduce their access to opportunities`}
               </SpotifySubtitle>
             </div>
           </SpotifyGrid>
         </MeasurementWrapper>
       </MeasurementContainer>
-
-      {/* Who We Serve moved higher in ImpactReportPage */}
     </>
   );
 }
 
-export default memo(ImpactSection);
+export default ImpactSection;
