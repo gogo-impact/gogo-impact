@@ -128,7 +128,7 @@ export function FinancialTabEditor({
     const parsed = parseGradientString(currentGradient);
     const newColors = [...parsed.colors];
     newColors[gradientPickerColorIndex] = val;
-    const newGradient = composeGradient(parsed.type, parsed.degree, newColors);
+    const newGradient = composeGradient(parsed.type, parsed.degree, newColors, parsed.opacity);
     onFinancialChange(gradientPickerKey, newGradient);
   };
 

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Grid, Box, Typography, Button, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
+import { Grid, Box, Typography, Button, MenuItem, Select, FormControl, InputLabel, Slider } from '@mui/material';
 import COLORS from '../../../assets/colors';
 
 // Gradient types
@@ -12,7 +12,47 @@ export type GradientType = 'linear' | 'radial' | 'conic';
 export interface ParsedGradient {
   type: GradientType;
   degree: number;
-  colors: string[];
+  colors: string[];  // Base colors (hex format for the picker UI)
+  opacity: number;   // Opacity to apply to all colors (0-1)
+}
+
+// Helper: Extract opacity from an rgba color string
+function extractOpacityFromRgba(color: string): number | null {
+  const match = color.match(/rgba\s*\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*([\d.]+)\s*\)/i);
+  return match ? parseFloat(match[1]) : null;
+}
+
+// Helper: Convert rgba/rgb to hex (stripping alpha)
+function colorToHex(color: string): string {
+  const rgbaMatch = color.match(/rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+  if (rgbaMatch) {
+    const r = parseInt(rgbaMatch[1], 10);
+    const g = parseInt(rgbaMatch[2], 10);
+    const b = parseInt(rgbaMatch[3], 10);
+    const toHex = (n: number) => Math.max(0, Math.min(255, n)).toString(16).padStart(2, '0');
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  }
+  // Already hex
+  if (color.startsWith('#')) {
+    const raw = color.slice(1);
+    if (raw.length === 3) {
+      return `#${raw.split('').map(c => c + c).join('')}`;
+    }
+    return color;
+  }
+  return color;
+}
+
+// Helper: Apply opacity to a hex color, returning rgba string
+function applyOpacityToHex(hex: string, opacity: number): string {
+  const clean = hex.startsWith('#') ? hex.slice(1) : hex;
+  const expanded = clean.length === 3 
+    ? clean.split('').map(c => c + c).join('') 
+    : clean;
+  const r = parseInt(expanded.slice(0, 2), 16);
+  const g = parseInt(expanded.slice(2, 4), 16);
+  const b = parseInt(expanded.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 }
 
 // Parse a CSS gradient string into its components
@@ -22,12 +62,14 @@ export function parseGradientString(gradient: string | null | undefined): Parsed
     type: 'linear',
     degree: 90,
     colors: [COLORS.gogo_blue, COLORS.gogo_purple],
+    opacity: 1,
   };
 
   if (!gradient) return defaultResult;
 
   let type: GradientType = 'linear';
   let degree = 90;
+  let opacity = 1;
 
   // Detect gradient type
   if (gradient.startsWith('radial-gradient')) {
@@ -52,18 +94,39 @@ export function parseGradientString(gradient: string | null | undefined): Parsed
   // Extract colors - match hex, rgb, rgba patterns
   const colorPattern = /(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\))/g;
   const matches = gradient.match(colorPattern);
-  const colors = matches && matches.length >= 2 ? matches.slice(0, 3) : defaultResult.colors;
+  let rawColors = matches && matches.length >= 2 ? matches.slice(0, 3) : defaultResult.colors;
 
-  return { type, degree, colors };
+  // Try to extract opacity from the first rgba color
+  if (rawColors.length > 0) {
+    const firstOpacity = extractOpacityFromRgba(rawColors[0]);
+    if (firstOpacity !== null) {
+      opacity = firstOpacity;
+    }
+  }
+
+  // Convert all colors to hex for the picker UI
+  const colors = rawColors.map(colorToHex);
+
+  return { type, degree, colors, opacity };
 }
 
-// Compose a CSS gradient string from components
+// Compose a CSS gradient string from components (with opacity applied to colors)
 export function composeGradient(
   type: GradientType,
   degree: number,
   colors: string[],
+  opacity: number = 1,
 ): string {
-  const colorStops = colors.filter(Boolean).join(', ');
+  // Apply opacity to each color
+  const colorsWithOpacity = colors.filter(Boolean).map(color => {
+    // If it's already rgba, just use it; otherwise convert hex to rgba with opacity
+    if (color.startsWith('rgba(')) {
+      return color;
+    }
+    return applyOpacityToHex(colorToHex(color), opacity);
+  });
+  
+  const colorStops = colorsWithOpacity.join(', ');
   switch (type) {
     case 'radial':
       return `radial-gradient(circle, ${colorStops})`;
@@ -209,6 +272,7 @@ export function GradientEditor({
   const [gradientType, setGradientType] = useState<GradientType>(parsed.type);
   const [degree, setDegree] = useState(parsed.degree);
   const [colors, setColors] = useState<string[]>(parsed.colors);
+  const [opacity, setOpacity] = useState(parsed.opacity);
   const [hasThreeColors, setHasThreeColors] = useState(parsed.colors.length >= 3);
 
   // Sync local state when value changes externally
@@ -217,6 +281,7 @@ export function GradientEditor({
     setGradientType(newParsed.type);
     setDegree(newParsed.degree);
     setColors(newParsed.colors);
+    setOpacity(newParsed.opacity);
     setHasThreeColors(newParsed.colors.length >= 3);
   }, [value, defaultGradient]);
 
@@ -225,26 +290,32 @@ export function GradientEditor({
     newType: GradientType = gradientType,
     newDegree: number = degree,
     newColors: string[] = colors,
+    newOpacity: number = opacity,
   ) => {
-    const gradient = composeGradient(newType, newDegree, newColors);
+    const gradient = composeGradient(newType, newDegree, newColors, newOpacity);
     onChange(gradient);
   };
 
   const handleTypeChange = (newType: GradientType) => {
     setGradientType(newType);
-    emitChange(newType, degree, colors);
+    emitChange(newType, degree, colors, opacity);
   };
 
   const handleDegreeChange = (newDegree: number) => {
     setDegree(newDegree);
-    emitChange(gradientType, newDegree, colors);
+    emitChange(gradientType, newDegree, colors, opacity);
   };
 
   const handleColorChange = (index: number, newColor: string) => {
     const newColors = [...colors];
     newColors[index] = newColor;
     setColors(newColors);
-    emitChange(gradientType, degree, newColors);
+    emitChange(gradientType, degree, newColors, opacity);
+  };
+
+  const handleOpacityChange = (newOpacity: number) => {
+    setOpacity(newOpacity);
+    emitChange(gradientType, degree, colors, newOpacity);
   };
 
   const handleToggleThreeColors = () => {
@@ -260,10 +331,10 @@ export function GradientEditor({
       newColors = colors.slice(0, 2);
     }
     setColors(newColors);
-    emitChange(gradientType, degree, newColors);
+    emitChange(gradientType, degree, newColors, opacity);
   };
 
-  const previewBackground = composeGradient(gradientType, degree, colors);
+  const previewBackground = composeGradient(gradientType, degree, colors, opacity);
 
   return (
     <Box sx={{ mt: 2, mb: 2 }}>
@@ -410,6 +481,36 @@ export function GradientEditor({
             >
               {hasThreeColors ? '− Remove 3rd color' : '+ Add 3rd color'}
             </Button>
+            
+            {/* Opacity slider */}
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="caption" color="rgba(255,255,255,0.7)">
+                Opacity: {Math.round(opacity * 100)}%
+              </Typography>
+              <Slider
+                value={opacity}
+                onChange={(_, val) => handleOpacityChange(val as number)}
+                min={0}
+                max={1}
+                step={0.01}
+                size="small"
+                sx={{
+                  color: COLORS.gogo_blue,
+                  '& .MuiSlider-thumb': {
+                    width: 14,
+                    height: 14,
+                    backgroundColor: 'white',
+                    border: `2px solid ${COLORS.gogo_blue}`,
+                  },
+                  '& .MuiSlider-track': {
+                    backgroundColor: COLORS.gogo_blue,
+                  },
+                  '& .MuiSlider-rail': {
+                    backgroundColor: 'rgba(255,255,255,0.3)',
+                  },
+                }}
+              />
+            </Box>
           </Box>
         </Grid>
 
@@ -424,9 +525,25 @@ export function GradientEditor({
               height: 140,
               borderRadius: 1,
               border: '1px solid rgba(255,255,255,0.1)',
-              background: previewBackground,
+              // Checkerboard pattern for transparency
+              background: `linear-gradient(45deg, #808080 25%, transparent 25%), 
+                           linear-gradient(-45deg, #808080 25%, transparent 25%), 
+                           linear-gradient(45deg, transparent 75%, #808080 75%), 
+                           linear-gradient(-45deg, transparent 75%, #808080 75%)`,
+              backgroundSize: '16px 16px',
+              backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px',
+              position: 'relative',
+              overflow: 'hidden',
             }}
-          />
+          >
+            <Box
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                background: previewBackground,
+              }}
+            />
+          </Box>
         </Grid>
       </Grid>
     </Box>

@@ -672,10 +672,10 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element {
   const isValidGradient = (s?: string | null) =>
     !!s &&
     !/undefined/i.test(String(s)) &&
-    /linear-gradient\(/i.test(String(s));
-  const gradientOk = isValidGradient(mission?.backgroundColor);
+    /(linear|radial|conic)-gradient\(/i.test(String(s));
+  const gradientOk = isValidGradient(mission?.backgroundGradient || mission?.backgroundColor);
   const gradientBackground = gradientOk
-    ? (mission?.backgroundColor as string)
+    ? ((mission?.backgroundGradient || mission?.backgroundColor) as string)
     : undefined;
   const sectionBackground = gradientBackground;
 

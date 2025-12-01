@@ -109,7 +109,7 @@ export function HearOurImpactTabEditor({
     const parsed = parseGradientString(currentGradient);
     const newColors = [...parsed.colors];
     newColors[gradientPickerColorIndex] = color;
-    const newGradient = composeGradient(parsed.type, parsed.degree, newColors);
+    const newGradient = composeGradient(parsed.type, parsed.degree, newColors, parsed.opacity);
     onHearOurImpactChange(gradientPickerKey, newGradient);
   };
 

@@ -21,12 +21,10 @@ import { GradientEditor, parseGradientString, composeGradient } from './Gradient
 import {
   MissionSectionForm,
   MissionTextAlign,
-  MissionLayoutVariant,
   MissionStatAction,
   MissionStatNumberSource,
   MissionBadgeIcon,
   MISSION_TEXT_ALIGN_OPTIONS,
-  MISSION_LAYOUT_VARIANTS,
 } from '../types';
 import COLORS from '../../../assets/colors';
 import { v4 as uuidv4 } from 'uuid';
@@ -169,7 +167,7 @@ export function MissionTabEditor({
     newColors[gradientPickerColorIndex] = val;
     
     // Compose the new gradient
-    const newGradient = composeGradient(parsed.type, parsed.degree, newColors);
+    const newGradient = composeGradient(parsed.type, parsed.degree, newColors, parsed.opacity);
     onMissionChange(gradientPickerKey, newGradient);
   };
 
@@ -233,21 +231,6 @@ export function MissionTabEditor({
             {MISSION_TEXT_ALIGN_OPTIONS.map((option) => (
               <MenuItem key={option} value={option}>
                 {option.charAt(0).toUpperCase() + option.slice(1)}
-              </MenuItem>
-            ))}
-          </CustomTextField>
-        </Grid>
-        <Grid item xs={12} md={12}>
-          <CustomTextField
-            select
-            label="Layout Variant"
-            value={mission.layoutVariant}
-            onChange={(e) => onMissionChange('layoutVariant', e.target.value as MissionLayoutVariant)}
-            fullWidth
-          >
-            {MISSION_LAYOUT_VARIANTS.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option === 'ticket' ? 'Ticket' : 'Default'}
               </MenuItem>
             ))}
           </CustomTextField>

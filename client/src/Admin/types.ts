@@ -1,7 +1,7 @@
 // Shared types for the Admin customization pages
 
 export type MissionLayoutVariant = 'ticket' | 'default';
-export type MissionTextAlign = 'left' | 'center' | 'right';
+export type MissionTextAlign = 'left' | 'center';
 export type MissionStatAction =
   | 'none'
   | 'openModal' // legacy
@@ -225,7 +225,7 @@ export type { PopulationContent, FinancialContent, MethodContent, CurriculumCont
 
 export interface ImpactReportForm {
   hero: HeroSectionForm;
-  mission: MissionSectionForm;
+  mission: MissionSectionForm | null;
   population: import('../services/impact.api').PopulationContent;
   financial: import('../services/impact.api').FinancialContent;
   method: import('../services/impact.api').MethodContent;
@@ -259,6 +259,6 @@ export const LAST_ADMIN_TAB_STORAGE_KEY = 'gogo_admin_impact_tab';
 
 export const DEFAULT_SWATCH_SIZE = 6;
 
-export const MISSION_TEXT_ALIGN_OPTIONS: MissionTextAlign[] = ['left', 'center', 'right'];
+export const MISSION_TEXT_ALIGN_OPTIONS: MissionTextAlign[] = ['left', 'center'];
 export const MISSION_LAYOUT_VARIANTS: MissionLayoutVariant[] = ['ticket', 'default'];
 export const BACKGROUND_LOGO_OPTIONS = [{ key: 'gogoLogoBK', label: 'GOGO Logo' }];

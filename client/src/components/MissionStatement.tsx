@@ -89,6 +89,18 @@ const Ticket = styled.div`
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45),
     0 0 0 1px rgba(255, 255, 255, 0.04) inset;
 
+  /* CSS mask for punch-out notches - creates actual transparent holes */
+  --notch-size: 12px;
+  --notch-offset: 68px; /* Distance from right edge to notch center */
+  mask-image: 
+    radial-gradient(circle at calc(100% - var(--notch-offset)) 0, transparent var(--notch-size), black calc(var(--notch-size) + 0.5px)),
+    radial-gradient(circle at calc(100% - var(--notch-offset)) 100%, transparent var(--notch-size), black calc(var(--notch-size) + 0.5px));
+  mask-composite: intersect;
+  -webkit-mask-image: 
+    radial-gradient(circle at calc(100% - var(--notch-offset)) 0, transparent var(--notch-size), black calc(var(--notch-size) + 0.5px)),
+    radial-gradient(circle at calc(100% - var(--notch-offset)) 100%, transparent var(--notch-size), black calc(var(--notch-size) + 0.5px));
+  -webkit-mask-composite: source-in;
+
   &::before {
     content: '';
     position: absolute;
@@ -114,6 +126,11 @@ const Ticket = styled.div`
         ${COLORS.gogo_purple}22,
         transparent 60%
       );
+  }
+
+  @media (max-width: 768px) {
+    mask-image: none;
+    -webkit-mask-image: none;
   }
 `;
 
@@ -144,28 +161,6 @@ const TicketRight = styled.div`
   border-left: 2px dashed rgba(255, 255, 255, 0.25);
   position: relative;
 
-  /* Notches (Stub cutout effect) */
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    left: -7px; /* Center on the 2px border */
-    width: 12px;
-    height: 12px;
-    background-color: white;
-    mix-blend-mode: destination-out;
-    border-radius: 50%;
-    z-index: 3;
-  }
-
-  &::before {
-    top: -24px; /* Positioned to cut the top edge (18px padding + 6px radius) */
-  }
-
-  &::after {
-    bottom: -24px; /* Positioned to cut the bottom edge */
-  }
-
   @media (max-width: 768px) {
     border-left: 0;
     padding-left: 0;
@@ -175,18 +170,6 @@ const TicketRight = styled.div`
     padding-top: 18px;
     margin-top: 12px;
     width: 100%;
-
-    &::before {
-      top: -7px;
-      left: -30px; /* Left padding (24px) + radius (6px) */
-    }
-
-    &::after {
-      top: -7px;
-      bottom: auto;
-      left: auto;
-      right: -26px; /* Right padding (20px) + radius (6px) */
-    }
   }
 `;
 

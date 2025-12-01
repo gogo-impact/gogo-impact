@@ -108,7 +108,7 @@ export function TestimonialsTabEditor({
     const parsed = parseGradientString(currentGradient);
     const newColors = [...parsed.colors];
     newColors[gradientPickerColorIndex] = color;
-    const newGradient = composeGradient(parsed.type, parsed.degree, newColors);
+    const newGradient = composeGradient(parsed.type, parsed.degree, newColors, parsed.opacity);
     onTestimonialsChange(gradientPickerKey, newGradient);
   };
 

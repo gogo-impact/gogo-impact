@@ -122,179 +122,89 @@ const VIEWPORTS = [
 function getDefaultFormValues(): ImpactReportForm {
   return {
     hero: {
-      title: '',
-      subtitle: '',
-      year: '',
-      tagline: '',
-      textAlign: 'center',
-      layoutVariant: 'default',
-      bubblesCsv: '',
+      title: "",
+      subtitle: "",
+      year: "",
+      tagline: "",
+      textAlign: "center",
+      layoutVariant: "default",
+      bubblesCsv: "",
       degree: 180,
-      color1: '#000000',
-      color2: '#000000',
+      color1: "#000000",
+      color2: "#000000",
       gradientOpacity: 0,
       backgroundImageUrl: null,
       backgroundImagePreview: null,
       backgroundImageFile: null,
-      ariaLabel: '',
+      ariaLabel: "",
       backgroundGrayscale: false,
-      primaryCtaLabel: 'Watch Our Story',
-      primaryCtaHref: 'https://youtu.be/21ufVKC5TEo?si=3N7xugwbc3Z4RNm-',
-      secondaryCtaLabel: 'Support Our Mission',
-      secondaryCtaHref: 'https://www.classy.org/give/352794/#!/donation/checkout',
+      primaryCtaLabel: "Watch Our Story",
+      primaryCtaHref: "https://youtu.be/21ufVKC5TEo?si=3N7xugwbc3Z4RNm-",
+      secondaryCtaLabel: "Support Our Mission",
+      secondaryCtaHref:
+        "https://www.classy.org/give/352794/#!/donation/checkout",
     },
-    mission: {
-      enabled: true,
-      ariaLabel: 'Mission section',
-      layoutVariant: 'ticket',
-      textAlign: 'center',
-      animationsEnabled: true,
-      title: 'Our Mission',
-      titleColor: null,
-      titleGradientDegree: 90,
-      titleGradientColor1: '#7e9aff',
-      titleGradientColor2: '#bfb1ff',
-      titleGradientOpacity: 1,
-      badgeLabel: 'Since 2008',
-      badgeIcon: { type: 'glyph', value: '♫' },
-      badgeTextColor: 'rgba(255,255,255,0.8)',
-      badgeBgColor: 'rgba(0,0,0,0.4)',
-      badgeBorderColor: 'rgba(255,255,255,0.1)',
-      statementTitle: 'MISSION STATEMENT — ADMIT ALL',
-      statementText:
-        'Our mission is to empower youth through music, art and mentorship. Guitars Over Guns offers students from our most vulnerable communities a combination of arts education and mentorship with paid, professional musician mentors to help them overcome hardship, find their voice and reach their potential as tomorrow\'s leaders. Since 2008, we have served nearly 12,000 students.',
-      statementMeta: 'ISSUED 2025 • CHOOSE YOUR SOUND',
-      serial: 'SN-GOGO-2025',
-      statementTitleColor: null,
-      statementTextColor: null,
-      statementMetaColor: null,
-      serialColor: null,
-      titleGradient:
-        'linear-gradient(to right, rgb(126,154,255), rgb(191,175,255), rgb(178,255,241))',
-      titleUnderlineGradientDegree: 0,
-      titleUnderlineGradientColor1: '#5fa8d3',
-      titleUnderlineGradientColor2: '#7b7fd1',
-      titleUnderlineGradient: 'linear-gradient(to right, #5fa8d3, #7b7fd1)',
-      ticketStripeGradient: 'linear-gradient(180deg, #1946f5, #00cc99)',
-      ticketStripeGradientDegree: 180,
-      ticketStripeGradientColor1: '#1946f5',
-      ticketStripeGradientColor2: '#00cc99',
-      degree: 180,
-      color1: '#5038a0',
-      color2: '#121242',
-      gradientOpacity: 0,
-      statsTitle: 'At a Glance',
-      statsTitleColor: 'rgba(255,255,255,0.7)',
-      statsEqualizer: {
-        enabled: true,
-        barCount: 4,
-      },
-      stats: [
-        {
-          id: 'students',
-          number: 1622,
-          label: 'Students',
-          color: '#22C55E',
-          action: 'none',
-          modalId: null,
-          iconKey: null,
-          numberSource: 'explicit',
-        },
-        {
-          id: 'mentors',
-          number: 105,
-          label: 'Paid Mentors',
-          color: '#3B82F6',
-          action: 'none',
-          modalId: null,
-          iconKey: null,
-          numberSource: 'explicit',
-        },
-        {
-          id: 'sites',
-          number: 59,
-          label: 'School & Community Sites',
-          color: '#8B5CF6',
-          action: 'none',
-          modalId: null,
-          iconKey: null,
-          numberSource: 'explicit',
-        },
-        {
-          id: 'disciplines',
-          number: 12,
-          label: 'Artistic Disciplines',
-          color: '#FDE047',
-          action: 'openModal',
-          modalId: 'disciplines',
-          iconKey: null,
-          numberSource: 'explicit',
-        },
-      ],
-      modalTitle: 'Artistic Disciplines',
-      disciplinesItems: [
-        { name: 'Music Production', iconKey: null },
-        { name: 'Guitar', iconKey: null },
-        { name: 'Drums', iconKey: null },
-        { name: 'Piano', iconKey: null },
-        { name: 'Vocals', iconKey: null },
-        { name: 'Bass', iconKey: null },
-        { name: 'DJing', iconKey: null },
-        { name: 'Songwriting', iconKey: null },
-        { name: 'Dance', iconKey: null },
-        { name: 'Visual Art', iconKey: null },
-        { name: 'Digital Art', iconKey: null },
-        { name: 'Spoken Word', iconKey: null },
-        { name: 'Theater', iconKey: null },
-        { name: 'Sound Engineering', iconKey: null },
-        { name: 'Brass Instruments', iconKey: null },
-        { name: 'Woodwind Instruments', iconKey: null },
-        { name: 'Strings', iconKey: null },
-      ],
-      backgroundLogo: {
-        enabled: true,
-        svgKey: 'gogoLogoBK',
-        opacity: 0.05,
-        rotationDeg: 0,
-        scale: 1,
-      },
-    },
+    // Mission section - populated from backend only, no defaults
+    mission: null,
     population: {
-      sectionBadge: 'Who We Serve',
-      sectionTitle: 'Our Population',
-      title: 'TALENT IS UNIVERSALLY DISTRIBUTED, BUT OPPORTUNITY IS NOT.',
+      sectionBadge: "Who We Serve",
+      sectionTitle: "Our Population",
+      title: "TALENT IS UNIVERSALLY DISTRIBUTED, BUT OPPORTUNITY IS NOT.",
       infoCard1Text:
-        'That is why, since 2008, Guitars Over Guns has used the transformative power of music, mentorship, and the arts to unlock possibilities for young people who face systemic barriers to opportunity.',
+        "That is why, since 2008, Guitars Over Guns has used the transformative power of music, mentorship, and the arts to unlock possibilities for young people who face systemic barriers to opportunity.",
       infoCard2Text:
-        'The Childhood Global Assessment Scale (C-GAS) is a widely recognized tool to measure young people\'s psychological and social well-being.',
+        "The Childhood Global Assessment Scale (C-GAS) is a widely recognized tool to measure young people's psychological and social well-being.",
       demographicsData: [
-        { id: 'Hispanic/Latinx', label: 'Hispanic/Latinx', value: 46, color: COLORS.gogo_teal },
-        { id: 'Black/African American', label: 'Black/African American', value: 44, color: COLORS.gogo_blue },
-        { id: 'Other', label: 'Other', value: 10, color: COLORS.gogo_purple },
+        {
+          id: "Hispanic/Latinx",
+          label: "Hispanic/Latinx",
+          value: 46,
+          color: COLORS.gogo_teal,
+        },
+        {
+          id: "Black/African American",
+          label: "Black/African American",
+          value: 44,
+          color: COLORS.gogo_blue,
+        },
+        { id: "Other", label: "Other", value: 10, color: COLORS.gogo_purple },
       ],
-      demographicsCaption: 'Ages 8-18: 96% at or below the Federal Poverty Level',
+      demographicsCaption:
+        "Ages 8-18: 96% at or below the Federal Poverty Level",
       stat1Percent: 94,
-      stat1Text: 'of students made or maintained academic gains (2023-2024)',
+      stat1Text: "of students made or maintained academic gains (2023-2024)",
       stat1Color: COLORS.gogo_teal,
       stat2Percent: 95,
-      stat2Text: 'of students improved conduct in their classes (2023-2024)',
+      stat2Text: "of students improved conduct in their classes (2023-2024)",
       stat2Color: COLORS.gogo_pink,
-      cgasTitle: 'Mental Health & Well-being (C-GAS)',
+      cgasTitle: "Mental Health & Well-being (C-GAS)",
       cgasTooltip:
-        'The Childhood Global Assessment Scale (C-GAS) is a widely recognized tool to measure young people\'s psychological and social well-being.',
+        "The Childhood Global Assessment Scale (C-GAS) is a widely recognized tool to measure young people's psychological and social well-being.",
       cgasStats: [
-        { value: '100%', label: 'Improved 5+ points\n(High Risk Students)', color: COLORS.gogo_blue },
-        { value: '85%', label: 'Maintained or Increased\n(Fall 2023)', color: COLORS.gogo_purple },
-        { value: '84%', label: 'Maintained or Increased\n(Spring 2024)', color: COLORS.gogo_teal },
+        {
+          value: "100%",
+          label: "Improved 5+ points\n(High Risk Students)",
+          color: COLORS.gogo_blue,
+        },
+        {
+          value: "85%",
+          label: "Maintained or Increased\n(Fall 2023)",
+          color: COLORS.gogo_purple,
+        },
+        {
+          value: "84%",
+          label: "Maintained or Increased\n(Spring 2024)",
+          color: COLORS.gogo_teal,
+        },
       ],
-      skillsTitle: 'Core Skills Developed',
+      skillsTitle: "Core Skills Developed",
       skillsList: [
-        'Confidence and self-awareness',
-        'Emotional intelligence and creativity',
-        'Self-presentation and expression',
-        'Workforce readiness and life skills',
-        'Trusted mentors & positive role models',
-        'Supportive community of peers',
+        "Confidence and self-awareness",
+        "Emotional intelligence and creativity",
+        "Self-presentation and expression",
+        "Workforce readiness and life skills",
+        "Trusted mentors & positive role models",
+        "Supportive community of peers",
       ],
       blob1ColorA: `${COLORS.gogo_blue}55`,
       blob1ColorB: `${COLORS.gogo_purple}22`,
@@ -309,35 +219,65 @@ function getDefaultFormValues(): ImpactReportForm {
     testimonials: {},
     nationalImpact: {},
     impact: {
-      title: 'Our Impact',
+      title: "Our Impact",
       stats: [
-        { id: '1', number: '500+', label: 'Students Served' },
-        { id: '2', number: '15', label: 'Years of Service' },
-        { id: '3', number: '95%', label: 'Graduation Rate' },
-        { id: '4', number: '4', label: 'Cities' },
+        { id: "1", number: "500+", label: "Students Served" },
+        { id: "2", number: "15", label: "Years of Service" },
+        { id: "3", number: "95%", label: "Graduation Rate" },
+        { id: "4", number: "4", label: "Cities" },
       ],
       enabled: true,
     },
     programs: {
-      title: 'Our Programs',
+      title: "Our Programs",
       programs: [
-        { id: '1', name: 'Music Mentorship', description: 'One-on-one mentorship with professional musicians', image: null, imagePreview: null },
-        { id: '2', name: 'Group Sessions', description: 'Collaborative learning in small groups', image: null, imagePreview: null },
+        {
+          id: "1",
+          name: "Music Mentorship",
+          description: "One-on-one mentorship with professional musicians",
+          image: null,
+          imagePreview: null,
+        },
+        {
+          id: "2",
+          name: "Group Sessions",
+          description: "Collaborative learning in small groups",
+          image: null,
+          imagePreview: null,
+        },
       ],
       enabled: true,
     },
     locations: {
-      title: 'Our Locations',
+      title: "Our Locations",
       locations: [
-        { id: '1', name: 'Miami', address: 'Miami, FL', coordinates: { lat: 25.7617, lng: -80.1918 } },
-        { id: '2', name: 'Chicago', address: 'Chicago, IL', coordinates: { lat: 41.8781, lng: -87.6298 } },
+        {
+          id: "1",
+          name: "Miami",
+          address: "Miami, FL",
+          coordinates: { lat: 25.7617, lng: -80.1918 },
+        },
+        {
+          id: "2",
+          name: "Chicago",
+          address: "Chicago, IL",
+          coordinates: { lat: 41.8781, lng: -87.6298 },
+        },
       ],
       enabled: true,
     },
     testimonials: {
-      title: 'What Our Students Say',
+      title: "What Our Students Say",
       testimonials: [
-        { id: '1', name: 'Maria Rodriguez', role: 'Student, Miami', content: 'Guitars Over Guns changed my life. I found my voice through music.', image: null, imagePreview: null },
+        {
+          id: "1",
+          name: "Maria Rodriguez",
+          role: "Student, Miami",
+          content:
+            "Guitars Over Guns changed my life. I found my voice through music.",
+          image: null,
+          imagePreview: null,
+        },
       ],
       enabled: true,
     },
@@ -406,6 +346,7 @@ function ImpactReportCustomizationPage() {
 
   // Error states
   const [errors, setErrors] = useState<{ general: string }>({ general: '' });
+  const [missionLoadError, setMissionLoadError] = useState(false);
 
   // Loading state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -413,13 +354,19 @@ function ImpactReportCustomizationPage() {
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [heroUploadPct, setHeroUploadPct] = useState<number | null>(null);
   const [flashPreviewHero, setFlashPreviewHero] = useState(false);
-  const [savedSnapshot, setSavedSnapshot] = useState<ImpactReportForm | null>(null);
+  const [savedSnapshot, setSavedSnapshot] = useState<ImpactReportForm | null>(
+    null,
+  );
 
   // Defaults swatch editor state
   const [defaultSwatch, setDefaultSwatch] = useState<string[] | null>(null);
 
   // Handle section changes
-  const handleSectionChange = (section: keyof ImpactReportForm, field: string, value: any) => {
+  const handleSectionChange = (
+    section: keyof ImpactReportForm,
+    field: string,
+    value: any,
+  ) => {
     setImpactReportForm((prev) => ({
       ...prev,
       [section]: {
@@ -428,24 +375,27 @@ function ImpactReportCustomizationPage() {
       },
     }));
     setIsDirty(true);
-    if (section === 'hero') {
+    if (section === "hero") {
       setFlashPreviewHero(true);
       window.setTimeout(() => setFlashPreviewHero(false), 800);
     }
   };
 
   // Handle hero background image selection
-  const handleHeroBackgroundUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleHeroBackgroundUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     if (!e.target.files || !e.target.files[0]) return;
     const file = e.target.files[0];
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    const isHeicLike = /heic|heif/i.test(file.type) || /\.(heic|heif)$/i.test(file.name);
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    const isHeicLike =
+      /heic|heif/i.test(file.type) || /\.(heic|heif)$/i.test(file.name);
     if (!allowedTypes.includes(file.type)) {
       const message = isHeicLike
-        ? 'HEIC images are not widely supported in browsers. Please upload a JPG or PNG instead.'
-        : 'Unsupported image format. Please upload a JPG, PNG, or WebP image.';
+        ? "HEIC images are not widely supported in browsers. Please upload a JPG or PNG instead."
+        : "Unsupported image format. Please upload a JPG, PNG, or WebP image.";
       setErrors((prev) => ({ ...prev, general: message }));
-      enqueueSnackbar(message, { variant: 'warning' });
+      enqueueSnackbar(message, { variant: "warning" });
       return;
     }
     const preview = URL.createObjectURL(file);
@@ -458,7 +408,7 @@ function ImpactReportCustomizationPage() {
       },
     }));
     setIsDirty(true);
-    setErrors((prev) => ({ ...prev, general: '' }));
+    setErrors((prev) => ({ ...prev, general: "" }));
   };
 
   const handleClearHeroBackground = () => {
@@ -472,7 +422,7 @@ function ImpactReportCustomizationPage() {
       },
     }));
     setIsDirty(true);
-    enqueueSnackbar('Background cleared', { variant: 'info' });
+    enqueueSnackbar("Background cleared", { variant: "info" });
   };
 
   // Prefill from backend
@@ -480,15 +430,18 @@ function ImpactReportCustomizationPage() {
     (async () => {
       const hero = await fetchHeroContent();
       if (!hero) {
-        enqueueSnackbar('Failed to load hero section data from database. Using empty form.', { variant: 'warning' });
+        enqueueSnackbar(
+          "Failed to load hero section data from database. Using empty form.",
+          { variant: "warning" },
+        );
         return;
       }
       const g = parseGradient(hero.backgroundColor as string | null);
-      const alphaMatch = (hero.backgroundColor as string | '').match(
-        /rgba\([^,]+,[^,]+,[^,]+,\s*(\d*\.?\d+)\)/i
+      const alphaMatch = (hero.backgroundColor as string | "").match(
+        /rgba\([^,]+,[^,]+,[^,]+,\s*(\d*\.?\d+)\)/i,
       );
       const parsedAlpha = alphaMatch
-        ? Math.max(0, Math.min(1, parseFloat(alphaMatch[1] || '1')))
+        ? Math.max(0, Math.min(1, parseFloat(alphaMatch[1] || "1")))
         : undefined;
       setImpactReportForm((prev) => {
         const next: ImpactReportForm = {
@@ -496,36 +449,82 @@ function ImpactReportCustomizationPage() {
           hero: {
             ...prev.hero,
             title: hero.title !== undefined ? hero.title : prev.hero.title,
-            subtitle: hero.subtitle !== undefined ? hero.subtitle : prev.hero.subtitle,
+            subtitle:
+              hero.subtitle !== undefined ? hero.subtitle : prev.hero.subtitle,
             year: hero.year !== undefined ? hero.year : prev.hero.year,
-            tagline: hero.tagline !== undefined ? hero.tagline : prev.hero.tagline,
-            ariaLabel: typeof hero.ariaLabel === 'string' ? hero.ariaLabel : prev.hero.ariaLabel,
+            tagline:
+              hero.tagline !== undefined ? hero.tagline : prev.hero.tagline,
+            ariaLabel:
+              typeof hero.ariaLabel === "string"
+                ? hero.ariaLabel
+                : prev.hero.ariaLabel,
             textAlign:
-              hero.textAlign && (['left', 'center', 'right'] as string[]).includes(hero.textAlign)
-                ? (hero.textAlign as 'left' | 'center' | 'right')
+              hero.textAlign &&
+              (["left", "center", "right"] as string[]).includes(hero.textAlign)
+                ? (hero.textAlign as "left" | "center" | "right")
                 : prev.hero.textAlign,
             layoutVariant:
-              hero.layoutVariant === 'ticket' || hero.layoutVariant === 'default'
+              hero.layoutVariant === "ticket" ||
+              hero.layoutVariant === "default"
                 ? hero.layoutVariant
                 : prev.hero.layoutVariant,
             titleColor: (hero as any)?.titleColor ?? prev.hero.titleColor,
-            subtitleColor: (hero as any)?.subtitleColor ?? prev.hero.subtitleColor,
+            subtitleColor:
+              (hero as any)?.subtitleColor ?? prev.hero.subtitleColor,
             yearColor: (hero as any)?.yearColor ?? prev.hero.yearColor,
             taglineColor: (hero as any)?.taglineColor ?? prev.hero.taglineColor,
-            primaryCtaColor: (hero as any)?.primaryCtaColor ?? prev.hero.primaryCtaColor,
-            secondaryCtaColor: (hero as any)?.secondaryCtaColor ?? prev.hero.secondaryCtaColor,
-            bubblesCsv: Array.isArray(hero.bubbles) ? hero.bubbles.join(', ') : prev.hero.bubblesCsv,
+            // Title underline
+            titleUnderlineColor:
+              (hero as any)?.titleUnderlineColor ??
+              prev.hero.titleUnderlineColor,
+            // Bubble styling
+            bubbleTextColor:
+              (hero as any)?.bubbleTextColor ?? prev.hero.bubbleTextColor,
+            bubbleBgColor:
+              (hero as any)?.bubbleBgColor ?? prev.hero.bubbleBgColor,
+            bubbleBorderColor:
+              (hero as any)?.bubbleBorderColor ?? prev.hero.bubbleBorderColor,
+            // CTA text colors
+            primaryCtaColor:
+              (hero as any)?.primaryCtaColor ?? prev.hero.primaryCtaColor,
+            secondaryCtaColor:
+              (hero as any)?.secondaryCtaColor ?? prev.hero.secondaryCtaColor,
+            // CTA background colors
+            primaryCtaBgColor:
+              (hero as any)?.primaryCtaBgColor ?? prev.hero.primaryCtaBgColor,
+            primaryCtaHoverBgColor:
+              (hero as any)?.primaryCtaHoverBgColor ??
+              prev.hero.primaryCtaHoverBgColor,
+            secondaryCtaBgColor:
+              (hero as any)?.secondaryCtaBgColor ??
+              prev.hero.secondaryCtaBgColor,
+            secondaryCtaHoverBgColor:
+              (hero as any)?.secondaryCtaHoverBgColor ??
+              prev.hero.secondaryCtaHoverBgColor,
+            bubblesCsv: Array.isArray(hero.bubbles)
+              ? hero.bubbles.join(", ")
+              : prev.hero.bubblesCsv,
             degree: g.degree,
             color1: toHex(g.color1),
             color2: toHex(g.color2),
-            gradientOpacity: typeof parsedAlpha === 'number' ? parsedAlpha : prev.hero.gradientOpacity,
+            gradientOpacity:
+              typeof parsedAlpha === "number"
+                ? parsedAlpha
+                : prev.hero.gradientOpacity,
+            // Also set the backgroundGradient string directly from the loaded value
+            backgroundGradient:
+              hero.backgroundColor ?? prev.hero.backgroundGradient,
             backgroundImageUrl: hero.backgroundImage ?? null,
             backgroundImagePreview: null,
-            backgroundGrayscale: (hero as any)?.backgroundImageGrayscale === true ? true : false,
-            primaryCtaLabel: hero.primaryCta?.label ?? prev.hero.primaryCtaLabel,
+            backgroundGrayscale:
+              (hero as any)?.backgroundImageGrayscale === true ? true : false,
+            primaryCtaLabel:
+              hero.primaryCta?.label ?? prev.hero.primaryCtaLabel,
             primaryCtaHref: hero.primaryCta?.href ?? prev.hero.primaryCtaHref,
-            secondaryCtaLabel: hero.secondaryCta?.label ?? prev.hero.secondaryCtaLabel,
-            secondaryCtaHref: hero.secondaryCta?.href ?? prev.hero.secondaryCtaHref,
+            secondaryCtaLabel:
+              hero.secondaryCta?.label ?? prev.hero.secondaryCtaLabel,
+            secondaryCtaHref:
+              hero.secondaryCta?.href ?? prev.hero.secondaryCtaHref,
           },
         };
         setSavedSnapshot(next);
@@ -534,218 +533,191 @@ function ImpactReportCustomizationPage() {
     })();
   }, []);
 
-  // Prefill mission from backend
+  // Prefill mission from backend - purely data driven, no defaults
   useEffect(() => {
     (async () => {
       const mission = await fetchMissionContent();
       if (!mission) {
-        enqueueSnackbar('Failed to load mission section data from database. Using empty form.', { variant: 'warning' });
+        setMissionLoadError(true);
+        enqueueSnackbar(
+          "Failed to load mission section data. Please refresh the page.",
+          { variant: "error" },
+        );
         return;
       }
-      const g = parseGradient(mission.backgroundColor as string | null);
-      const titleGradientParsed = parseGradient(((mission as any)?.titleGradient as string) ?? null);
+
+      // Parse gradients from backend data
+      const bgGradient =
+        (mission as any)?.backgroundGradient || mission.backgroundColor;
+      const g = parseGradient(bgGradient as string | null);
+      const titleGradientParsed = parseGradient(
+        (mission as any)?.titleGradient ?? null,
+      );
       const titleUnderlineParsed = parseGradient(
-        ((mission as any)?.titleUnderlineGradient as string) ?? null
+        (mission as any)?.titleUnderlineGradient ?? null,
       );
       const ticketStripeParsed = parseGradient(
-        ((mission as any)?.ticketStripeGradient as string) ?? null
+        (mission as any)?.ticketStripeGradient ?? null,
       );
-      const alphaMatch = (mission.backgroundColor as string | '').match(
-        /rgba\([^,]+,[^,]+,[^,]+,\s*(\d*\.?\d+)\)/i
+
+      // Extract opacity from gradients if using rgba
+      const alphaMatch = ((bgGradient as string) || "").match(
+        /rgba\([^,]+,[^,]+,[^,]+,\s*(\d*\.?\d+)\)/i,
       );
       const parsedAlpha = alphaMatch
-        ? Math.max(0, Math.min(1, parseFloat(alphaMatch[1] || '1')))
-        : undefined;
-      const titleAlphaMatch = ((mission as any)?.titleGradient as string | '').match(
-        /rgba\([^,]+,[^,]+,[^,]+,\s*(\d*\.?\d+)\)/i
-      );
+        ? Math.max(0, Math.min(1, parseFloat(alphaMatch[1] || "1")))
+        : 1;
+      const titleAlphaMatch = (
+        ((mission as any)?.titleGradient as string) || ""
+      ).match(/rgba\([^,]+,[^,]+,[^,]+,\s*(\d*\.?\d+)\)/i);
       const parsedTitleAlpha = titleAlphaMatch
-        ? Math.max(0, Math.min(1, parseFloat(titleAlphaMatch[1] || '1')))
-        : undefined;
+        ? Math.max(0, Math.min(1, parseFloat(titleAlphaMatch[1] || "1")))
+        : 1;
+
+      // Parse disciplines modal
       const disciplinesModal = ((mission as any)?.modals ?? []).find(
-        (m: any) => m?.id === 'disciplines'
+        (m: any) => m?.id === "disciplines",
       );
       const sanitizedDisciplines =
         disciplinesModal?.items
-          ?.map((it: any) => {
-            const name = typeof it?.name === 'string' ? it.name : '';
-            if (!name) return null;
-            return {
-              name,
-              iconKey: typeof it?.iconKey === 'string' && it.iconKey.length > 0 ? it.iconKey : null,
-            };
-          })
-          .filter(Boolean) ?? null;
-      const sanitizedStats: any[] | null = Array.isArray((mission as any)?.stats)
-        ? ((mission as any)?.stats as any[]).map((s, idx) => {
-            const rawAction = (s?.action as string | undefined) || 'none';
-            let action: any = 'none';
+          ?.map((it: any) => ({
+            name: typeof it?.name === "string" ? it.name : "",
+            iconKey:
+              typeof it?.iconKey === "string" && it.iconKey.length > 0
+                ? it.iconKey
+                : null,
+          }))
+          .filter((it: any) => it.name) ?? [];
+
+      // Parse stats
+      const sanitizedStats = Array.isArray((mission as any)?.stats)
+        ? (mission as any).stats.map((s: any, idx: number) => {
+            const rawAction = s?.action || "none";
+            let action = "none";
             if (
-              rawAction === 'openDisciplinesModal' ||
-              rawAction === 'openStudentMusicModal' ||
-              rawAction === 'openMentorMusicModal' ||
-              rawAction === 'scrollToMap' ||
-              rawAction === 'openMapModal'
+              [
+                "openDisciplinesModal",
+                "openStudentMusicModal",
+                "openMentorMusicModal",
+                "scrollToMap",
+                "openMapModal",
+              ].includes(rawAction)
             ) {
               action = rawAction;
-            } else if (rawAction === 'openModal') {
-              action = s?.modalId === 'disciplines' ? 'openDisciplinesModal' : 'none';
+            } else if (rawAction === "openModal") {
+              action =
+                s?.modalId === "disciplines" ? "openDisciplinesModal" : "none";
             }
             return {
               id: String(s?.id ?? idx),
-              number: s?.number ?? '',
-              label: s?.label ?? '',
-              color: s?.color ?? undefined,
+              number: s?.number ?? "",
+              label: s?.label ?? "",
+              color: s?.color ?? "#ffffff",
               action,
               modalId: s?.modalId ?? null,
-              iconKey: typeof s?.iconKey === 'string' && s.iconKey.length > 0 ? s.iconKey : null,
-              numberSource: s?.numberSource === 'modalItemsLength' ? 'modalItemsLength' : 'explicit',
+              iconKey:
+                typeof s?.iconKey === "string" && s.iconKey.length > 0
+                  ? s.iconKey
+                  : null,
+              numberSource:
+                s?.numberSource === "modalItemsLength"
+                  ? "modalItemsLength"
+                  : "explicit",
+              visible: s?.visible !== false,
             };
           })
-        : null;
-      const statsEqualizerConfig = (() => {
-        const eq = (mission as any)?.statsEqualizer ?? {};
-        const enabled = eq?.enabled === false ? false : true;
-        const eqBarCountRaw = Number(eq?.barCount);
-        const barCount =
-          Number.isFinite(eqBarCountRaw) && eqBarCountRaw > 0
-            ? Math.min(24, Math.max(1, Math.round(eqBarCountRaw)))
-            : null;
-        return { enabled, barCount };
-      })();
-      setImpactReportForm((prev) => {
-        const nextTitleGradientDegree = titleGradientParsed?.degree ?? prev.mission.titleGradientDegree;
-        const nextTitleGradientColor1 = titleGradientParsed?.color1
+        : [];
+
+      // Stats equalizer config
+      const eq = (mission as any)?.statsEqualizer ?? {};
+      const eqBarCount = Number(eq?.barCount);
+
+      // Build mission form directly from backend data
+      const missionForm: MissionSectionForm = {
+        enabled: (mission as any)?.visible !== false,
+        ariaLabel: (mission as any)?.ariaLabel ?? "",
+        layoutVariant:
+          (mission as any)?.layoutVariant === "default" ? "default" : "ticket",
+        textAlign: ["left", "center"].includes((mission as any)?.textAlign)
+          ? (mission as any)?.textAlign
+          : "center",
+        animationsEnabled: (mission as any)?.animationsEnabled !== false,
+        title: mission.title ?? "",
+        titleColor: (mission as any)?.titleColor ?? null,
+        titleGradient: (mission as any)?.titleGradient ?? "",
+        titleGradientDegree: titleGradientParsed?.degree ?? 90,
+        titleGradientColor1: titleGradientParsed?.color1
           ? toHex(titleGradientParsed.color1)
-          : prev.mission.titleGradientColor1;
-        const nextTitleGradientColor2 = titleGradientParsed?.color2
+          : "#ffffff",
+        titleGradientColor2: titleGradientParsed?.color2
           ? toHex(titleGradientParsed.color2)
-          : prev.mission.titleGradientColor2;
-        const nextTitleGradientOpacity =
-          typeof parsedTitleAlpha === 'number' ? parsedTitleAlpha : (prev.mission.titleGradientOpacity ?? 1);
-        const composedTitleGradient = composeGradient(
-          nextTitleGradientDegree,
-          nextTitleGradientColor1,
-          nextTitleGradientColor2,
-          nextTitleGradientOpacity
-        );
-
-        const nextUnderlineDegree =
-          titleUnderlineParsed?.degree ?? prev.mission.titleUnderlineGradientDegree;
-        const nextUnderlineColor1 = titleUnderlineParsed?.color1
+          : "#ffffff",
+        titleGradientOpacity: parsedTitleAlpha,
+        titleUnderlineGradient: (mission as any)?.titleUnderlineGradient ?? "",
+        titleUnderlineGradientDegree: titleUnderlineParsed?.degree ?? 90,
+        titleUnderlineGradientColor1: titleUnderlineParsed?.color1
           ? toHex(titleUnderlineParsed.color1)
-          : prev.mission.titleUnderlineGradientColor1;
-        const nextUnderlineColor2 = titleUnderlineParsed?.color2
+          : "#ffffff",
+        titleUnderlineGradientColor2: titleUnderlineParsed?.color2
           ? toHex(titleUnderlineParsed.color2)
-          : prev.mission.titleUnderlineGradientColor2;
-        const composedUnderlineGradient = composeSimpleGradient(
-          nextUnderlineDegree,
-          nextUnderlineColor1,
-          nextUnderlineColor2
-        );
-
-        const nextStripeDegree = ticketStripeParsed?.degree ?? prev.mission.ticketStripeGradientDegree;
-        const nextStripeColor1 = ticketStripeParsed?.color1
+          : "#ffffff",
+        ticketStripeGradient: (mission as any)?.ticketStripeGradient ?? "",
+        ticketStripeGradientDegree: ticketStripeParsed?.degree ?? 180,
+        ticketStripeGradientColor1: ticketStripeParsed?.color1
           ? toHex(ticketStripeParsed.color1)
-          : prev.mission.ticketStripeGradientColor1;
-        const nextStripeColor2 = ticketStripeParsed?.color2
+          : "#ffffff",
+        ticketStripeGradientColor2: ticketStripeParsed?.color2
           ? toHex(ticketStripeParsed.color2)
-          : prev.mission.ticketStripeGradientColor2;
-        const composedStripeGradient = composeSimpleGradient(
-          nextStripeDegree,
-          nextStripeColor1,
-          nextStripeColor2
-        );
+          : "#ffffff",
+        backgroundGradient: bgGradient ?? "",
+        degree: g.degree,
+        color1: toHex(g.color1),
+        color2: toHex(g.color2),
+        gradientOpacity: parsedAlpha,
+        badgeLabel: (mission as any)?.badgeLabel ?? "",
+        badgeIcon: (mission as any)?.badgeIcon ?? { type: "glyph", value: "♫" },
+        badgeTextColor: (mission as any)?.badgeTextColor ?? null,
+        badgeBgColor: (mission as any)?.badgeBgColor ?? null,
+        badgeBorderColor: (mission as any)?.badgeBorderColor ?? null,
+        statementTitle: (mission as any)?.statementTitle ?? "",
+        statementText: (mission as any)?.statementText ?? "",
+        statementMeta: (mission as any)?.statementMeta ?? "",
+        serial: (mission as any)?.serial ?? "",
+        statementTitleColor: (mission as any)?.statementTitleColor ?? null,
+        statementTextColor: (mission as any)?.statementTextColor ?? null,
+        statementMetaColor: (mission as any)?.statementMetaColor ?? null,
+        serialColor: (mission as any)?.serialColor ?? null,
+        statsTitle: (mission as any)?.statsTitle ?? "",
+        statsTitleColor: (mission as any)?.statsTitleColor ?? null,
+        statsEqualizer: {
+          enabled: eq?.enabled !== false,
+          barCount:
+            Number.isFinite(eqBarCount) && eqBarCount > 0
+              ? Math.min(24, Math.max(1, Math.round(eqBarCount)))
+              : 4,
+        },
+        stats: sanitizedStats,
+        modalTitle: disciplinesModal?.title ?? "",
+        disciplinesItems: sanitizedDisciplines,
+        backgroundLogo: {
+          enabled: (mission as any)?.backgroundLogo?.enabled !== false,
+          svgKey: (mission as any)?.backgroundLogo?.svgKey ?? "gogoLogoBK",
+          opacity: (mission as any)?.backgroundLogo?.opacity ?? 0.05,
+          rotationDeg: (mission as any)?.backgroundLogo?.rotationDeg ?? 0,
+          scale: (mission as any)?.backgroundLogo?.scale ?? 1,
+        },
+        overlayColor1: (mission as any)?.overlayColor1 ?? null,
+        overlayColor2: (mission as any)?.overlayColor2 ?? null,
+        overlayOpacity: (mission as any)?.overlayOpacity ?? null,
+        ticketBorderColor: (mission as any)?.ticketBorderColor ?? null,
+        ticketBackdropColor: (mission as any)?.ticketBackdropColor ?? null,
+        ticketShowBarcode: (mission as any)?.ticketShowBarcode !== false,
+        statCardBgColor: (mission as any)?.statCardBgColor ?? null,
+        statCardBorderWidth: (mission as any)?.statCardBorderWidth ?? null,
+      };
 
-        const prevEqualizer = prev.mission.statsEqualizer;
-        const prevBackgroundLogo = prev.mission.backgroundLogo;
-        const next: ImpactReportForm = {
-          ...prev,
-          mission: {
-            ...prev.mission,
-            enabled: (mission as any)?.visible === false ? false : true,
-            ariaLabel:
-              typeof (mission as any)?.ariaLabel === 'string'
-                ? (mission as any)?.ariaLabel
-                : prev.mission.ariaLabel,
-            layoutVariant: (mission as any)?.layoutVariant === 'default' ? 'default' : 'ticket',
-            textAlign: ['left', 'center', 'right'].includes((mission as any)?.textAlign)
-              ? ((mission as any)?.textAlign as 'left' | 'center' | 'right')
-              : prev.mission.textAlign,
-            animationsEnabled: (mission as any)?.animationsEnabled === false ? false : true,
-            title: mission.title ?? prev.mission.title,
-            titleColor: (mission as any)?.titleColor ?? prev.mission.titleColor ?? null,
-            titleGradient: composedTitleGradient,
-            titleGradientDegree: nextTitleGradientDegree,
-            titleGradientColor1: nextTitleGradientColor1,
-            titleGradientColor2: nextTitleGradientColor2,
-            titleGradientOpacity: nextTitleGradientOpacity,
-            titleUnderlineGradient:
-              (mission as any)?.titleUnderlineGradient ?? composedUnderlineGradient,
-            titleUnderlineGradientDegree: nextUnderlineDegree,
-            titleUnderlineGradientColor1: nextUnderlineColor1,
-            titleUnderlineGradientColor2: nextUnderlineColor2,
-            ticketStripeGradient: (mission as any)?.ticketStripeGradient ?? composedStripeGradient,
-            ticketStripeGradientDegree: nextStripeDegree,
-            ticketStripeGradientColor1: nextStripeColor1,
-            ticketStripeGradientColor2: nextStripeColor2,
-            badgeLabel: (mission as any)?.badgeLabel ?? prev.mission.badgeLabel,
-            badgeIcon:
-              typeof (mission as any)?.badgeIcon?.value === 'string'
-                ? {
-                    type: (mission as any)?.badgeIcon?.type === 'iconKey' ? 'iconKey' : 'glyph',
-                    value: (mission as any)?.badgeIcon?.value,
-                  }
-                : prev.mission.badgeIcon,
-            badgeTextColor:
-              (mission as any)?.badgeTextColor ?? prev.mission.badgeTextColor ?? null,
-            badgeBgColor: (mission as any)?.badgeBgColor ?? prev.mission.badgeBgColor ?? null,
-            badgeBorderColor:
-              (mission as any)?.badgeBorderColor ?? prev.mission.badgeBorderColor ?? null,
-            statementTitle: (mission as any)?.statementTitle ?? prev.mission.statementTitle,
-            statementText: (mission as any)?.statementText ?? prev.mission.statementText,
-            statementMeta: (mission as any)?.statementMeta ?? prev.mission.statementMeta,
-            serial: (mission as any)?.serial ?? prev.mission.serial,
-            statementTitleColor:
-              (mission as any)?.statementTitleColor ?? prev.mission.statementTitleColor ?? null,
-            statementTextColor:
-              (mission as any)?.statementTextColor ?? prev.mission.statementTextColor ?? null,
-            statementMetaColor:
-              (mission as any)?.statementMetaColor ?? prev.mission.statementMetaColor ?? null,
-            serialColor: (mission as any)?.serialColor ?? prev.mission.serialColor ?? null,
-            degree: g.degree,
-            color1: toHex(g.color1),
-            color2: toHex(g.color2),
-            gradientOpacity: typeof parsedAlpha === 'number' ? parsedAlpha : prev.mission.gradientOpacity,
-            statsTitle: (mission as any)?.statsTitle ?? prev.mission.statsTitle ?? '',
-            statsTitleColor:
-              (mission as any)?.statsTitleColor ?? prev.mission.statsTitleColor ?? null,
-            statsEqualizer: {
-              enabled: statsEqualizerConfig.enabled,
-              barCount:
-                statsEqualizerConfig.barCount ?? prevEqualizer?.barCount ?? prev.mission.statsEqualizer.barCount,
-            },
-            stats: sanitizedStats ?? prev.mission.stats,
-            modalTitle: disciplinesModal?.title ?? prev.mission.modalTitle,
-            disciplinesItems: sanitizedDisciplines ?? prev.mission.disciplinesItems,
-            backgroundLogo: {
-              enabled: (mission as any)?.backgroundLogo?.enabled === false ? false : true,
-              svgKey: (mission as any)?.backgroundLogo?.svgKey ?? prevBackgroundLogo?.svgKey,
-              opacity:
-                typeof (mission as any)?.backgroundLogo?.opacity === 'number'
-                  ? (mission as any)?.backgroundLogo?.opacity
-                  : prevBackgroundLogo?.opacity,
-              rotationDeg:
-                typeof (mission as any)?.backgroundLogo?.rotationDeg === 'number'
-                  ? (mission as any)?.backgroundLogo?.rotationDeg
-                  : prevBackgroundLogo?.rotationDeg,
-              scale:
-                typeof (mission as any)?.backgroundLogo?.scale === 'number'
-                  ? (mission as any)?.backgroundLogo?.scale
-                  : prevBackgroundLogo?.scale,
-            },
-          },
-        };
+      setImpactReportForm((prev) => {
+        const next = { ...prev, mission: missionForm };
         setSavedSnapshot(next);
         return next;
       });
@@ -765,11 +737,13 @@ function ImpactReportCustomizationPage() {
         COLORS.gogo_green,
       ];
       const incoming =
-        defs?.colorSwatch && Array.isArray(defs.colorSwatch) && defs.colorSwatch.length > 0
+        defs?.colorSwatch &&
+        Array.isArray(defs.colorSwatch) &&
+        defs.colorSwatch.length > 0
           ? defs.colorSwatch
           : brand;
       const normalized = Array.from({ length: DEFAULT_SWATCH_SIZE }).map(
-        (_, i) => incoming[i] ?? brand[i % brand.length]
+        (_, i) => incoming[i] ?? brand[i % brand.length],
       );
       setDefaultSwatch(normalized);
     })();
@@ -780,7 +754,10 @@ function ImpactReportCustomizationPage() {
     (async () => {
       const population = await fetchPopulationContent();
       if (!population) {
-        enqueueSnackbar('Failed to load population section data from database. Using empty form.', { variant: 'warning' });
+        enqueueSnackbar(
+          "Failed to load population section data from database. Using empty form.",
+          { variant: "warning" },
+        );
         return;
       }
       setImpactReportForm((prev) => ({
@@ -798,7 +775,10 @@ function ImpactReportCustomizationPage() {
     (async () => {
       const financial = await fetchFinancialContent();
       if (!financial) {
-        enqueueSnackbar('Failed to load financial section data from database. Using empty form.', { variant: 'warning' });
+        enqueueSnackbar(
+          "Failed to load financial section data from database. Using empty form.",
+          { variant: "warning" },
+        );
         return;
       }
       setImpactReportForm((prev) => ({
@@ -816,7 +796,10 @@ function ImpactReportCustomizationPage() {
     (async () => {
       const method = await fetchMethodContent();
       if (!method) {
-        enqueueSnackbar('Failed to load method section data from database. Using empty form.', { variant: 'warning' });
+        enqueueSnackbar(
+          "Failed to load method section data from database. Using empty form.",
+          { variant: "warning" },
+        );
         return;
       }
       setImpactReportForm((prev) => ({
@@ -834,7 +817,10 @@ function ImpactReportCustomizationPage() {
     (async () => {
       const curriculum = await fetchCurriculumContent();
       if (!curriculum) {
-        enqueueSnackbar('Failed to load curriculum section data from database. Using empty form.', { variant: 'warning' });
+        enqueueSnackbar(
+          "Failed to load curriculum section data from database. Using empty form.",
+          { variant: "warning" },
+        );
         return;
       }
       setImpactReportForm((prev) => ({
@@ -852,7 +838,10 @@ function ImpactReportCustomizationPage() {
     (async () => {
       const impactSection = await fetchImpactSectionContent();
       if (!impactSection) {
-        enqueueSnackbar('Failed to load impact section data from database. Using empty form.', { variant: 'warning' });
+        enqueueSnackbar(
+          "Failed to load impact section data from database. Using empty form.",
+          { variant: "warning" },
+        );
         return;
       }
       setImpactReportForm((prev) => ({
@@ -870,7 +859,10 @@ function ImpactReportCustomizationPage() {
     (async () => {
       const hearOurImpact = await fetchHearOurImpactContent();
       if (!hearOurImpact) {
-        enqueueSnackbar('Failed to load Hear Our Impact data from database. Using empty form.', { variant: 'warning' });
+        enqueueSnackbar(
+          "Failed to load Hear Our Impact data from database. Using empty form.",
+          { variant: "warning" },
+        );
         return;
       }
       setImpactReportForm((prev) => ({
@@ -888,7 +880,10 @@ function ImpactReportCustomizationPage() {
     (async () => {
       const testimonials = await fetchTestimonialsContent();
       if (!testimonials) {
-        enqueueSnackbar('Failed to load Testimonials data from database. Using empty form.', { variant: 'warning' });
+        enqueueSnackbar(
+          "Failed to load Testimonials data from database. Using empty form.",
+          { variant: "warning" },
+        );
         return;
       }
       setImpactReportForm((prev) => ({
@@ -906,7 +901,10 @@ function ImpactReportCustomizationPage() {
     (async () => {
       const nationalImpact = await fetchNationalImpactContent();
       if (!nationalImpact) {
-        enqueueSnackbar('Failed to load National Impact data from database. Using empty form.', { variant: 'warning' });
+        enqueueSnackbar(
+          "Failed to load National Impact data from database. Using empty form.",
+          { variant: "warning" },
+        );
         return;
       }
       setImpactReportForm((prev) => ({
@@ -926,25 +924,38 @@ function ImpactReportCustomizationPage() {
     try {
       // Save Hero content to backend
       const bubbles = impactReportForm.hero.bubblesCsv
-        .split(',')
+        .split(",")
         .map((s) => s.trim())
         .filter(Boolean);
 
-      const safeDegree = Math.max(1, Math.min(360, Number(impactReportForm.hero.degree) || 180));
-      const safeColor1 = isValidColorStop(impactReportForm.hero.color1)
-        ? impactReportForm.hero.color1
-        : '#5038a0';
-      const safeColor2 = isValidColorStop(impactReportForm.hero.color2)
-        ? impactReportForm.hero.color2
-        : '#121242';
-      const safeAlpha = Math.max(0, Math.min(1, Number(impactReportForm.hero.gradientOpacity) || 0));
-      const backgroundColor = composeGradient(safeDegree, safeColor1, safeColor2, safeAlpha);
+      // Use the backgroundGradient string directly (opacity is embedded in the rgba colors)
+      // Fall back to legacy fields if no backgroundGradient is set
+      const backgroundColor =
+        impactReportForm.hero.backgroundGradient ||
+        (() => {
+          const safeDegree = Math.max(
+            1,
+            Math.min(360, Number(impactReportForm.hero.degree) || 180),
+          );
+          const safeColor1 = isValidColorStop(impactReportForm.hero.color1)
+            ? impactReportForm.hero.color1
+            : "#5038a0";
+          const safeColor2 = isValidColorStop(impactReportForm.hero.color2)
+            ? impactReportForm.hero.color2
+            : "#121242";
+          const safeAlpha = Math.max(
+            0,
+            Math.min(1, Number(impactReportForm.hero.gradientOpacity) || 0),
+          );
+          return composeGradient(safeDegree, safeColor1, safeColor2, safeAlpha);
+        })();
 
       // Upload background image if a new file is pending
-      let backgroundImagePayload = impactReportForm.hero.backgroundImageUrl ?? null;
+      let backgroundImagePayload =
+        impactReportForm.hero.backgroundImageUrl ?? null;
       if (impactReportForm.hero.backgroundImageFile) {
         const file = impactReportForm.hero.backgroundImageFile as File;
-        const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
+        const ext = (file.name.split(".").pop() || "bin").toLowerCase();
         const signed = await signUpload({
           contentType: file.type,
           extension: ext,
@@ -953,8 +964,8 @@ function ImpactReportCustomizationPage() {
         setHeroUploadPct(0);
         await new Promise<void>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
-          xhr.open('PUT', signed.uploadUrl);
-          if (file.type) xhr.setRequestHeader('Content-Type', file.type);
+          xhr.open("PUT", signed.uploadUrl);
+          if (file.type) xhr.setRequestHeader("Content-Type", file.type);
           xhr.upload.onprogress = (evt) => {
             if (evt.lengthComputable) {
               const pct = Math.round((evt.loaded / evt.total) * 100);
@@ -965,7 +976,7 @@ function ImpactReportCustomizationPage() {
             if (xhr.status >= 200 && xhr.status < 300) resolve();
             else reject(new Error(`Upload failed: ${xhr.status}`));
           };
-          xhr.onerror = () => reject(new Error('Network error during upload'));
+          xhr.onerror = () => reject(new Error("Network error during upload"));
           xhr.send(file);
         });
         try {
@@ -974,7 +985,7 @@ function ImpactReportCustomizationPage() {
             publicUrl: signed.publicUrl,
             contentType: file.type,
             bytes: file.size,
-            tag: 'hero-background',
+            tag: "hero-background",
           });
         } catch {}
         backgroundImagePayload = signed.publicUrl;
@@ -992,7 +1003,8 @@ function ImpactReportCustomizationPage() {
       const payload = {
         backgroundColor,
         backgroundImage: backgroundImagePayload,
-        backgroundImageGrayscale: impactReportForm.hero.backgroundGrayscale || undefined,
+        backgroundImageGrayscale:
+          impactReportForm.hero.backgroundGrayscale || undefined,
         textAlign: impactReportForm.hero.textAlign,
         layoutVariant: impactReportForm.hero.layoutVariant,
         titleColor: impactReportForm.hero.titleColor || undefined,
@@ -1005,6 +1017,14 @@ function ImpactReportCustomizationPage() {
         tagline: impactReportForm.hero.tagline,
         bubbles,
         ariaLabel: impactReportForm.hero.ariaLabel,
+        // Title underline
+        titleUnderlineColor:
+          impactReportForm.hero.titleUnderlineColor || undefined,
+        // Bubble styling
+        bubbleTextColor: impactReportForm.hero.bubbleTextColor || undefined,
+        bubbleBgColor: impactReportForm.hero.bubbleBgColor || undefined,
+        bubbleBorderColor: impactReportForm.hero.bubbleBorderColor || undefined,
+        // CTA buttons
         primaryCta: {
           label: impactReportForm.hero.primaryCtaLabel || undefined,
           href: impactReportForm.hero.primaryCtaHref || undefined,
@@ -1015,11 +1035,20 @@ function ImpactReportCustomizationPage() {
         },
         primaryCtaColor: impactReportForm.hero.primaryCtaColor || undefined,
         secondaryCtaColor: impactReportForm.hero.secondaryCtaColor || undefined,
+        primaryCtaBgColor: impactReportForm.hero.primaryCtaBgColor || undefined,
+        primaryCtaHoverBgColor:
+          impactReportForm.hero.primaryCtaHoverBgColor || undefined,
+        secondaryCtaBgColor:
+          impactReportForm.hero.secondaryCtaBgColor || undefined,
+        secondaryCtaHoverBgColor:
+          impactReportForm.hero.secondaryCtaHoverBgColor || undefined,
       };
-      console.log('[admin][hero] save payload', payload);
+      console.log("[admin][hero] save payload", payload);
       const heroSaveResult = await saveHeroContent(payload);
       if (!heroSaveResult) {
-        throw new Error('Failed to save changes. Please check your connection and try again.');
+        throw new Error(
+          "Failed to save changes. Please check your connection and try again.",
+        );
       }
 
       // Save Defaults (swatch)
@@ -1028,38 +1057,57 @@ function ImpactReportCustomizationPage() {
       }
 
       // ======= Mission save =======
+      if (!impactReportForm.mission) {
+        throw new Error("Mission data not loaded. Please refresh the page.");
+      }
       // Use full gradient strings directly if available, otherwise fall back to composing from legacy fields
-      const missionBackgroundColor = impactReportForm.mission.backgroundGradient || (() => {
-        const mSafeDegree = Math.max(1, Math.min(360, Number(impactReportForm.mission.degree) || 180));
-        const mSafeColor1 = isValidColorStop(impactReportForm.mission.color1)
-          ? impactReportForm.mission.color1
-          : '#5038a0';
-        const mSafeColor2 = isValidColorStop(impactReportForm.mission.color2)
-          ? impactReportForm.mission.color2
-          : '#121242';
-        const mSafeAlpha = Math.max(
-          0,
-          Math.min(1, Number(impactReportForm.mission.gradientOpacity) || 0)
-        );
-        return composeGradient(mSafeDegree, mSafeColor1, mSafeColor2, mSafeAlpha);
-      })();
+      const missionBackgroundColor =
+        impactReportForm.mission.backgroundGradient ||
+        (() => {
+          const mSafeDegree = Math.max(
+            1,
+            Math.min(360, Number(impactReportForm.mission.degree) || 180),
+          );
+          const mSafeColor1 = isValidColorStop(impactReportForm.mission.color1)
+            ? impactReportForm.mission.color1
+            : "#5038a0";
+          const mSafeColor2 = isValidColorStop(impactReportForm.mission.color2)
+            ? impactReportForm.mission.color2
+            : "#121242";
+          const mSafeAlpha = Math.max(
+            0,
+            Math.min(1, Number(impactReportForm.mission.gradientOpacity) || 0),
+          );
+          return composeGradient(
+            mSafeDegree,
+            mSafeColor1,
+            mSafeColor2,
+            mSafeAlpha,
+          );
+        })();
 
-      const missionTitleGradient = impactReportForm.mission.titleGradient || composeGradient(
-        impactReportForm.mission.titleGradientDegree,
-        impactReportForm.mission.titleGradientColor1,
-        impactReportForm.mission.titleGradientColor2,
-        impactReportForm.mission.titleGradientOpacity ?? 1
-      );
-      const missionUnderlineGradient = impactReportForm.mission.titleUnderlineGradient || composeSimpleGradient(
-        impactReportForm.mission.titleUnderlineGradientDegree,
-        impactReportForm.mission.titleUnderlineGradientColor1,
-        impactReportForm.mission.titleUnderlineGradientColor2
-      );
-      const missionTicketStripeGradient = impactReportForm.mission.ticketStripeGradient || composeSimpleGradient(
-        impactReportForm.mission.ticketStripeGradientDegree,
-        impactReportForm.mission.ticketStripeGradientColor1,
-        impactReportForm.mission.ticketStripeGradientColor2
-      );
+      const missionTitleGradient =
+        impactReportForm.mission.titleGradient ||
+        composeGradient(
+          impactReportForm.mission.titleGradientDegree,
+          impactReportForm.mission.titleGradientColor1,
+          impactReportForm.mission.titleGradientColor2,
+          impactReportForm.mission.titleGradientOpacity ?? 1,
+        );
+      const missionUnderlineGradient =
+        impactReportForm.mission.titleUnderlineGradient ||
+        composeSimpleGradient(
+          impactReportForm.mission.titleUnderlineGradientDegree,
+          impactReportForm.mission.titleUnderlineGradientColor1,
+          impactReportForm.mission.titleUnderlineGradientColor2,
+        );
+      const missionTicketStripeGradient =
+        impactReportForm.mission.ticketStripeGradient ||
+        composeSimpleGradient(
+          impactReportForm.mission.ticketStripeGradientDegree,
+          impactReportForm.mission.ticketStripeGradientColor1,
+          impactReportForm.mission.ticketStripeGradientColor2,
+        );
 
       const missionPayload: Record<string, unknown> = {
         visible: impactReportForm.mission.enabled,
@@ -1067,42 +1115,57 @@ function ImpactReportCustomizationPage() {
         layoutVariant: impactReportForm.mission.layoutVariant,
         textAlign: impactReportForm.mission.textAlign,
         animationsEnabled: impactReportForm.mission.animationsEnabled,
-        backgroundColor: missionBackgroundColor,
+        backgroundGradient: missionBackgroundColor,
         title: impactReportForm.mission.title,
         titleColor: impactReportForm.mission.titleColor || undefined,
         titleGradient: missionTitleGradient || undefined,
         titleUnderlineGradient: missionUnderlineGradient || undefined,
         ticketStripeGradient: missionTicketStripeGradient || undefined,
+        ticketBorderColor:
+          impactReportForm.mission.ticketBorderColor || undefined,
+        ticketBackdropColor:
+          impactReportForm.mission.ticketBackdropColor || undefined,
+        ticketShowBarcode: impactReportForm.mission.ticketShowBarcode,
         badgeLabel: impactReportForm.mission.badgeLabel,
         badgeIcon: impactReportForm.mission.badgeIcon || undefined,
         badgeTextColor: impactReportForm.mission.badgeTextColor || undefined,
         badgeBgColor: impactReportForm.mission.badgeBgColor || undefined,
-        badgeBorderColor: impactReportForm.mission.badgeBorderColor || undefined,
+        badgeBorderColor:
+          impactReportForm.mission.badgeBorderColor || undefined,
         statementTitle: impactReportForm.mission.statementTitle,
-        statementTitleColor: impactReportForm.mission.statementTitleColor || undefined,
+        statementTitleColor:
+          impactReportForm.mission.statementTitleColor || undefined,
         statementText: impactReportForm.mission.statementText,
-        statementTextColor: impactReportForm.mission.statementTextColor || undefined,
+        statementTextColor:
+          impactReportForm.mission.statementTextColor || undefined,
         statementMeta: impactReportForm.mission.statementMeta,
-        statementMetaColor: impactReportForm.mission.statementMetaColor || undefined,
+        statementMetaColor:
+          impactReportForm.mission.statementMetaColor || undefined,
         serial: impactReportForm.mission.serial,
         serialColor: impactReportForm.mission.serialColor || undefined,
         statsTitle: impactReportForm.mission.statsTitle || undefined,
         statsTitleColor: impactReportForm.mission.statsTitleColor || undefined,
         statsEqualizer: impactReportForm.mission.statsEqualizer,
+        overlayColor1: impactReportForm.mission.overlayColor1 || undefined,
+        overlayColor2: impactReportForm.mission.overlayColor2 || undefined,
+        overlayOpacity: impactReportForm.mission.overlayOpacity,
+        statCardBgColor: impactReportForm.mission.statCardBgColor || undefined,
+        statCardBorderWidth: impactReportForm.mission.statCardBorderWidth,
         stats: impactReportForm.mission.stats.map((s) => ({
           id: s.id,
           number: s.number,
           label: s.label,
           color: s.color || undefined,
-          action: s.action || 'none',
+          action: s.action || "none",
           modalId: s.modalId ?? null,
           iconKey: s.iconKey || undefined,
-          numberSource: s.numberSource || 'explicit',
+          numberSource: s.numberSource || "explicit",
         })),
         modals: [
           {
-            id: 'disciplines',
-            title: impactReportForm.mission.modalTitle || 'Artistic Disciplines',
+            id: "disciplines",
+            title:
+              impactReportForm.mission.modalTitle || "Artistic Disciplines",
             items: impactReportForm.mission.disciplinesItems
               .filter((item) => item.name?.trim().length > 0)
               .map((item) => ({
@@ -1112,86 +1175,121 @@ function ImpactReportCustomizationPage() {
           },
         ],
       };
-      console.log('[admin][mission] save payload', missionPayload);
+      console.log("[admin][mission] save payload", missionPayload);
       const missionSaveResult = await saveMissionContent(missionPayload);
       if (!missionSaveResult) {
-        throw new Error('Failed to save changes. Please check your connection and try again.');
+        throw new Error(
+          "Failed to save changes. Please check your connection and try again.",
+        );
       }
 
       // ======= Population save =======
       const populationPayload = { ...impactReportForm.population };
-      console.log('[admin][population] save payload', populationPayload);
-      const populationSaveResult = await savePopulationContent(populationPayload);
+      console.log("[admin][population] save payload", populationPayload);
+      const populationSaveResult =
+        await savePopulationContent(populationPayload);
       if (!populationSaveResult) {
-        throw new Error('Failed to save changes. Please check your connection and try again.');
+        throw new Error(
+          "Failed to save changes. Please check your connection and try again.",
+        );
       }
 
       // ======= Financial save =======
       const financialPayload = { ...impactReportForm.financial };
-      console.log('[admin][financial] save payload', financialPayload);
+      console.log("[admin][financial] save payload", financialPayload);
       const financialSaveResult = await saveFinancialContent(financialPayload);
       if (!financialSaveResult) {
-        throw new Error('Failed to save changes. Please check your connection and try again.');
+        throw new Error(
+          "Failed to save changes. Please check your connection and try again.",
+        );
       }
 
       // ======= Method save =======
       const methodPayload = { ...impactReportForm.method };
-      console.log('[admin][method] save payload', methodPayload);
+      console.log("[admin][method] save payload", methodPayload);
       const methodSaveResult = await saveMethodContent(methodPayload);
       if (!methodSaveResult) {
-        throw new Error('Failed to save changes. Please check your connection and try again.');
+        throw new Error(
+          "Failed to save changes. Please check your connection and try again.",
+        );
       }
 
       // ======= Curriculum save =======
       const curriculumPayload = { ...impactReportForm.curriculum };
-      console.log('[admin][curriculum] save payload', curriculumPayload);
-      const curriculumSaveResult = await saveCurriculumContent(curriculumPayload);
+      console.log("[admin][curriculum] save payload", curriculumPayload);
+      const curriculumSaveResult =
+        await saveCurriculumContent(curriculumPayload);
       if (!curriculumSaveResult) {
-        throw new Error('Failed to save changes. Please check your connection and try again.');
+        throw new Error(
+          "Failed to save changes. Please check your connection and try again.",
+        );
       }
 
       // ======= Impact Section save =======
       const impactSectionPayload = { ...impactReportForm.impactSection };
-      console.log('[admin][impactSection] save payload', impactSectionPayload);
-      const impactSectionSaveResult = await saveImpactSectionContent(impactSectionPayload);
+      console.log("[admin][impactSection] save payload", impactSectionPayload);
+      const impactSectionSaveResult =
+        await saveImpactSectionContent(impactSectionPayload);
       if (!impactSectionSaveResult) {
-        throw new Error('Failed to save changes. Please check your connection and try again.');
+        throw new Error(
+          "Failed to save changes. Please check your connection and try again.",
+        );
       }
 
       // ======= Hear Our Impact save =======
       const hearOurImpactPayload = { ...impactReportForm.hearOurImpact };
-      console.log('[admin][hearOurImpact] save payload', hearOurImpactPayload);
-      const hearOurImpactSaveResult = await saveHearOurImpactContent(hearOurImpactPayload);
+      console.log("[admin][hearOurImpact] save payload", hearOurImpactPayload);
+      const hearOurImpactSaveResult =
+        await saveHearOurImpactContent(hearOurImpactPayload);
       if (!hearOurImpactSaveResult) {
-        throw new Error('Failed to save changes. Please check your connection and try again.');
+        throw new Error(
+          "Failed to save changes. Please check your connection and try again.",
+        );
       }
 
       // ======= Testimonials save =======
       const testimonialsPayload = { ...impactReportForm.testimonials };
-      console.log('[admin][testimonials] save payload', testimonialsPayload);
-      const testimonialsSaveResult = await saveTestimonialsContent(testimonialsPayload);
+      console.log("[admin][testimonials] save payload", testimonialsPayload);
+      const testimonialsSaveResult =
+        await saveTestimonialsContent(testimonialsPayload);
       if (!testimonialsSaveResult) {
-        throw new Error('Failed to save changes. Please check your connection and try again.');
+        throw new Error(
+          "Failed to save changes. Please check your connection and try again.",
+        );
       }
 
       // ======= National Impact save =======
       const nationalImpactPayload = { ...impactReportForm.nationalImpact };
-      console.log('[admin][nationalImpact] save payload', nationalImpactPayload);
-      const nationalImpactSaveResult = await saveNationalImpactContent(nationalImpactPayload);
+      console.log(
+        "[admin][nationalImpact] save payload",
+        nationalImpactPayload,
+      );
+      const nationalImpactSaveResult = await saveNationalImpactContent(
+        nationalImpactPayload,
+      );
       if (!nationalImpactSaveResult) {
-        throw new Error('Failed to save changes. Please check your connection and try again.');
+        throw new Error(
+          "Failed to save changes. Please check your connection and try again.",
+        );
       }
 
-      enqueueSnackbar('Impact report saved', { variant: 'success' });
+      enqueueSnackbar("Impact report saved", { variant: "success" });
       setIsDirty(false);
       setLastSavedAt(new Date());
-      setSavedSnapshot(JSON.parse(JSON.stringify(impactReportForm)) as ImpactReportForm);
+      setSavedSnapshot(
+        JSON.parse(JSON.stringify(impactReportForm)) as ImpactReportForm,
+      );
     } catch (error) {
-      console.error('Error saving impact report:', error);
+      console.error("Error saving impact report:", error);
       const errorMessage =
-        error instanceof Error ? error.message : 'An error occurred while saving. Please try again.';
+        error instanceof Error
+          ? error.message
+          : "An error occurred while saving. Please try again.";
       setErrors((prev) => ({ ...prev, general: errorMessage }));
-      enqueueSnackbar(errorMessage, { variant: 'error', autoHideDuration: 6000 });
+      enqueueSnackbar(errorMessage, {
+        variant: "error",
+        autoHideDuration: 6000,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -1200,7 +1298,9 @@ function ImpactReportCustomizationPage() {
   // Discard changes and restore last saved snapshot
   const handleDiscard = async () => {
     if (!savedSnapshot) return;
-    const restore = JSON.parse(JSON.stringify(savedSnapshot)) as ImpactReportForm;
+    const restore = JSON.parse(
+      JSON.stringify(savedSnapshot),
+    ) as ImpactReportForm;
     setImpactReportForm(restore);
     setIsDirty(false);
     try {
@@ -1214,20 +1314,32 @@ function ImpactReportCustomizationPage() {
         COLORS.gogo_green,
       ];
       const incoming =
-        defs?.colorSwatch && Array.isArray(defs.colorSwatch) && defs.colorSwatch.length > 0
+        defs?.colorSwatch &&
+        Array.isArray(defs.colorSwatch) &&
+        defs.colorSwatch.length > 0
           ? defs.colorSwatch
           : brand;
       const normalized = Array.from({ length: DEFAULT_SWATCH_SIZE }).map(
-        (_, i) => incoming[i] ?? brand[i % brand.length]
+        (_, i) => incoming[i] ?? brand[i % brand.length],
       );
       setDefaultSwatch(normalized);
     } catch {}
-    enqueueSnackbar('Changes discarded', { variant: 'info' });
+    enqueueSnackbar("Changes discarded", { variant: "info" });
   };
 
   // Build and debounce the preview hero override
-  const liveHeroOverride = useMemo(
-    () => ({
+  const liveHeroOverride = useMemo(() => {
+    // Use the backgroundGradient string directly (opacity is embedded in the rgba colors)
+    const backgroundColor =
+      impactReportForm.hero.backgroundGradient ||
+      composeGradient(
+        impactReportForm.hero.degree,
+        impactReportForm.hero.color1,
+        impactReportForm.hero.color2,
+        impactReportForm.hero.gradientOpacity,
+      );
+
+    return {
       title: impactReportForm.hero.title,
       subtitle: impactReportForm.hero.subtitle,
       year: impactReportForm.hero.year,
@@ -1238,6 +1350,13 @@ function ImpactReportCustomizationPage() {
       subtitleColor: impactReportForm.hero.subtitleColor,
       yearColor: impactReportForm.hero.yearColor,
       taglineColor: impactReportForm.hero.taglineColor,
+      // Title underline
+      titleUnderlineColor: impactReportForm.hero.titleUnderlineColor,
+      // Bubble styling
+      bubbleTextColor: impactReportForm.hero.bubbleTextColor,
+      bubbleBgColor: impactReportForm.hero.bubbleBgColor,
+      bubbleBorderColor: impactReportForm.hero.bubbleBorderColor,
+      // CTA buttons
       primaryCta: {
         label: impactReportForm.hero.primaryCtaLabel,
         href: impactReportForm.hero.primaryCtaHref,
@@ -1248,53 +1367,62 @@ function ImpactReportCustomizationPage() {
       },
       primaryCtaColor: impactReportForm.hero.primaryCtaColor,
       secondaryCtaColor: impactReportForm.hero.secondaryCtaColor,
+      primaryCtaBgColor: impactReportForm.hero.primaryCtaBgColor,
+      primaryCtaHoverBgColor: impactReportForm.hero.primaryCtaHoverBgColor,
+      secondaryCtaBgColor: impactReportForm.hero.secondaryCtaBgColor,
+      secondaryCtaHoverBgColor: impactReportForm.hero.secondaryCtaHoverBgColor,
       bubbles: impactReportForm.hero.bubblesCsv
-        .split(',')
+        .split(",")
         .map((s) => s.trim())
         .filter(Boolean),
-      backgroundColor: composeGradient(
-        impactReportForm.hero.degree,
-        impactReportForm.hero.color1,
-        impactReportForm.hero.color2,
-        impactReportForm.hero.gradientOpacity
-      ),
+      backgroundColor,
       backgroundImage:
         impactReportForm.hero.backgroundImagePreview ||
         impactReportForm.hero.backgroundImageUrl ||
         null,
       backgroundImageGrayscale: impactReportForm.hero.backgroundGrayscale,
       ariaLabel: impactReportForm.hero.ariaLabel,
-    }),
-    [impactReportForm.hero]
-  );
+    };
+  }, [impactReportForm.hero]);
 
   const debouncedHeroOverride = useDebouncedValue(liveHeroOverride, 300);
 
   // Build and debounce the preview mission override
   const liveMissionOverride = useMemo(() => {
+    // Return null if mission data hasn't loaded yet
+    if (!impactReportForm.mission) return null;
+
     // Use full gradient strings directly if available, otherwise fall back to composing from legacy fields
-    const missionTitleGradient = impactReportForm.mission.titleGradient || composeGradient(
-      impactReportForm.mission.titleGradientDegree,
-      impactReportForm.mission.titleGradientColor1,
-      impactReportForm.mission.titleGradientColor2,
-      impactReportForm.mission.titleGradientOpacity ?? 1
-    );
-    const missionTitleUnderlineGradient = impactReportForm.mission.titleUnderlineGradient || composeSimpleGradient(
-      impactReportForm.mission.titleUnderlineGradientDegree,
-      impactReportForm.mission.titleUnderlineGradientColor1,
-      impactReportForm.mission.titleUnderlineGradientColor2
-    );
-    const missionTicketStripeGradient = impactReportForm.mission.ticketStripeGradient || composeSimpleGradient(
-      impactReportForm.mission.ticketStripeGradientDegree,
-      impactReportForm.mission.ticketStripeGradientColor1,
-      impactReportForm.mission.ticketStripeGradientColor2
-    );
-    const missionBackgroundGradient = impactReportForm.mission.backgroundGradient || composeGradient(
-      impactReportForm.mission.degree,
-      impactReportForm.mission.color1,
-      impactReportForm.mission.color2,
-      impactReportForm.mission.gradientOpacity
-    );
+    const missionTitleGradient =
+      impactReportForm.mission.titleGradient ||
+      composeGradient(
+        impactReportForm.mission.titleGradientDegree,
+        impactReportForm.mission.titleGradientColor1,
+        impactReportForm.mission.titleGradientColor2,
+        impactReportForm.mission.titleGradientOpacity ?? 1,
+      );
+    const missionTitleUnderlineGradient =
+      impactReportForm.mission.titleUnderlineGradient ||
+      composeSimpleGradient(
+        impactReportForm.mission.titleUnderlineGradientDegree,
+        impactReportForm.mission.titleUnderlineGradientColor1,
+        impactReportForm.mission.titleUnderlineGradientColor2,
+      );
+    const missionTicketStripeGradient =
+      impactReportForm.mission.ticketStripeGradient ||
+      composeSimpleGradient(
+        impactReportForm.mission.ticketStripeGradientDegree,
+        impactReportForm.mission.ticketStripeGradientColor1,
+        impactReportForm.mission.ticketStripeGradientColor2,
+      );
+    const missionBackgroundGradient =
+      impactReportForm.mission.backgroundGradient ||
+      composeGradient(
+        impactReportForm.mission.degree,
+        impactReportForm.mission.color1,
+        impactReportForm.mission.color2,
+        impactReportForm.mission.gradientOpacity,
+      );
     return {
       enabled: impactReportForm.mission.enabled,
       ariaLabel: impactReportForm.mission.ariaLabel,
@@ -1306,23 +1434,36 @@ function ImpactReportCustomizationPage() {
       titleGradient: missionTitleGradient,
       titleUnderlineGradient: missionTitleUnderlineGradient,
       ticketStripeGradient: missionTicketStripeGradient,
+      ticketBorderColor:
+        impactReportForm.mission.ticketBorderColor || undefined,
+      ticketBackdropColor:
+        impactReportForm.mission.ticketBackdropColor || undefined,
+      ticketShowBarcode: impactReportForm.mission.ticketShowBarcode,
       badgeLabel: impactReportForm.mission.badgeLabel,
       badgeIcon: impactReportForm.mission.badgeIcon,
       badgeTextColor: impactReportForm.mission.badgeTextColor || undefined,
       badgeBgColor: impactReportForm.mission.badgeBgColor || undefined,
       badgeBorderColor: impactReportForm.mission.badgeBorderColor || undefined,
       statementTitle: impactReportForm.mission.statementTitle,
-      statementTitleColor: impactReportForm.mission.statementTitleColor || undefined,
+      statementTitleColor:
+        impactReportForm.mission.statementTitleColor || undefined,
       statementText: impactReportForm.mission.statementText,
-      statementTextColor: impactReportForm.mission.statementTextColor || undefined,
+      statementTextColor:
+        impactReportForm.mission.statementTextColor || undefined,
       statementMeta: impactReportForm.mission.statementMeta,
-      statementMetaColor: impactReportForm.mission.statementMetaColor || undefined,
+      statementMetaColor:
+        impactReportForm.mission.statementMetaColor || undefined,
       serial: impactReportForm.mission.serial,
       serialColor: impactReportForm.mission.serialColor || undefined,
       statsTitle: impactReportForm.mission.statsTitle || undefined,
       statsTitleColor: impactReportForm.mission.statsTitleColor || undefined,
       statsEqualizer: impactReportForm.mission.statsEqualizer,
-      backgroundColor: missionBackgroundGradient,
+      backgroundGradient: missionBackgroundGradient,
+      overlayColor1: impactReportForm.mission.overlayColor1 || undefined,
+      overlayColor2: impactReportForm.mission.overlayColor2 || undefined,
+      overlayOpacity: impactReportForm.mission.overlayOpacity,
+      statCardBgColor: impactReportForm.mission.statCardBgColor || undefined,
+      statCardBorderWidth: impactReportForm.mission.statCardBorderWidth,
       stats: impactReportForm.mission.stats.map((s) => ({
         id: s.id,
         number: s.number,
@@ -1331,12 +1472,12 @@ function ImpactReportCustomizationPage() {
         action: s.action,
         modalId: s.modalId ?? null,
         iconKey: s.iconKey || undefined,
-        numberSource: s.numberSource || 'explicit',
+        numberSource: s.numberSource || "explicit",
       })),
       modals: [
         {
-          id: 'disciplines',
-          title: impactReportForm.mission.modalTitle || 'Artistic Disciplines',
+          id: "disciplines",
+          title: impactReportForm.mission.modalTitle || "Artistic Disciplines",
           items: impactReportForm.mission.disciplinesItems
             .filter((item) => item.name?.trim().length > 0)
             .map((item) => ({
@@ -1349,29 +1490,74 @@ function ImpactReportCustomizationPage() {
   }, [impactReportForm.mission]);
   const debouncedMissionOverride = useDebouncedValue(liveMissionOverride, 300);
 
-  const livePopulationOverride = useMemo(() => impactReportForm.population, [impactReportForm.population]);
-  const debouncedPopulationOverride = useDebouncedValue(livePopulationOverride, 300);
+  const livePopulationOverride = useMemo(
+    () => impactReportForm.population,
+    [impactReportForm.population],
+  );
+  const debouncedPopulationOverride = useDebouncedValue(
+    livePopulationOverride,
+    300,
+  );
 
-  const liveFinancialOverride = useMemo(() => impactReportForm.financial, [impactReportForm.financial]);
-  const debouncedFinancialOverride = useDebouncedValue(liveFinancialOverride, 300);
+  const liveFinancialOverride = useMemo(
+    () => impactReportForm.financial,
+    [impactReportForm.financial],
+  );
+  const debouncedFinancialOverride = useDebouncedValue(
+    liveFinancialOverride,
+    300,
+  );
 
-  const liveMethodOverride = useMemo(() => impactReportForm.method, [impactReportForm.method]);
+  const liveMethodOverride = useMemo(
+    () => impactReportForm.method,
+    [impactReportForm.method],
+  );
   const debouncedMethodOverride = useDebouncedValue(liveMethodOverride, 300);
 
-  const liveCurriculumOverride = useMemo(() => impactReportForm.curriculum, [impactReportForm.curriculum]);
-  const debouncedCurriculumOverride = useDebouncedValue(liveCurriculumOverride, 300);
+  const liveCurriculumOverride = useMemo(
+    () => impactReportForm.curriculum,
+    [impactReportForm.curriculum],
+  );
+  const debouncedCurriculumOverride = useDebouncedValue(
+    liveCurriculumOverride,
+    300,
+  );
 
-  const liveImpactSectionOverride = useMemo(() => impactReportForm.impactSection, [impactReportForm.impactSection]);
-  const debouncedImpactSectionOverride = useDebouncedValue(liveImpactSectionOverride, 300);
+  const liveImpactSectionOverride = useMemo(
+    () => impactReportForm.impactSection,
+    [impactReportForm.impactSection],
+  );
+  const debouncedImpactSectionOverride = useDebouncedValue(
+    liveImpactSectionOverride,
+    300,
+  );
 
-  const liveHearOurImpactOverride = useMemo(() => impactReportForm.hearOurImpact, [impactReportForm.hearOurImpact]);
-  const debouncedHearOurImpactOverride = useDebouncedValue(liveHearOurImpactOverride, 300);
+  const liveHearOurImpactOverride = useMemo(
+    () => impactReportForm.hearOurImpact,
+    [impactReportForm.hearOurImpact],
+  );
+  const debouncedHearOurImpactOverride = useDebouncedValue(
+    liveHearOurImpactOverride,
+    300,
+  );
 
-  const liveTestimonialsOverride = useMemo(() => impactReportForm.testimonials, [impactReportForm.testimonials]);
-  const debouncedTestimonialsOverride = useDebouncedValue(liveTestimonialsOverride, 300);
+  const liveTestimonialsOverride = useMemo(
+    () => impactReportForm.testimonials,
+    [impactReportForm.testimonials],
+  );
+  const debouncedTestimonialsOverride = useDebouncedValue(
+    liveTestimonialsOverride,
+    300,
+  );
 
-  const liveNationalImpactOverride = useMemo(() => impactReportForm.nationalImpact, [impactReportForm.nationalImpact]);
-  const debouncedNationalImpactOverride = useDebouncedValue(liveNationalImpactOverride, 300);
+  const liveNationalImpactOverride = useMemo(
+    () => impactReportForm.nationalImpact,
+    [impactReportForm.nationalImpact],
+  );
+  const debouncedNationalImpactOverride = useDebouncedValue(
+    liveNationalImpactOverride,
+    300,
+  );
 
   // Viewport simulator
   const [viewportIdx, setViewportIdx] = useState<number>(0);
@@ -1393,10 +1579,10 @@ function ImpactReportCustomizationPage() {
     recomputeScale();
     const ro = new ResizeObserver(recomputeScale);
     if (artboardOuterRef.current) ro.observe(artboardOuterRef.current);
-    window.addEventListener('resize', recomputeScale);
+    window.addEventListener("resize", recomputeScale);
     return () => {
       ro.disconnect();
-      window.removeEventListener('resize', recomputeScale);
+      window.removeEventListener("resize", recomputeScale);
     };
   }, [viewportIdx]);
 
@@ -1415,29 +1601,86 @@ function ImpactReportCustomizationPage() {
       case 0:
         return <DefaultsPreview defaultSwatch={defaultSwatch} />;
       case 1:
-        return <MemoHeroSection previewMode heroOverride={debouncedHeroOverride} />;
+        return (
+          <MemoHeroSection previewMode heroOverride={debouncedHeroOverride} />
+        );
       case 2:
-        return <MemoMissionSection previewMode missionOverride={debouncedMissionOverride as any} />;
+        if (missionLoadError || !impactReportForm.mission) {
+          return (
+            <Box sx={{ p: 4, textAlign: "center", color: "white" }}>
+              <Typography variant="h6" color="error">
+                Mission data not loaded
+              </Typography>
+            </Box>
+          );
+        }
+        return (
+          <MemoMissionSection
+            previewMode
+            missionOverride={debouncedMissionOverride as any}
+          />
+        );
       case 3:
         return (
-          <MemoPopulationComponent inline previewMode populationOverride={debouncedPopulationOverride} />
+          <MemoPopulationComponent
+            inline
+            previewMode
+            populationOverride={debouncedPopulationOverride}
+          />
         );
       case 4:
-        return <MemoFinancialSection previewMode financialOverride={debouncedFinancialOverride} />;
+        return (
+          <MemoFinancialSection
+            previewMode
+            financialOverride={debouncedFinancialOverride}
+          />
+        );
       case 5:
-        return <MemoMethodSection previewMode methodOverride={debouncedMethodOverride} />;
+        return (
+          <MemoMethodSection
+            previewMode
+            methodOverride={debouncedMethodOverride}
+          />
+        );
       case 6:
-        return <MemoCurriculumSection previewMode curriculumOverride={debouncedCurriculumOverride} />;
+        return (
+          <MemoCurriculumSection
+            previewMode
+            curriculumOverride={debouncedCurriculumOverride}
+          />
+        );
       case 7:
-        return <MemoImpactSection previewMode impactSectionOverride={debouncedImpactSectionOverride} />;
+        return (
+          <MemoImpactSection
+            previewMode
+            impactSectionOverride={debouncedImpactSectionOverride}
+          />
+        );
       case 8:
-        return <MemoSpotifyEmbedsSection previewMode hearOurImpactOverride={debouncedHearOurImpactOverride} />;
+        return (
+          <MemoSpotifyEmbedsSection
+            previewMode
+            hearOurImpactOverride={debouncedHearOurImpactOverride}
+          />
+        );
       case 9:
-        return <MemoSingleQuoteSection previewMode testimonialsOverride={debouncedTestimonialsOverride} />;
+        return (
+          <MemoSingleQuoteSection
+            previewMode
+            testimonialsOverride={debouncedTestimonialsOverride}
+          />
+        );
       case 10:
-        return <MemoLocationsSection previewMode nationalImpactOverride={debouncedNationalImpactOverride} />;
+        return (
+          <MemoLocationsSection
+            previewMode
+            nationalImpactOverride={debouncedNationalImpactOverride}
+          />
+        );
       default:
-        return <MemoHeroSection previewMode heroOverride={debouncedHeroOverride} />;
+        return (
+          <MemoHeroSection previewMode heroOverride={debouncedHeroOverride} />
+        );
     }
   };
 
@@ -1458,17 +1701,40 @@ function ImpactReportCustomizationPage() {
             hero={impactReportForm.hero}
             defaultSwatch={defaultSwatch}
             heroUploadPct={heroUploadPct}
-            onHeroChange={(field, value) => handleSectionChange('hero', field, value)}
+            onHeroChange={(field, value) =>
+              handleSectionChange("hero", field, value)
+            }
             onBackgroundUpload={handleHeroBackgroundUpload}
             onClearBackground={handleClearHeroBackground}
           />
         );
       case 2:
+        if (missionLoadError || !impactReportForm.mission) {
+          return (
+            <Box sx={{ p: 4, textAlign: "center" }}>
+              <Typography variant="h6" color="error" gutterBottom>
+                Failed to load Mission section data
+              </Typography>
+              <Typography color="text.secondary" sx={{ mb: 2 }}>
+                Could not load data from the database. Please refresh the page
+                to try again.
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={() => window.location.reload()}
+              >
+                Refresh Page
+              </Button>
+            </Box>
+          );
+        }
         return (
           <MissionTabEditor
             mission={impactReportForm.mission}
             defaultSwatch={defaultSwatch}
-            onMissionChange={(field, value) => handleSectionChange('mission', field, value)}
+            onMissionChange={(field, value) =>
+              handleSectionChange("mission", field, value)
+            }
           />
         );
       case 3:
@@ -1476,7 +1742,9 @@ function ImpactReportCustomizationPage() {
           <PopulationTabEditor
             population={impactReportForm.population}
             defaultSwatch={defaultSwatch}
-            onPopulationChange={(field, value) => handleSectionChange('population', field, value)}
+            onPopulationChange={(field, value) =>
+              handleSectionChange("population", field, value)
+            }
           />
         );
       case 4:
@@ -1484,7 +1752,9 @@ function ImpactReportCustomizationPage() {
           <FinancialTabEditor
             financial={impactReportForm.financial}
             defaultSwatch={defaultSwatch}
-            onFinancialChange={(field, value) => handleSectionChange('financial', field, value)}
+            onFinancialChange={(field, value) =>
+              handleSectionChange("financial", field, value)
+            }
           />
         );
       case 5:
@@ -1492,7 +1762,9 @@ function ImpactReportCustomizationPage() {
           <MethodTabEditor
             method={impactReportForm.method}
             defaultSwatch={defaultSwatch}
-            onMethodChange={(field, value) => handleSectionChange('method', field, value)}
+            onMethodChange={(field, value) =>
+              handleSectionChange("method", field, value)
+            }
           />
         );
       case 6:
@@ -1500,7 +1772,9 @@ function ImpactReportCustomizationPage() {
           <CurriculumTabEditor
             curriculum={impactReportForm.curriculum}
             defaultSwatch={defaultSwatch}
-            onCurriculumChange={(field, value) => handleSectionChange('curriculum', field, value)}
+            onCurriculumChange={(field, value) =>
+              handleSectionChange("curriculum", field, value)
+            }
           />
         );
       case 7:
@@ -1508,7 +1782,9 @@ function ImpactReportCustomizationPage() {
           <ImpactSectionTabEditor
             impactSection={impactReportForm.impactSection}
             defaultSwatch={defaultSwatch}
-            onImpactSectionChange={(field, value) => handleSectionChange('impactSection', field, value)}
+            onImpactSectionChange={(field, value) =>
+              handleSectionChange("impactSection", field, value)
+            }
           />
         );
       case 8:
@@ -1516,7 +1792,9 @@ function ImpactReportCustomizationPage() {
           <HearOurImpactTabEditor
             hearOurImpact={impactReportForm.hearOurImpact}
             defaultSwatch={defaultSwatch}
-            onHearOurImpactChange={(field, value) => handleSectionChange('hearOurImpact', field, value)}
+            onHearOurImpactChange={(field, value) =>
+              handleSectionChange("hearOurImpact", field, value)
+            }
           />
         );
       case 9:
@@ -1524,7 +1802,9 @@ function ImpactReportCustomizationPage() {
           <TestimonialsTabEditor
             testimonials={impactReportForm.testimonials}
             defaultSwatch={defaultSwatch}
-            onTestimonialsChange={(field, value) => handleSectionChange('testimonials', field, value)}
+            onTestimonialsChange={(field, value) =>
+              handleSectionChange("testimonials", field, value)
+            }
           />
         );
       case 10:
@@ -1532,7 +1812,9 @@ function ImpactReportCustomizationPage() {
           <NationalImpactTabEditor
             nationalImpact={impactReportForm.nationalImpact}
             defaultSwatch={defaultSwatch}
-            onNationalImpactChange={(field, value) => handleSectionChange('nationalImpact', field, value)}
+            onNationalImpactChange={(field, value) =>
+              handleSectionChange("nationalImpact", field, value)
+            }
           />
         );
       default:

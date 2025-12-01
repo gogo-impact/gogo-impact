@@ -179,6 +179,8 @@ const HeroContainer = styled.section<{ $background?: string }>`
   align-items: center;
   position: sticky;
   top: 0;
+  /* Pull up to compensate for .main-content padding-top (64px) */
+  margin-top: -64px;
   background: ${(props) => props.$background ?? "transparent"};
   background-size: cover;
   background-position: center;
@@ -310,6 +312,14 @@ const SubtitleText = styled.h2`
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   pointer-events: none; /* Let events pass through */
   letter-spacing: 0.05em;
+  text-decoration: none;
+  border: none;
+
+  &::after,
+  &::before {
+    display: none;
+    content: none;
+  }
 `;
 
 // Green underline
@@ -336,6 +346,14 @@ const ReportYear = styled.div`
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   pointer-events: none; /* Let events pass through */
   letter-spacing: 0.02em;
+  border: none;
+  text-decoration: none;
+
+  &::after,
+  &::before {
+    display: none;
+    content: none;
+  }
 `;
 
 // Button container
@@ -352,11 +370,12 @@ const ButtonContainer = styled.div`
 const PrimaryButton = styled.button<{
   $bgColor?: string;
   $hoverBgColor?: string;
+  $textColor?: string;
 }>`
   background: ${(p) => p.$bgColor || "var(--spotify-blue, #1946f5)"};
-  border: none;
+  border: 1px solid ${(p) => p.$textColor || "white"};
   border-radius: 500px;
-  color: white;
+  color: ${(p) => p.$textColor || "white"};
   cursor: pointer;
   font-family: var(--font-body);
   font-weight: 700;
@@ -382,11 +401,12 @@ const PrimaryButton = styled.button<{
 const SecondaryButton = styled.button<{
   $bgColor?: string;
   $hoverBgColor?: string;
+  $textColor?: string;
 }>`
   background: ${(p) => p.$bgColor || "rgba(255, 255, 255, 0.1)"};
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid ${(p) => p.$textColor || "white"};
   border-radius: 500px;
-  color: white;
+  color: ${(p) => p.$textColor || "white"};
   cursor: pointer;
   font-family: var(--font-body);
   font-weight: 700;
@@ -400,7 +420,6 @@ const SecondaryButton = styled.button<{
 
   &:hover {
     background: ${(p) => p.$hoverBgColor || "rgba(255, 255, 255, 0.2)"};
-    border-color: rgba(255, 255, 255, 0.4);
     transform: scale(1.05);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
   }
@@ -2057,9 +2076,9 @@ function HeroSection(props: HeroSectionProps = {}): JSX.Element {
 
             {bubbles && bubbles.length > 0 && (
               <ChipsRow>
-                {bubbles.map((city) => (
+                {bubbles.map((city, idx) => (
                   <Chip
-                    key={city}
+                    key={`${idx}-${city}`}
                     $textColor={bubbleTextColor}
                     $bgColor={bubbleBgColor}
                     $borderColor={bubbleBorderColor}
@@ -2082,14 +2101,13 @@ function HeroSection(props: HeroSectionProps = {}): JSX.Element {
                     ref={primaryButtonRef}
                     $bgColor={primaryCtaBgColor}
                     $hoverBgColor={primaryCtaHoverBgColor}
+                    $textColor={primaryCtaColor}
                     style={{
                       ...(disableEntranceAnimations
                         ? { opacity: 1, transform: "none" }
                         : {}),
-                      ...(primaryCtaColor ? { color: primaryCtaColor } : {}),
                     }}
                   >
-                    <span>▶</span>
                     <span>{primaryCta.label}</span>
                   </PrimaryButton>
                 </a>
@@ -2105,12 +2123,10 @@ function HeroSection(props: HeroSectionProps = {}): JSX.Element {
                     ref={secondaryButtonRef}
                     $bgColor={secondaryCtaBgColor}
                     $hoverBgColor={secondaryCtaHoverBgColor}
+                    $textColor={secondaryCtaColor}
                     style={{
                       ...(disableEntranceAnimations
                         ? { opacity: 1, transform: "none" }
-                        : {}),
-                      ...(secondaryCtaColor
-                        ? { color: secondaryCtaColor }
                         : {}),
                     }}
                   >
