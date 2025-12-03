@@ -42,6 +42,12 @@ export const CustomTextField = styled(TextField)`
       color: ${COLORS.gogo_blue};
     }
   }
+  & .MuiFormHelperText-root {
+    color: rgba(255, 255, 255, 0.5);
+    &.Mui-error {
+      color: #f44336;
+    }
+  }
 `;
 
 /* Scope styles for clearer button states and glass look */

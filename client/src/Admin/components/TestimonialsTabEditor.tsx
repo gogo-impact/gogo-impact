@@ -12,8 +12,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ColorPickerPopover from '../../components/ColorPickerPopover';
 import { CustomTextField } from '../styles';
 import { GradientEditor, parseGradientString, composeGradient } from './GradientEditor';
+import { ImageCropper } from './ImageCropper';
 import { TestimonialsContent } from '../../services/impact.api';
-import { uploadFile } from '../../services/upload.api';
+import { signUpload, uploadToSignedUrl } from '../../services/upload.api';
 
 export interface TestimonialsTabEditorProps {
   testimonials: TestimonialsContent;
@@ -56,6 +57,10 @@ export function TestimonialsTabEditor({
   // Image upload state
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Image cropper state
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [cropperImageSrc, setCropperImageSrc] = useState('');
 
   // Color picker helpers
   const openColorPicker = (el: HTMLElement, field: TestimonialsColorField) => {
@@ -117,17 +122,57 @@ export function TestimonialsTabEditor({
     setGradientPickerKey(null);
   };
 
-  // Image upload handler
-  const handleImageUpload = async (file: File) => {
+  // Image file selection - opens cropper
+  const handleFileSelect = (file: File) => {
+    const objectUrl = URL.createObjectURL(file);
+    setCropperImageSrc(objectUrl);
+    setCropperOpen(true);
+  };
+
+  // Handle cropped image upload
+  const handleCroppedImageUpload = async (croppedBlob: Blob) => {
+    // Close cropper first
+    setCropperOpen(false);
+    // Clean up object URL
+    if (cropperImageSrc) {
+      URL.revokeObjectURL(cropperImageSrc);
+    }
+    setCropperImageSrc('');
+
+    // Now upload
     setUploading(true);
     try {
-      const result = await uploadFile(file, { folder: 'testimonials' });
-      onTestimonialsChange('imageUrl', result.publicUrl);
+      const signed = await signUpload({
+        contentType: 'image/jpeg',
+        extension: 'jpg',
+        folder: 'testimonials',
+      });
+
+      const putRes = await uploadToSignedUrl({
+        uploadUrl: signed.uploadUrl,
+        file: croppedBlob,
+        contentType: 'image/jpeg',
+      });
+
+      if (!putRes.ok) {
+        throw new Error('Failed to upload cropped image');
+      }
+
+      onTestimonialsChange('imageUrl', signed.publicUrl);
     } catch (error) {
       console.error('Failed to upload image:', error);
     } finally {
       setUploading(false);
     }
+  };
+
+  // Handle closing the cropper
+  const handleCropperClose = () => {
+    setCropperOpen(false);
+    if (cropperImageSrc) {
+      URL.revokeObjectURL(cropperImageSrc);
+    }
+    setCropperImageSrc('');
   };
 
   const handleRemoveImage = () => {
@@ -249,7 +294,7 @@ export function TestimonialsTabEditor({
         />
       </Grid>
 
-      <Grid item xs={12} md={6}>
+      <Grid item xs={12}>
         <GradientEditor
           label="Name Gradient"
           value={getGradientValue('nameGradient')}
@@ -268,7 +313,7 @@ export function TestimonialsTabEditor({
         </Typography>
       </Grid>
 
-      <Grid item xs={12} md={6}>
+      <Grid item xs={12}>
         <GradientEditor
           label="Bar Gradient"
           value={getGradientValue('eqBarGradient')}
@@ -277,7 +322,7 @@ export function TestimonialsTabEditor({
         />
       </Grid>
 
-      <Grid item xs={12} md={6}>
+      <Grid item xs={12}>
         <GradientEditor
           label="EQ Background Gradient"
           value={getGradientValue('eqBgGradient')}
@@ -389,12 +434,22 @@ export function TestimonialsTabEditor({
             ref={fileInputRef}
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) handleImageUpload(file);
+              if (file) handleFileSelect(file);
               e.target.value = '';
             }}
           />
         </Box>
       </Grid>
+
+      {/* Image Cropper Dialog */}
+      <ImageCropper
+        open={cropperOpen}
+        imageSrc={cropperImageSrc}
+        onClose={handleCropperClose}
+        onCropComplete={handleCroppedImageUpload}
+        title="Crop Image"
+        // No aspectRatio = freeform crop
+      />
 
       <Grid item xs={12} md={6}>
         <CustomTextField

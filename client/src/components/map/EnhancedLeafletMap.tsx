@@ -11,7 +11,6 @@ import 'leaflet/dist/leaflet.css';
 import './EnhancedLeafletMap.css';
 import styled from 'styled-components';
 import COLORS from '../../../assets/colors.ts';
-import defaultRegions from './data/regions';
 import { darkenColor, lightenColor } from './utils/colorHelpers';
 import { Region, Sublocation } from './types';
 import { MapRegion as ApiMapRegion, MapLocation as ApiMapLocation } from '../../services/impact.api';
@@ -200,52 +199,79 @@ interface EnhancedLeafletMapProps {
   overlayButtonHoverBgColor?: string;
 }
 
+// Helper to validate coordinates
+function isValidCoordinate(coord: [number, number] | null | undefined): coord is [number, number] {
+  return (
+    Array.isArray(coord) &&
+    coord.length === 2 &&
+    typeof coord[0] === 'number' &&
+    typeof coord[1] === 'number' &&
+    !isNaN(coord[0]) &&
+    !isNaN(coord[1]) &&
+    isFinite(coord[0]) &&
+    isFinite(coord[1])
+  );
+}
+
 // Transform API regions to internal format with sublocations
 function transformApiRegions(apiRegions: ApiMapRegion[]): Region[] {
   return apiRegions.map((region) => {
-    // Calculate center from locations
-    const locations = region.locations || [];
-    let centerCoordinates: [number, number] = [39.8283, -98.5795]; // Default US center
+    // Filter locations to only include those with valid coordinates
+    const allLocations = region.locations || [];
+    const validLocations = allLocations.filter(loc => isValidCoordinate(loc.coordinates));
     
-    if (locations.length > 0) {
-      const avgLat = locations.reduce((sum, loc) => sum + loc.coordinates[0], 0) / locations.length;
-      const avgLng = locations.reduce((sum, loc) => sum + loc.coordinates[1], 0) / locations.length;
-      centerCoordinates = [avgLat, avgLng];
+    // Default US center
+    let centerCoordinates: [number, number] = [39.8283, -98.5795];
+    
+    // Priority: 1) Use region-level coordinates if valid, 2) Calculate from valid locations, 3) Default
+    if (isValidCoordinate(region.coordinates) && (region.coordinates[0] !== 0 || region.coordinates[1] !== 0)) {
+      centerCoordinates = region.coordinates;
+    } else if (validLocations.length > 0) {
+      const avgLat = validLocations.reduce((sum, loc) => sum + loc.coordinates[0], 0) / validLocations.length;
+      const avgLng = validLocations.reduce((sum, loc) => sum + loc.coordinates[1], 0) / validLocations.length;
+      if (!isNaN(avgLat) && !isNaN(avgLng) && isFinite(avgLat) && isFinite(avgLng)) {
+        centerCoordinates = [avgLat, avgLng];
+      }
     }
 
     // Calculate bounds and zoom from locations spread
-    let defaultZoom = 10;
+    // Default to city-scale zoom (12)
+    let defaultZoom = 12;
     let maxBounds: [[number, number], [number, number]] | undefined;
     
-    if (locations.length > 1) {
-      const lats = locations.map(l => l.coordinates[0]);
-      const lngs = locations.map(l => l.coordinates[1]);
+    if (validLocations.length > 1) {
+      const lats = validLocations.map(l => l.coordinates[0]);
+      const lngs = validLocations.map(l => l.coordinates[1]);
       const minLat = Math.min(...lats);
       const maxLat = Math.max(...lats);
       const minLng = Math.min(...lngs);
       const maxLng = Math.max(...lngs);
       
-      // Add padding
-      const latPad = (maxLat - minLat) * 0.3 || 0.1;
-      const lngPad = (maxLng - minLng) * 0.3 || 0.1;
-      maxBounds = [
-        [minLat - latPad, minLng - lngPad],
-        [maxLat + latPad, maxLng + lngPad],
-      ];
-      
-      // Estimate zoom based on spread
-      const latSpread = maxLat - minLat;
-      const lngSpread = maxLng - minLng;
-      const maxSpread = Math.max(latSpread, lngSpread);
-      if (maxSpread > 5) defaultZoom = 6;
-      else if (maxSpread > 2) defaultZoom = 8;
-      else if (maxSpread > 1) defaultZoom = 9;
-      else if (maxSpread > 0.5) defaultZoom = 10;
-      else defaultZoom = 11;
+      // Only set bounds if all values are valid
+      if (isFinite(minLat) && isFinite(maxLat) && isFinite(minLng) && isFinite(maxLng)) {
+        // Add very generous padding - 300% to allow full exploration and popup viewing
+        const latPad = (maxLat - minLat) * 3.0 || 1.0;
+        const lngPad = (maxLng - minLng) * 3.0 || 1.0;
+        maxBounds = [
+          [minLat - latPad, minLng - lngPad],
+          [maxLat + latPad, maxLng + lngPad],
+        ];
+        
+        // Estimate zoom based on spread - city-scale focused
+        const latSpread = maxLat - minLat;
+        const lngSpread = maxLng - minLng;
+        const maxSpread = Math.max(latSpread, lngSpread);
+        if (maxSpread > 5) defaultZoom = 8;        // Large metro area
+        else if (maxSpread > 2) defaultZoom = 10;  // Metro area
+        else if (maxSpread > 1) defaultZoom = 11;  // City
+        else if (maxSpread > 0.5) defaultZoom = 12; // City neighborhood
+        else if (maxSpread > 0.1) defaultZoom = 13; // Neighborhood
+        else defaultZoom = 14;                      // Close neighborhood
+      }
     }
 
-    // Transform locations to sublocations format
-    const sublocations: Sublocation[] = locations.map((loc) => ({
+    // Transform valid locations to sublocations format
+    const sublocations: Sublocation[] = validLocations.map((loc) => ({
       id: loc.id,
       name: loc.name,
       coordinates: loc.coordinates,
@@ -260,7 +286,7 @@ function transformApiRegions(apiRegions: ApiMapRegion[]): Region[] {
       name: region.name,
       centerCoordinates,
       defaultZoom,
-      minZoom: 5,
+      minZoom: 9,  // City-scale minimum zoom
       maxZoom: 18,
       color: region.color || COLORS.gogo_blue,
       maxBounds,
@@ -275,12 +301,12 @@ function EnhancedLeafletMap({
   overlayButtonBgColor,
   overlayButtonHoverBgColor,
 }: EnhancedLeafletMapProps) {
-  // Transform API regions or use defaults
+  // Transform API regions (no default fallback - fully data-driven)
   const regions = useMemo(() => {
     if (apiRegions && apiRegions.length > 0) {
       return transformApiRegions(apiRegions);
     }
-    return defaultRegions;
+    return [];
   }, [apiRegions]);
 
   // Create a ref to store the map DOM element
@@ -293,10 +319,26 @@ function EnhancedLeafletMap({
   const [totalLocations, setTotalLocations] = useState(0);
   // Add state for boundary message visibility
   const [showBoundaryMessage, setShowBoundaryMessage] = useState(false);
-  // Reference to the boundary message timeout
-  const boundaryMessageTimeoutRef = useRef(null);
   // Add state for overlay visibility
   const [showOverlay, setShowOverlay] = useState(true);
+
+  // Count visible regions (excluding summer-programs and those without valid coordinates)
+  const visibleRegionsCount = useMemo(() => {
+    return regions.filter((region) => {
+      if (region.id === 'summer-programs') return false;
+      const coords = region.centerCoordinates;
+      return (
+        Array.isArray(coords) &&
+        coords.length === 2 &&
+        typeof coords[0] === 'number' &&
+        typeof coords[1] === 'number' &&
+        isFinite(coords[0]) &&
+        isFinite(coords[1]) &&
+        !isNaN(coords[0]) &&
+        !isNaN(coords[1])
+      );
+    }).length;
+  }, [regions]);
 
   useEffect(() => {
     // Keep track of total locations
@@ -310,41 +352,41 @@ function EnhancedLeafletMap({
   const createRegionMarkerIcon = (color = COLORS.gogo_blue, name = '') => {
     // Get the first letter of the region name, default to 'R' if empty
     const firstLetter = name && name.length > 0 ? name.charAt(0) : 'R';
+    // Create unique ID for this marker's gradient to avoid conflicts
+    const gradientId = `regionGradient-${name.replace(/\s+/g, '-')}-${Date.now()}`;
+    const filterId = `textShadow-${name.replace(/\s+/g, '-')}-${Date.now()}`;
 
     return L.divIcon({
       className: 'custom-region-marker',
       html: `
         <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
           <!-- Outer glow/shadow -->
-          <circle cx="22" cy="22" r="20" fill="${color}" fill-opacity="0.2" />
+          <circle cx="22" cy="22" r="20" fill="${color}" fill-opacity="0.25" />
           
           <!-- Main circle with gradient -->
-          <circle cx="22" cy="22" r="16" fill="url(#regionGradient)" stroke="${color}" stroke-width="2"/>
+          <circle cx="22" cy="22" r="16" fill="url(#${gradientId})" stroke="${lightenColor(color, 20)}" stroke-width="2"/>
           
-          <!-- Inner highlight -->
-          <circle cx="22" cy="22" r="14" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
-          
-          <!-- Center circle with gradient -->
-          <circle cx="22" cy="22" r="8" fill="white"/>
+          <!-- Inner highlight ring -->
+          <circle cx="22" cy="22" r="14" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
           
           <!-- Pulse animation (subtle expanding circle) -->
           <circle cx="22" cy="22" r="20" fill="${color}" fill-opacity="0.2">
-            <animate attributeName="r" values="16;20;16" dur="2s" repeatCount="indefinite" />
-            <animate attributeName="fill-opacity" values="0.2;0.1;0.2" dur="2s" repeatCount="indefinite" />
+            <animate attributeName="r" values="16;22;16" dur="2s" repeatCount="indefinite" />
+            <animate attributeName="fill-opacity" values="0.3;0;0.3" dur="2s" repeatCount="indefinite" />
           </circle>
           
-          <!-- Text with slight shadow -->
-          <text x="22" y="26" font-family="Arial" font-size="11" fill="${color}" text-anchor="middle" font-weight="bold" filter="url(#textShadow)">${firstLetter}</text>
+          <!-- Text with shadow for contrast -->
+          <text x="22" y="27" font-family="Arial, sans-serif" font-size="14" fill="white" text-anchor="middle" font-weight="bold" filter="url(#${filterId})">${firstLetter}</text>
           
           <!-- Definitions for gradients and filters -->
           <defs>
-            <linearGradient id="regionGradient" x1="6" y1="6" x2="38" y2="38" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="${color}" />
-              <stop offset="100%" stop-color="${darkenColor(color, 30)}" />
+            <linearGradient id="${gradientId}" x1="6" y1="6" x2="38" y2="38" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="${lightenColor(color, 15)}" />
+              <stop offset="100%" stop-color="${darkenColor(color, 20)}" />
             </linearGradient>
             
-            <filter id="textShadow" x="-50%" y="-50%" width="200%" height="200%">
-              <feDropShadow dx="0" dy="1" stdDeviation="0.5" flood-opacity="0.3" />
+            <filter id="${filterId}" x="-50%" y="-50%" width="200%" height="200%">
+              <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="#000" flood-opacity="0.5" />
             </filter>
           </defs>
         </svg>
@@ -557,9 +599,23 @@ function EnhancedLeafletMap({
 
   // Function to initialize the map with regions
   const initializeMapWithRegions = (map) => {
-    // Add all region markers
+    // Add all region markers (only for regions with valid coordinates)
     regions
       .filter((region) => region.id !== 'summer-programs')
+      .filter((region) => {
+        // Validate centerCoordinates
+        const coords = region.centerCoordinates;
+        return (
+          Array.isArray(coords) &&
+          coords.length === 2 &&
+          typeof coords[0] === 'number' &&
+          typeof coords[1] === 'number' &&
+          isFinite(coords[0]) &&
+          isFinite(coords[1]) &&
+          !isNaN(coords[0]) &&
+          !isNaN(coords[1])
+        );
+      })
       .forEach((region) => {
         const marker = L.marker(region.centerCoordinates, {
           icon: createRegionMarkerIcon(
@@ -595,15 +651,30 @@ function EnhancedLeafletMap({
   const initializeMapWithSublocations = (map, region) => {
     const { sublocations } = region;
     
+    // Filter to only valid locations
+    const validSublocations = sublocations.filter((loc) => {
+      const coords = loc.coordinates;
+      return (
+        Array.isArray(coords) &&
+        coords.length === 2 &&
+        typeof coords[0] === 'number' &&
+        typeof coords[1] === 'number' &&
+        isFinite(coords[0]) &&
+        isFinite(coords[1]) &&
+        !isNaN(coords[0]) &&
+        !isNaN(coords[1])
+      );
+    });
+    
     // Check if we should use canvas rendering for performance (many points)
     // Use canvas if there are more than 500 points
-    const useCanvas = sublocations.length > 500;
+    const useCanvas = validSublocations.length > 500;
     
     if (useCanvas) {
       // Use a canvas renderer for better performance with many points
       const renderer = L.canvas({ padding: 0.5 });
       
-      sublocations.forEach((location) => {
+      validSublocations.forEach((location) => {
         const marker = L.circleMarker(location.coordinates, {
           renderer: renderer,
           radius: 8,
@@ -626,7 +697,7 @@ function EnhancedLeafletMap({
       });
     } else {
       // Use custom markers for smaller datasets
-      sublocations.forEach((location) => {
+      validSublocations.forEach((location) => {
         const marker = L.marker(location.coordinates, {
           icon: createLocationMarkerIcon(
             location.type || 'default',
@@ -647,20 +718,29 @@ function EnhancedLeafletMap({
     }
   };
 
-  // Add function to show boundary message temporarily
-  const showBoundaryMessageTemporarily = () => {
-    setShowBoundaryMessage(true);
-
-    // Clear any existing timeout
-    if (boundaryMessageTimeoutRef.current) {
-      clearTimeout(boundaryMessageTimeoutRef.current);
+  // Calculate how far the map view exceeds the bounds (returns 0 if within bounds)
+  const calculateBoundaryOverflow = (mapBounds: L.LatLngBounds, maxBounds: L.LatLngBounds): number => {
+    let overflow = 0;
+    
+    // Calculate overflow in each direction
+    if (mapBounds.getSouth() < maxBounds.getSouth()) {
+      overflow = Math.max(overflow, maxBounds.getSouth() - mapBounds.getSouth());
     }
-
-    // Set a new timeout to hide the message after 2 seconds
-    boundaryMessageTimeoutRef.current = setTimeout(() => {
-      setShowBoundaryMessage(false);
-    }, 2000);
+    if (mapBounds.getNorth() > maxBounds.getNorth()) {
+      overflow = Math.max(overflow, mapBounds.getNorth() - maxBounds.getNorth());
+    }
+    if (mapBounds.getWest() < maxBounds.getWest()) {
+      overflow = Math.max(overflow, maxBounds.getWest() - mapBounds.getWest());
+    }
+    if (mapBounds.getEast() > maxBounds.getEast()) {
+      overflow = Math.max(overflow, mapBounds.getEast() - maxBounds.getEast());
+    }
+    
+    return overflow;
   };
+
+  // Threshold for showing boundary message (in degrees - roughly 0.5 degrees is significant rubber banding)
+  const BOUNDARY_OVERFLOW_THRESHOLD = 0.3;
 
   // Setup the map when component mounts or region changes
   useEffect(() => {
@@ -685,14 +765,34 @@ function EnhancedLeafletMap({
     // Initialize the map with appropriate view
     let map;
     if (selectedRegion) {
-      // Dynamic calculation of bounds if sublocations exist
-      let bounds;
-      if (selectedRegion.sublocations && selectedRegion.sublocations.length > 0) {
-         // Create a Leaflet LatLngBounds object
-         const latLngs = selectedRegion.sublocations.map(s => s.coordinates);
-         bounds = L.latLngBounds(latLngs);
-         // Pad the bounds slightly
-         bounds = bounds.pad(0.2);
+      // Dynamic calculation of bounds if sublocations exist with valid coordinates
+      let bounds: L.LatLngBounds | undefined;
+      try {
+        if (selectedRegion.sublocations && selectedRegion.sublocations.length > 0) {
+           // Filter to only valid coordinates
+           const validLatLngs = selectedRegion.sublocations
+             .map(s => s.coordinates)
+             .filter((coord): coord is [number, number] => 
+               Array.isArray(coord) && 
+               coord.length === 2 && 
+               typeof coord[0] === 'number' &&
+               typeof coord[1] === 'number' &&
+               !isNaN(coord[0]) && 
+               !isNaN(coord[1]) &&
+               isFinite(coord[0]) &&
+               isFinite(coord[1])
+             );
+           
+           if (validLatLngs.length > 0) {
+             const tempBounds = L.latLngBounds(validLatLngs);
+             if (tempBounds.isValid()) {
+               bounds = tempBounds.pad(0.8);  // Generous initial padding
+             }
+           }
+        }
+      } catch (e) {
+        console.warn('[EnhancedLeafletMap] Error calculating bounds:', e);
+        bounds = undefined;
       }
 
       // Set view based on selected region
@@ -707,44 +807,98 @@ function EnhancedLeafletMap({
         zoomControl: false, // Always disable the zoom control
       });
 
-      if (bounds) {
-        map.fitBounds(bounds);
-      } else if (selectedRegion.centerCoordinates) {
-        map.setView(
-          selectedRegion.centerCoordinates,
-          selectedRegion.defaultZoom || 10,
-        );
-      } else {
-        // Fallback if no bounds and no center
-         map.setView([39.8283, -98.5795], 4);
+      // Set initial view with validation
+      try {
+        if (bounds && bounds.isValid()) {
+          map.fitBounds(bounds);
+        } else if (
+          selectedRegion.centerCoordinates &&
+          Array.isArray(selectedRegion.centerCoordinates) &&
+          selectedRegion.centerCoordinates.length === 2 &&
+          isFinite(selectedRegion.centerCoordinates[0]) &&
+          isFinite(selectedRegion.centerCoordinates[1]) &&
+          !isNaN(selectedRegion.centerCoordinates[0]) &&
+          !isNaN(selectedRegion.centerCoordinates[1])
+        ) {
+          map.setView(
+            selectedRegion.centerCoordinates,
+            selectedRegion.defaultZoom || 12,  // City-scale default
+          );
+        } else {
+          // Fallback if no bounds and no center
+          map.setView([39.8283, -98.5795], 4);
+        }
+      } catch (e) {
+        console.warn('[EnhancedLeafletMap] Error setting view:', e);
+        map.setView([39.8283, -98.5795], 4);
       }
 
-      // Set bounds if available from data, otherwise use calculated bounds expanded
-      const maxBoundsToUse = selectedRegion.maxBounds 
-        ? L.latLngBounds(selectedRegion.maxBounds[0], selectedRegion.maxBounds[1])
-        : (bounds ? bounds.pad(0.5) : null);
-
-      if (maxBoundsToUse) {
-        map.setMaxBounds(maxBoundsToUse);
-
-        // Add event listener for when user hits the map boundary (only if overlay is not shown)
-        if (!showOverlay) {
-          map.on('drag', function () {
-            // Check if current view is at the bounds
-            const mapBounds = map.getBounds();
-            const { maxBounds } = map.options;
-
-            if (
-              maxBounds &&
-              (mapBounds.getSouth() <= maxBounds.getSouth() ||
-                mapBounds.getNorth() >= maxBounds.getNorth() ||
-                mapBounds.getWest() <= maxBounds.getWest() ||
-                mapBounds.getEast() >= maxBounds.getEast())
-            ) {
-              showBoundaryMessageTemporarily();
-            }
-          });
+      // Create max bounds from the region's locations with reasonable padding
+      let regionMaxBounds: L.LatLngBounds | null = null;
+      try {
+        if (bounds && bounds.isValid()) {
+          // Get the center and calculate a reasonable max bounds area
+          // Allow panning about 2.5x the visible area in each direction
+          const boundsCenter = bounds.getCenter();
+          const latSpan = bounds.getNorth() - bounds.getSouth();
+          const lngSpan = bounds.getEast() - bounds.getWest();
+          
+          // Minimum span to ensure small regions still have room to pan
+          const minSpan = 0.5; // About 30 miles
+          const effectiveLatSpan = Math.max(latSpan, minSpan);
+          const effectiveLngSpan = Math.max(lngSpan, minSpan);
+          
+          // Create bounds that are 2.5x larger in each direction from center
+          regionMaxBounds = L.latLngBounds(
+            [boundsCenter.lat - effectiveLatSpan * 2.5, boundsCenter.lng - effectiveLngSpan * 2.5],
+            [boundsCenter.lat + effectiveLatSpan * 2.5, boundsCenter.lng + effectiveLngSpan * 2.5]
+          );
+          
+          if (regionMaxBounds.isValid()) {
+            map.setMaxBounds(regionMaxBounds);
+          }
+        } else if (
+          selectedRegion.centerCoordinates &&
+          isFinite(selectedRegion.centerCoordinates[0]) &&
+          isFinite(selectedRegion.centerCoordinates[1])
+        ) {
+          // If no bounds but we have a center, create bounds around it
+          const center = selectedRegion.centerCoordinates;
+          const span = 1.0; // About 60 miles radius
+          regionMaxBounds = L.latLngBounds(
+            [center[0] - span * 2.5, center[1] - span * 2.5],
+            [center[0] + span * 2.5, center[1] + span * 2.5]
+          );
+          
+          if (regionMaxBounds.isValid()) {
+            map.setMaxBounds(regionMaxBounds);
+          }
         }
+      } catch (e) {
+        console.warn('[EnhancedLeafletMap] Error setting max bounds:', e);
+      }
+
+      // Add event listener for boundary message (only if overlay is not shown)
+      if (!showOverlay && regionMaxBounds && regionMaxBounds.isValid()) {
+        map.on('drag', function () {
+          const mapBounds = map.getBounds();
+          
+          // Check if we're at or past any edge
+          const atEdge = (
+            mapBounds.getSouth() <= regionMaxBounds!.getSouth() ||
+            mapBounds.getNorth() >= regionMaxBounds!.getNorth() ||
+            mapBounds.getWest() <= regionMaxBounds!.getWest() ||
+            mapBounds.getEast() >= regionMaxBounds!.getEast()
+          );
+          
+          // Show message when at edge, hide immediately when not
+          setShowBoundaryMessage(atEdge);
+        });
+        
+        // Hide message when drag ends
+        map.on('dragend', function () {
+          setShowBoundaryMessage(false);
+        });
       }
 
       // Set min/max zoom
@@ -759,11 +913,9 @@ function EnhancedLeafletMap({
         map.on('zoomend', function () {
           const currentZoom = map.getZoom();
           // Define a threshold - if the user zooms out far enough, return to nationwide view
-          // Typically 3-4 levels below the region's default zoom is a good threshold
-          // If defaultZoom is not present, estimate from current view after fitBounds? 
-          // Better to just use a reasonable absolute minimum for region view (e.g. 6) or use the prop if available
-          const minRegionZoom = selectedRegion.minZoom || 5;
-          const zoomThreshold = Math.max(minRegionZoom, 4);
+          // Use the region's minZoom as the threshold (city-scale is 9)
+          const minRegionZoom = selectedRegion.minZoom || 9;
+          const zoomThreshold = Math.max(minRegionZoom - 1, 7);  // One level below min, but at least 7
 
           if (currentZoom <= zoomThreshold) {
             // User has zoomed out far enough, return to nationwide view
@@ -885,10 +1037,8 @@ function EnhancedLeafletMap({
         document.head.removeChild(style);
       }
 
-      // Clear any pending timeout
-      if (boundaryMessageTimeoutRef.current) {
-        clearTimeout(boundaryMessageTimeoutRef.current);
-      }
+      // Reset boundary message state
+      setShowBoundaryMessage(false);
 
       if (leafletMapRef.current) {
         // Remove any event listeners
@@ -905,16 +1055,11 @@ function EnhancedLeafletMap({
     showOverlay,
     initializeMapWithRegions,
     initializeMapWithSublocations,
-  ]); // Added all required dependencies
+  ]); // Note: regions changes are handled via component key, not here
 
   // Handle exiting region view
   const handleExitRegion = () => {
-    // Clear any boundary message timeout
-    if (boundaryMessageTimeoutRef.current) {
-      clearTimeout(boundaryMessageTimeoutRef.current);
-      setShowBoundaryMessage(false);
-    }
-
+    setShowBoundaryMessage(false);
     setSelectedRegion(null);
   };
 
@@ -946,7 +1091,7 @@ function EnhancedLeafletMap({
         ) : (
           <>
             <strong>GOGO Impact</strong>: {totalLocations} locations in{' '}
-            {regions.length - 1} regions
+            {visibleRegionsCount} regions
           </>
         )}
       </StatsPanel>

@@ -1113,7 +1113,7 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element | null {
           </IconButton>
         </DialogTitle>
         <DialogContent sx={{ p: 0, height: "500px" }}>
-          <EnhancedLeafletMap />
+          <EnhancedLeafletMap regions={nationalImpact?.regions ?? undefined} />
         </DialogContent>
       </Dialog>
 

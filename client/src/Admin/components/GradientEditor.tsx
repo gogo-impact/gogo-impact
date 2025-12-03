@@ -417,7 +417,12 @@ export function GradientEditor({
         {/* Type selector and degree */}
         <Grid item xs={12} md={4}>
           <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-            <InputLabel sx={{ color: "rgba(255,255,255,0.7)" }}>
+            <InputLabel
+              sx={{
+                color: "rgba(255,255,255,0.7)",
+                "&.Mui-focused": { color: "rgba(255,255,255,0.9)" },
+              }}
+            >
               Type
             </InputLabel>
             <Select
@@ -426,13 +431,34 @@ export function GradientEditor({
               onChange={(e) => handleTypeChange(e.target.value as GradientType)}
               sx={{
                 color: "white",
+                bgcolor: "rgba(255,255,255,0.06)",
                 ".MuiOutlinedInput-notchedOutline": {
                   borderColor: "rgba(255,255,255,0.3)",
                 },
                 "&:hover .MuiOutlinedInput-notchedOutline": {
                   borderColor: "rgba(255,255,255,0.5)",
                 },
-                ".MuiSvgIcon-root": { color: "white" },
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "rgba(255,255,255,0.6)",
+                },
+                ".MuiSvgIcon-root": { color: "rgba(255,255,255,0.5)" },
+              }}
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    bgcolor: "rgba(30, 30, 30, 0.95)",
+                    backdropFilter: "blur(10px)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    "& .MuiMenuItem-root": {
+                      color: "rgba(255,255,255,0.9)",
+                      "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
+                      "&.Mui-selected": { bgcolor: "rgba(255,255,255,0.15)" },
+                      "&.Mui-selected:hover": {
+                        bgcolor: "rgba(255,255,255,0.2)",
+                      },
+                    },
+                  },
+                },
               }}
             >
               <MenuItem value="linear">Linear</MenuItem>

@@ -19,9 +19,14 @@ export interface ImageCropperProps {
   imageSrc: string;
   onClose: () => void;
   onCropComplete: (croppedBlob: Blob) => void;
+  /** Aspect ratio for cropping. Pass undefined for freeform cropping. */
   aspectRatio?: number;
+  /** Fixed output width. For freeform crops, if not provided, uses cropped area width. */
   outputWidth?: number;
+  /** Fixed output height. For freeform crops, if not provided, uses cropped area height. */
   outputHeight?: number;
+  /** Maximum output dimension for freeform crops (default 1200). Ignored when aspectRatio is set. */
+  maxOutputSize?: number;
   title?: string;
 }
 
@@ -39,13 +44,15 @@ function createImage(url: string): Promise<HTMLImageElement> {
 }
 
 /**
- * Crops the image and returns a Blob
+ * Crops the image and returns a Blob.
+ * If outputWidth/outputHeight are not provided, uses the crop area dimensions (capped by maxSize).
  */
 async function getCroppedImg(
   imageSrc: string,
   pixelCrop: Area,
-  outputWidth: number,
-  outputHeight: number
+  outputWidth?: number,
+  outputHeight?: number,
+  maxSize: number = 1200
 ): Promise<Blob> {
   const image = await createImage(imageSrc);
   const canvas = document.createElement('canvas');
@@ -55,9 +62,36 @@ async function getCroppedImg(
     throw new Error('No 2d context');
   }
 
+  // Calculate output dimensions
+  let finalWidth: number;
+  let finalHeight: number;
+
+  if (outputWidth && outputHeight) {
+    // Fixed dimensions provided
+    finalWidth = outputWidth;
+    finalHeight = outputHeight;
+  } else {
+    // Freeform crop: use crop area dimensions, scaled down if needed
+    const cropAspect = pixelCrop.width / pixelCrop.height;
+    if (pixelCrop.width > maxSize || pixelCrop.height > maxSize) {
+      if (cropAspect > 1) {
+        // Wider than tall
+        finalWidth = maxSize;
+        finalHeight = Math.round(maxSize / cropAspect);
+      } else {
+        // Taller than wide
+        finalHeight = maxSize;
+        finalWidth = Math.round(maxSize * cropAspect);
+      }
+    } else {
+      finalWidth = pixelCrop.width;
+      finalHeight = pixelCrop.height;
+    }
+  }
+
   // Set canvas size to the desired output dimensions
-  canvas.width = outputWidth;
-  canvas.height = outputHeight;
+  canvas.width = finalWidth;
+  canvas.height = finalHeight;
 
   // Draw the cropped image
   ctx.drawImage(
@@ -68,8 +102,8 @@ async function getCroppedImg(
     pixelCrop.height,
     0,
     0,
-    outputWidth,
-    outputHeight
+    finalWidth,
+    finalHeight
   );
 
   // Return as blob
@@ -91,17 +125,22 @@ async function getCroppedImg(
 // Default to carousel dimensions (200x140 scaled up 2x for better quality)
 const DEFAULT_OUTPUT_WIDTH = 400;
 const DEFAULT_OUTPUT_HEIGHT = 280;
+const DEFAULT_MAX_OUTPUT_SIZE = 1200;
 
 export function ImageCropper({
   open,
   imageSrc,
   onClose,
   onCropComplete,
-  aspectRatio = 10 / 7, // Default carousel aspect ratio (200/140)
-  outputWidth = DEFAULT_OUTPUT_WIDTH,
-  outputHeight = DEFAULT_OUTPUT_HEIGHT,
+  aspectRatio, // undefined = freeform crop
+  outputWidth,
+  outputHeight,
+  maxOutputSize = DEFAULT_MAX_OUTPUT_SIZE,
   title = 'Crop Image',
 }: ImageCropperProps) {
+  // Apply defaults only when aspectRatio is provided (fixed ratio mode)
+  const effectiveOutputWidth = aspectRatio !== undefined ? (outputWidth ?? DEFAULT_OUTPUT_WIDTH) : outputWidth;
+  const effectiveOutputHeight = aspectRatio !== undefined ? (outputHeight ?? DEFAULT_OUTPUT_HEIGHT) : outputHeight;
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
@@ -127,7 +166,13 @@ export function ImageCropper({
 
     setIsProcessing(true);
     try {
-      const croppedBlob = await getCroppedImg(imageSrc, croppedAreaPixels, outputWidth, outputHeight);
+      const croppedBlob = await getCroppedImg(
+        imageSrc, 
+        croppedAreaPixels, 
+        effectiveOutputWidth, 
+        effectiveOutputHeight,
+        maxOutputSize
+      );
       onCropComplete(croppedBlob);
       // Reset state
       setCrop({ x: 0, y: 0 });
@@ -138,7 +183,7 @@ export function ImageCropper({
     } finally {
       setIsProcessing(false);
     }
-  }, [croppedAreaPixels, imageSrc, onCropComplete, outputWidth, outputHeight]);
+  }, [croppedAreaPixels, imageSrc, onCropComplete, effectiveOutputWidth, effectiveOutputHeight, maxOutputSize]);
 
   const handleClose = useCallback(() => {
     setCrop({ x: 0, y: 0 });

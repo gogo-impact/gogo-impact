@@ -217,15 +217,33 @@ export function HearOurImpactTabEditor({
             >
               <DragIndicatorIcon sx={{ color: 'rgba(255,255,255,0.3)' }} />
               <FormControl size="small" sx={{ minWidth: 100 }}>
-                <InputLabel sx={{ color: 'rgba(255,255,255,0.5)' }}>Type</InputLabel>
+                <InputLabel sx={{ color: 'rgba(255,255,255,0.5)', '&.Mui-focused': { color: 'rgba(255,255,255,0.7)' } }}>Type</InputLabel>
                 <Select
                   value={embed.type}
                   label="Type"
                   onChange={(e) => updateEmbed(field, idx, 'type', e.target.value)}
                   sx={{
                     color: 'white',
+                    bgcolor: 'rgba(255,255,255,0.06)',
                     '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.2)' },
                     '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.3)' },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.5)' },
+                    '.MuiSvgIcon-root': { color: 'rgba(255,255,255,0.5)' },
+                  }}
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        bgcolor: 'rgba(30, 30, 30, 0.95)',
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        '& .MuiMenuItem-root': {
+                          color: 'rgba(255,255,255,0.9)',
+                          '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
+                          '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.15)' },
+                          '&.Mui-selected:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
+                        },
+                      },
+                    },
                   }}
                 >
                   <MenuItem value="album">Album</MenuItem>
@@ -235,11 +253,12 @@ export function HearOurImpactTabEditor({
                 </Select>
               </FormControl>
               <CustomTextField
-                label="Spotify Embed URL"
+                label="Spotify URL"
                 value={embed.url}
                 onChange={(e) => updateEmbed(field, idx, 'url', e.target.value)}
                 sx={{ flex: 1 }}
-                placeholder="https://open.spotify.com/embed/..."
+                placeholder="https://open.spotify.com/track/..."
+                helperText="Paste any Spotify share link"
               />
               <IconButton
                 onClick={() => removeEmbed(field, idx)}

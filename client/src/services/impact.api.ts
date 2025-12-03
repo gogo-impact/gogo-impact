@@ -1347,6 +1347,7 @@ export interface MapRegion {
   id: string;
   name: string;
   color?: string | null;
+  coordinates?: [number, number] | null;  // Region center coordinates (auto-filled from city selection)
   locations: MapLocation[];
 }
 

@@ -39,6 +39,98 @@ async function geocodeAddress(address: string): Promise<{ formattedAddress: stri
   }
 }
 
+// Autocomplete for places (cities or addresses)
+interface NominatimResult {
+  place_id: number;
+  display_name: string;
+  lat: string;
+  lon: string;
+  type: string;
+  addresstype?: string;
+  class: string;
+}
+
+interface PlaceSuggestion {
+  displayName: string;
+  coordinates: [number, number];
+  placeId: string;
+  type: string;
+  addressType?: string;
+}
+
+async function searchPlaces(query: string, mode: 'city' | 'address'): Promise<PlaceSuggestion[]> {
+  try {
+    const encodedQuery = encodeURIComponent(query);
+    
+    // For city mode, add USA country code and filter for place types
+    // For address mode, search all types
+    let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodedQuery}&limit=8&addressdetails=1`;
+    
+    if (mode === 'city') {
+      // Focus on USA cities/places
+      url += '&countrycodes=us&featuretype=city';
+    }
+    
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'GOGO-Impact-Report/1.0',
+      },
+    });
+
+    if (!response.ok) {
+      console.error('[autocomplete] Nominatim request failed', { status: response.status });
+      return [];
+    }
+
+    const results: NominatimResult[] = await response.json();
+    
+    // Filter and transform results based on mode
+    const suggestions: PlaceSuggestion[] = results
+      .filter(result => {
+        if (mode === 'city') {
+          // For cities, accept city, town, village, hamlet, municipality types
+          const cityTypes = ['city', 'town', 'village', 'hamlet', 'municipality', 'suburb', 'neighbourhood'];
+          return cityTypes.includes(result.type) || cityTypes.includes(result.addresstype || '');
+        }
+        // For addresses, accept all results
+        return true;
+      })
+      .map(result => ({
+        displayName: result.display_name,
+        coordinates: [parseFloat(result.lat), parseFloat(result.lon)] as [number, number],
+        placeId: String(result.place_id),
+        type: result.type,
+        addressType: result.addresstype,
+      }));
+
+    return suggestions;
+  } catch (error) {
+    console.error('[autocomplete] Error searching places', { query, mode, error });
+    return [];
+  }
+}
+
+// Place autocomplete endpoint
+router.get("/impact/autocomplete-place", requireAuth, async (req, res, next) => {
+  try {
+    const query = req.query.q as string;
+    const mode = (req.query.mode as 'city' | 'address') || 'address';
+    
+    if (!query || typeof query !== 'string' || query.length < 3) {
+      return res.json({ suggestions: [] });
+    }
+
+    console.log('[autocomplete-place] Searching', { query, mode });
+    const suggestions = await searchPlaces(query.trim(), mode);
+    
+    console.log('[autocomplete-place] Found', { count: suggestions.length });
+    return res.json({ suggestions });
+  } catch (error) {
+    console.error('[autocomplete-place] Error', error);
+    return res.status(500).json({ suggestions: [], error: 'Server error' });
+  }
+});
+
 // Address validation endpoint
 router.post("/impact/validate-address", requireAuth, async (req, res, next) => {
   try {

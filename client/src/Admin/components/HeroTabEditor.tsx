@@ -14,6 +14,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import ColorPickerPopover from '../../components/ColorPickerPopover';
 import { CustomTextField } from '../styles';
 import { GradientEditor, parseGradientString, composeGradient } from './GradientEditor';
+import { ImageCropper } from "./ImageCropper";
 import { HeroSectionForm } from '../types';
 import COLORS from '../../../assets/colors';
 
@@ -63,6 +64,62 @@ export function HeroTabEditor({
   const [gradientPickerColorIndex, setGradientPickerColorIndex] =
     useState<number>(0);
   const gradientPickerOpen = Boolean(gradientPickerAnchor);
+
+  // State for image cropper
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [cropperImageSrc, setCropperImageSrc] = useState("");
+
+  // Handle file selection - opens cropper
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0]) return;
+    const file = e.target.files[0];
+
+    // Validate file type first
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      // Let the parent handler deal with the error
+      onBackgroundUpload(e);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    setCropperImageSrc(objectUrl);
+    setCropperOpen(true);
+
+    // Reset the input
+    e.target.value = "";
+  };
+
+  // Handle cropped image
+  const handleCropComplete = (croppedBlob: Blob) => {
+    // Close cropper
+    setCropperOpen(false);
+
+    // Clean up object URL
+    if (cropperImageSrc) {
+      URL.revokeObjectURL(cropperImageSrc);
+    }
+    setCropperImageSrc("");
+
+    // Create preview URL and File from cropped blob
+    const preview = URL.createObjectURL(croppedBlob);
+    const croppedFile = new File([croppedBlob], "cropped-background.jpg", {
+      type: "image/jpeg",
+    });
+
+    // Update form with cropped image
+    onHeroChange("backgroundImagePreview", preview);
+    onHeroChange("backgroundImageFile", croppedFile);
+  };
+
+  // Handle closing the cropper
+  const handleCropperClose = () => {
+    setCropperOpen(false);
+    if (cropperImageSrc) {
+      URL.revokeObjectURL(cropperImageSrc);
+    }
+    setCropperImageSrc("");
+  };
 
   // Get the current background gradient - use full string if available, otherwise compose from legacy fields
   const getBackgroundGradient = (): string => {
@@ -623,7 +680,7 @@ export function HeroTabEditor({
             <input
               type="file"
               accept="image/png,image/jpeg,image/webp"
-              onChange={onBackgroundUpload}
+              onChange={handleFileSelect}
               style={{ display: "none" }}
               ref={fileInputRef}
             />
@@ -726,6 +783,16 @@ export function HeroTabEditor({
           />
         </Grid>
       </Grid>
+
+      {/* Image Cropper Dialog */}
+      <ImageCropper
+        open={cropperOpen}
+        imageSrc={cropperImageSrc}
+        onClose={handleCropperClose}
+        onCropComplete={handleCropComplete}
+        title="Crop Background Image"
+        // No aspectRatio = freeform crop
+      />
     </Box>
   );
 }

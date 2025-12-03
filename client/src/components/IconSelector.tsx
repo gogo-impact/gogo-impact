@@ -1796,6 +1796,21 @@ export function IconSelector({
         autoHighlight
         openOnFocus
         blurOnSelect
+        componentsProps={{
+          paper: {
+            sx: {
+              bgcolor: "rgba(30, 30, 30, 0.95)",
+              backdropFilter: "blur(10px)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              "& .MuiAutocomplete-option": {
+                color: "rgba(255,255,255,0.9)",
+                "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
+                "&[aria-selected='true']": { bgcolor: "rgba(255,255,255,0.15)" },
+                "&[aria-selected='true']:hover": { bgcolor: "rgba(255,255,255,0.2)" },
+              },
+            },
+          },
+        }}
       />
     </Box>
   );

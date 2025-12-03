@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Grid,
   Box,
@@ -6,9 +6,6 @@ import {
   Button,
   Divider,
   IconButton,
-  TextField,
-  Autocomplete,
-  CircularProgress,
   Chip,
   Switch,
   FormControlLabel,
@@ -23,17 +20,19 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ErrorIcon from '@mui/icons-material/Error';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import MapIcon from '@mui/icons-material/Map';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import ColorPickerPopover from '../../components/ColorPickerPopover';
+import EnhancedLeafletMap from '../../components/map/EnhancedLeafletMap';
 import { CustomTextField } from '../styles';
+import PlaceAutocomplete from './PlaceAutocomplete';
 import {
   NationalImpactContent,
   MapRegion,
   MapLocation,
   MapLocationType,
-  validateAddress,
 } from '../../services/impact.api';
 
 export interface NationalImpactTabEditorProps {
@@ -73,12 +72,37 @@ export function NationalImpactTabEditor({
 
   // Expanded regions state
   const [expandedRegions, setExpandedRegions] = useState<Record<string, boolean>>({});
-
-  // Address validation state
-  const [validatingAddress, setValidatingAddress] = useState<string | null>(null);
-  const [addressError, setAddressError] = useState<Record<string, string>>({});
+  
+  // Map preview state
+  const [showMapPreview, setShowMapPreview] = useState(false);
 
   const regions: MapRegion[] = nationalImpact.regions ?? [];
+  
+  // Generate a key for the map that only changes when map-visual data changes
+  // (coordinates, colors, location count) - NOT on every text edit
+  const mapPreviewKey = useMemo(() => {
+    // Only include data that affects map rendering
+    const mapRelevantData = regions.map(r => ({
+      id: r.id,
+      color: r.color,
+      coordinates: r.coordinates,
+      locationCount: r.locations?.length || 0,
+      // Only coordinates and type affect map markers
+      locations: r.locations?.map(l => ({
+        coordinates: l.coordinates,
+        type: l.type,
+      })),
+    }));
+    const dataString = JSON.stringify(mapRelevantData);
+    // Simple hash function
+    let hash = 0;
+    for (let i = 0; i < dataString.length; i++) {
+      const char = dataString.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    return `map-preview-${hash}`;
+  }, [regions]);
 
   // Color picker helpers
   const openColorPicker = (el: HTMLElement, field: NationalImpactColorField) => {
@@ -188,52 +212,21 @@ export function NationalImpactTabEditor({
     onNationalImpactChange('regions', updated);
   };
 
-  // Address validation
-  const handleValidateAddress = async (
+  // Handle place selection from autocomplete (for address)
+  const handleAddressSelect = (
     regionIndex: number,
     locationIndex: number,
-    address: string
+    place: { displayName: string; coordinates: [number, number] }
   ) => {
-    const locationKey = `${regionIndex}-${locationIndex}`;
-    if (!address.trim()) {
-      setAddressError((prev) => ({ ...prev, [locationKey]: 'Address is required' }));
-      return;
-    }
-
-    setValidatingAddress(locationKey);
-    setAddressError((prev) => {
-      const next = { ...prev };
-      delete next[locationKey];
-      return next;
-    });
-
-    try {
-      const result = await validateAddress(address);
-      if (result.valid && result.formattedAddress && result.coordinates) {
-        // Update both address and coordinates
-        const updated = [...regions];
-        const locations = [...updated[regionIndex].locations];
-        locations[locationIndex] = {
-          ...locations[locationIndex],
-          address: result.formattedAddress,
-          coordinates: result.coordinates,
-        };
-        updated[regionIndex] = { ...updated[regionIndex], locations };
-        onNationalImpactChange('regions', updated);
-      } else {
-        setAddressError((prev) => ({
-          ...prev,
-          [locationKey]: result.error || 'Could not validate address',
-        }));
-      }
-    } catch (error) {
-      setAddressError((prev) => ({
-        ...prev,
-        [locationKey]: 'Failed to validate address',
-      }));
-    } finally {
-      setValidatingAddress(null);
-    }
+    const updated = [...regions];
+    const locations = [...updated[regionIndex].locations];
+    locations[locationIndex] = {
+      ...locations[locationIndex],
+      address: place.displayName,
+      coordinates: place.coordinates,
+    };
+    updated[regionIndex] = { ...updated[regionIndex], locations };
+    onNationalImpactChange('regions', updated);
   };
 
   return (
@@ -389,14 +382,28 @@ export function NationalImpactTabEditor({
                   openRegionColorPicker(e.currentTarget, regionIndex);
                 }}
               />
-              <CustomTextField
-                label="Region Name"
-                value={region.name}
-                onChange={(e) => updateRegion(regionIndex, 'name', e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-                sx={{ flex: 1 }}
-                placeholder="e.g., Miami"
-              />
+              <Box onClick={(e) => e.stopPropagation()} sx={{ flex: 1 }}>
+                <PlaceAutocomplete
+                  value={region.name}
+                  coordinates={region.coordinates ?? undefined}
+                  onPlaceSelect={(place) => {
+                    // Extract city name from the display name (first part before comma)
+                    const cityName = place.displayName.split(',')[0].trim();
+                    // Update both name and coordinates
+                    const updated = [...regions];
+                    updated[regionIndex] = {
+                      ...updated[regionIndex],
+                      name: cityName,
+                      coordinates: place.coordinates,
+                    };
+                    onNationalImpactChange('regions', updated);
+                  }}
+                  onInputChange={(value) => updateRegion(regionIndex, 'name', value)}
+                  mode="city"
+                  label="Region Name"
+                  placeholder="e.g., Miami"
+                />
+              </Box>
               <Chip
                 label={`${region.locations.length} locations`}
                 size="small"
@@ -418,11 +425,6 @@ export function NationalImpactTabEditor({
             <Collapse in={expandedRegions[region.id]}>
               <Box sx={{ p: 2 }}>
                 {region.locations.map((location, locationIndex) => {
-                  const locationKey = `${regionIndex}-${locationIndex}`;
-                  const isValidating = validatingAddress === locationKey;
-                  const hasError = !!addressError[locationKey];
-                  const hasCoordinates = location.coordinates[0] !== 0 || location.coordinates[1] !== 0;
-
                   return (
                     <Box
                       key={location.id}
@@ -450,15 +452,33 @@ export function NationalImpactTabEditor({
                         {/* Location Type */}
                         <Grid item xs={12} md={6}>
                           <FormControl fullWidth size="small">
-                            <InputLabel sx={{ color: 'rgba(255,255,255,0.5)' }}>Icon Type</InputLabel>
+                            <InputLabel sx={{ color: 'rgba(255,255,255,0.5)', '&.Mui-focused': { color: 'rgba(255,255,255,0.7)' } }}>Icon Type</InputLabel>
                             <Select
                               value={location.type || 'default'}
                               label="Icon Type"
                               onChange={(e) => updateLocation(regionIndex, locationIndex, 'type', e.target.value)}
                               sx={{
                                 color: 'white',
+                                bgcolor: 'rgba(255,255,255,0.06)',
                                 '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.2)' },
                                 '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.3)' },
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.5)' },
+                                '.MuiSvgIcon-root': { color: 'rgba(255,255,255,0.5)' },
+                              }}
+                              MenuProps={{
+                                PaperProps: {
+                                  sx: {
+                                    bgcolor: 'rgba(30, 30, 30, 0.95)',
+                                    backdropFilter: 'blur(10px)',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    '& .MuiMenuItem-root': {
+                                      color: 'rgba(255,255,255,0.9)',
+                                      '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
+                                      '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.15)' },
+                                      '&.Mui-selected:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
+                                    },
+                                  },
+                                },
                               }}
                             >
                               {LOCATION_TYPES.map((lt) => (
@@ -468,40 +488,18 @@ export function NationalImpactTabEditor({
                           </FormControl>
                         </Grid>
 
-                        {/* Address with Validation - Required */}
+                        {/* Address with Autocomplete - Required */}
                         <Grid item xs={12}>
-                          <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-                            <CustomTextField
-                              label="Address *"
-                              value={location.address}
-                              onChange={(e) => updateLocation(regionIndex, locationIndex, 'address', e.target.value)}
-                              fullWidth
-                              required
-                              error={hasError}
-                              helperText={hasError ? addressError[locationKey] : (hasCoordinates ? `Coordinates: ${location.coordinates[0].toFixed(4)}, ${location.coordinates[1].toFixed(4)}` : 'Enter address and click validate')}
-                              placeholder="e.g., 18484 NW 48th Pl, Miami Gardens, FL 33055"
-                              InputProps={{
-                                endAdornment: hasCoordinates && !hasError ? (
-                                  <CheckCircleIcon sx={{ color: '#4caf50', mr: 1 }} />
-                                ) : hasError ? (
-                                  <ErrorIcon sx={{ color: '#f44336', mr: 1 }} />
-                                ) : null,
-                              }}
-                            />
-                            <Button
-                              variant="contained"
-                              onClick={() => handleValidateAddress(regionIndex, locationIndex, location.address)}
-                              disabled={isValidating || !location.address.trim()}
-                              sx={{
-                                minWidth: 100,
-                                mt: 1,
-                                bgcolor: 'rgba(255,255,255,0.1)',
-                                '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
-                              }}
-                            >
-                              {isValidating ? <CircularProgress size={20} /> : 'Validate'}
-                            </Button>
-                          </Box>
+                          <PlaceAutocomplete
+                            value={location.address}
+                            coordinates={location.coordinates}
+                            onPlaceSelect={(place) => handleAddressSelect(regionIndex, locationIndex, place)}
+                            onInputChange={(value) => updateLocation(regionIndex, locationIndex, 'address', value)}
+                            mode="address"
+                            label="Address *"
+                            placeholder="Start typing an address..."
+                            required
+                          />
                         </Grid>
 
                         {/* Show Address Toggle */}
@@ -596,6 +594,84 @@ export function NationalImpactTabEditor({
           </Box>
         </Grid>
       )}
+
+      {/* ─────────────────────────────────────────────────────────────────────── */}
+      {/* MAP PREVIEW */}
+      {/* ─────────────────────────────────────────────────────────────────────── */}
+      <Grid item xs={12}>
+        <Divider sx={{ my: 2, bgcolor: 'rgba(255,255,255,0.1)' }} />
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <MapIcon sx={{ color: 'rgba(255,255,255,0.7)' }} />
+            <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.9)' }}>
+              Map Preview
+            </Typography>
+          </Box>
+          <Button
+            startIcon={showMapPreview ? <VisibilityOffIcon /> : <VisibilityIcon />}
+            onClick={() => setShowMapPreview(!showMapPreview)}
+            variant="outlined"
+            size="small"
+            sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
+          >
+            {showMapPreview ? 'Hide Preview' : 'Show Preview'}
+          </Button>
+        </Box>
+      </Grid>
+
+      <Collapse in={showMapPreview} sx={{ width: '100%' }}>
+        <Grid item xs={12}>
+          <Paper
+            sx={{
+              bgcolor: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 2,
+              overflow: 'hidden',
+              p: 2,
+            }}
+          >
+            {/* Preview Stats */}
+            <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
+              <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem' }}>
+                Live preview showing:
+              </Typography>
+              <Chip
+                size="small"
+                label={`${regions.length} regions`}
+                sx={{ bgcolor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.8)' }}
+              />
+              <Chip
+                size="small"
+                label={`${regions.reduce((sum, r) => sum + (r.locations?.length || 0), 0)} locations`}
+                sx={{ bgcolor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.8)' }}
+              />
+              <Chip
+                size="small"
+                label={`${regions.reduce((sum, r) => sum + (r.locations?.filter(l => l.coordinates && l.coordinates[0] !== 0).length || 0), 0)} with coordinates`}
+                sx={{ bgcolor: 'rgba(76, 175, 80, 0.2)', color: '#4caf50', border: '1px solid rgba(76, 175, 80, 0.3)' }}
+              />
+            </Box>
+            
+            <Box
+              sx={{
+                borderRadius: 2,
+                overflow: 'hidden',
+                border: '1px solid rgba(255,255,255,0.1)',
+              }}
+            >
+              <EnhancedLeafletMap
+                key={mapPreviewKey}
+                regions={regions}
+                overlayButtonBgColor={nationalImpact.overlayButtonBgColor || undefined}
+                overlayButtonHoverBgColor={nationalImpact.overlayButtonHoverBgColor || undefined}
+              />
+            </Box>
+            <Typography sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', mt: 1, fontStyle: 'italic' }}>
+              Map updates live as you edit. Only locations with valid coordinates will appear on the map.
+            </Typography>
+          </Paper>
+        </Grid>
+      </Collapse>
     </Grid>
   );
 }

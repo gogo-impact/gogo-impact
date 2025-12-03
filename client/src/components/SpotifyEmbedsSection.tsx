@@ -12,6 +12,30 @@ import {
   SpotifyEmbed,
 } from '../services/impact.api';
 
+/**
+ * Converts a regular Spotify URL to an embed URL.
+ * Accepts both regular URLs (https://open.spotify.com/track/xxx) 
+ * and embed URLs (https://open.spotify.com/embed/track/xxx).
+ * Strips query params like ?si=xxx.
+ */
+function toSpotifyEmbedUrl(url: string): string {
+  if (!url) return url;
+  try {
+    const parsed = new URL(url);
+    
+    // Already an embed URL - just return with path only (strips query params)
+    if (parsed.pathname.startsWith('/embed/')) {
+      return `https://open.spotify.com${parsed.pathname}`;
+    }
+    
+    // Convert regular URL: /track/xxx → /embed/track/xxx
+    return `https://open.spotify.com/embed${parsed.pathname}`;
+  } catch {
+    // If URL parsing fails, return as-is
+    return url;
+  }
+}
+
 interface SectionProps {
   $bgGradient?: string;
   $underlineGradient?: string;
@@ -227,7 +251,7 @@ function SpotifyEmbedsSection({
             >
               <iframe
                 title={embed.url}
-                src={embed.url}
+                src={toSpotifyEmbedUrl(embed.url)}
                 width="100%"
                 height="352"
                 frameBorder="0"
@@ -262,6 +286,9 @@ function SpotifyEmbedsSection({
         maxWidth="xl"
         container={previewMode ? sectionRef.current : undefined}
         disablePortal={previewMode}
+        disableEnforceFocus={previewMode}
+        disableAutoFocus={previewMode}
+        hideBackdrop={previewMode}
         PaperProps={{
           style: {
             background: modalBgGradient,
@@ -326,7 +353,7 @@ function SpotifyEmbedsSection({
               >
                 <iframe
                   title={embed.url}
-                  src={embed.url}
+                  src={toSpotifyEmbedUrl(embed.url)}
                   width="100%"
                   height="352"
                   frameBorder={0}
@@ -346,6 +373,9 @@ function SpotifyEmbedsSection({
         maxWidth="xl"
         container={previewMode ? sectionRef.current : undefined}
         disablePortal={previewMode}
+        disableEnforceFocus={previewMode}
+        disableAutoFocus={previewMode}
+        hideBackdrop={previewMode}
         PaperProps={{
           style: {
             background: modalBgGradient,
@@ -409,7 +439,7 @@ function SpotifyEmbedsSection({
               >
                 <iframe
                   title={embed.url}
-                  src={embed.url}
+                  src={toSpotifyEmbedUrl(embed.url)}
                   width="100%"
                   height="352"
                   frameBorder={0}

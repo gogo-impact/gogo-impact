@@ -10,6 +10,8 @@ export { ImpactSectionTabEditor } from './ImpactSectionTabEditor';
 export { HearOurImpactTabEditor } from './HearOurImpactTabEditor';
 export { TestimonialsTabEditor } from './TestimonialsTabEditor';
 export { NationalImpactTabEditor } from './NationalImpactTabEditor';
+export { PlaceAutocomplete } from './PlaceAutocomplete';
+export type { PlaceSuggestion, PlaceAutocompleteProps } from './PlaceAutocomplete';
 export { 
   GradientEditor, 
   parseGradientString, 
