@@ -372,7 +372,8 @@ function FooterSection({ previewMode = false, footerOverride }: FooterProps) {
             </MailingAddressSection>
           )}
 
-          {newsletter.enabled && (
+          {/* Newsletter disabled - functionality not implemented. Re-enable by removing `false &&` below */}
+          {false && newsletter.enabled && (
             <NewsletterSection>
               <NewsletterTitle $color={newsletter.titleColor ?? undefined}>
                 {newsletter.title || 'Join Our Newsletter'}

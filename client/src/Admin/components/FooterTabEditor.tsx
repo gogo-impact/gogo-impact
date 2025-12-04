@@ -1034,93 +1034,98 @@ export function FooterTabEditor({
       </Grid>
 
       {/* ─────────────────────────────────────────────────────────────────────── */}
-      {/* NEWSLETTER (OPTIONAL) */}
+      {/* NEWSLETTER (OPTIONAL) - DISABLED: functionality not implemented */}
+      {/* To re-enable, remove the `false &&` below */}
       {/* ─────────────────────────────────────────────────────────────────────── */}
-      <Grid item xs={12}>
-        <Divider sx={{ my: 2, bgcolor: 'rgba(255,255,255,0.1)' }} />
-        <Typography variant="h6" sx={{ mb: 1, color: 'rgba(255,255,255,0.9)' }}>
-          Newsletter Signup (Optional)
-        </Typography>
-      </Grid>
-
-      <Grid item xs={12}>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={newsletter.enabled}
-              onChange={(e) => updateNewsletter('enabled', e.target.checked)}
-            />
-          }
-          label="Enable newsletter signup"
-        />
-      </Grid>
-
-      {newsletter.enabled && (
+      {false && (
         <>
-          <Grid item xs={12} md={6}>
-            <CustomTextField
-              fullWidth
-              label="Title"
-              value={newsletter.title || 'Join Our Newsletter'}
-              onChange={(e) => updateNewsletter('title', e.target.value)}
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <CustomTextField
-              fullWidth
-              label="Button Text"
-              value={newsletter.buttonText || 'Sign Up'}
-              onChange={(e) => updateNewsletter('buttonText', e.target.value)}
-            />
-          </Grid>
           <Grid item xs={12}>
-            <CustomTextField
-              fullWidth
-              label="Input Placeholder"
-              value={newsletter.placeholder || 'Enter your email'}
-              onChange={(e) => updateNewsletter('placeholder', e.target.value)}
+            <Divider sx={{ my: 2, bgcolor: 'rgba(255,255,255,0.1)' }} />
+            <Typography variant="h6" sx={{ mb: 1, color: 'rgba(255,255,255,0.9)' }}>
+              Newsletter Signup (Optional)
+            </Typography>
+          </Grid>
+
+          <Grid item xs={12}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={newsletter.enabled}
+                  onChange={(e) => updateNewsletter('enabled', e.target.checked)}
+                />
+              }
+              label="Enable newsletter signup"
             />
           </Grid>
-          <Grid item xs={12}>
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={(e) => openColorPicker(e.currentTarget, 'newsletter.titleColor')}
-                sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
-              >
-                <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: newsletter.titleColor || '#fff', border: '1px solid rgba(255,255,255,0.2)' }} />
-                &nbsp;Title color
-              </Button>
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={(e) => openColorPicker(e.currentTarget, 'newsletter.buttonBgColor')}
-                sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
-              >
-                <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: newsletter.buttonBgColor || '#1946F5', border: '1px solid rgba(255,255,255,0.2)' }} />
-                &nbsp;Button BG
-              </Button>
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={(e) => openColorPicker(e.currentTarget, 'newsletter.buttonTextColor')}
-                sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
-              >
-                <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: newsletter.buttonTextColor || '#fff', border: '1px solid rgba(255,255,255,0.2)' }} />
-                &nbsp;Button text
-              </Button>
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={(e) => openColorPicker(e.currentTarget, 'newsletter.inputBgColor')}
-                sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
-              >
-                <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: newsletter.inputBgColor || 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.2)' }} />
-                &nbsp;Input BG
-              </Button>
-            </Box>
-          </Grid>
+
+          {newsletter.enabled && (
+            <>
+              <Grid item xs={12} md={6}>
+                <CustomTextField
+                  fullWidth
+                  label="Title"
+                  value={newsletter.title || 'Join Our Newsletter'}
+                  onChange={(e) => updateNewsletter('title', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <CustomTextField
+                  fullWidth
+                  label="Button Text"
+                  value={newsletter.buttonText || 'Sign Up'}
+                  onChange={(e) => updateNewsletter('buttonText', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <CustomTextField
+                  fullWidth
+                  label="Input Placeholder"
+                  value={newsletter.placeholder || 'Enter your email'}
+                  onChange={(e) => updateNewsletter('placeholder', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={(e) => openColorPicker(e.currentTarget, 'newsletter.titleColor')}
+                    sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
+                  >
+                    <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: newsletter.titleColor || '#fff', border: '1px solid rgba(255,255,255,0.2)' }} />
+                    &nbsp;Title color
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={(e) => openColorPicker(e.currentTarget, 'newsletter.buttonBgColor')}
+                    sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
+                  >
+                    <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: newsletter.buttonBgColor || '#1946F5', border: '1px solid rgba(255,255,255,0.2)' }} />
+                    &nbsp;Button BG
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={(e) => openColorPicker(e.currentTarget, 'newsletter.buttonTextColor')}
+                    sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
+                  >
+                    <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: newsletter.buttonTextColor || '#fff', border: '1px solid rgba(255,255,255,0.2)' }} />
+                    &nbsp;Button text
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={(e) => openColorPicker(e.currentTarget, 'newsletter.inputBgColor')}
+                    sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
+                  >
+                    <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: newsletter.inputBgColor || 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.2)' }} />
+                    &nbsp;Input BG
+                  </Button>
+                </Box>
+              </Grid>
+            </>
+          )}
         </>
       )}
 
