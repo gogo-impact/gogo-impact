@@ -1,13 +1,61 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { Reveal } from '../../animations';
 import COLORS from '../../assets/colors';
+import { FlexBContent, fetchFlexBContent } from '../services/impact.api';
 
-const Wrapper = styled.section`
+interface FlexBProps {
+  previewMode?: boolean;
+  flexBOverride?: FlexBContent | null;
+}
+
+interface WrapperProps {
+  $bgGradient?: string;
+  $primaryColor?: string;
+  $textColor?: string;
+  $labelTextColor?: string;
+  $headlineColor?: string;
+  $leadParagraphColor?: string;
+  $bodyTextColor?: string;
+  $pullQuoteBgColor?: string;
+  $pullQuoteTextColor?: string;
+  $pullQuoteAuthorColor?: string;
+  $sidebarBgColor?: string;
+  $sidebarBorderColor?: string;
+  $sidebarBorderRadius?: number;
+  $sidebarImageBorderRadius?: number;
+  $sidebarTitleColor?: string;
+  $bulletTextColor?: string;
+  $bulletMarkerColor?: string;
+  $keyTakeawayBgColor?: string;
+  $keyTakeawayTextColor?: string;
+  $keyTakeawayBorderRadius?: number;
+}
+
+const Wrapper = styled.section<WrapperProps>`
   padding: 8rem 0;
-  background: #141414; /* Slightly lighter/different shade than FlexA */
-  color: #e0e0e0;
-  --section-underline: ${COLORS.gogo_purple};
+  background: ${(p) => p.$bgGradient || '#141414'};
+  --text-color: ${(p) => p.$textColor || '#e0e0e0'};
+  color: var(--text-color);
+  --section-underline: ${(p) => p.$primaryColor || COLORS.gogo_purple};
+  --primary-color: ${(p) => p.$primaryColor || COLORS.gogo_purple};
+  --label-text-color: ${(p) => p.$labelTextColor || '#fff'};
+  --headline-color: ${(p) => p.$headlineColor || 'var(--text-color)'};
+  --lead-paragraph-color: ${(p) => p.$leadParagraphColor || 'var(--text-color)'};
+  --body-text-color: ${(p) => p.$bodyTextColor || 'var(--text-color)'};
+  --pull-quote-bg-color: ${(p) => p.$pullQuoteBgColor || 'rgba(124, 77, 255, 0.1)'};
+  --pull-quote-text-color: ${(p) => p.$pullQuoteTextColor || 'var(--text-color)'};
+  --pull-quote-author-color: ${(p) => p.$pullQuoteAuthorColor || COLORS.gogo_purple};
+  --sidebar-bg-color: ${(p) => p.$sidebarBgColor || '#1a1a1a'};
+  --sidebar-border-color: ${(p) => p.$sidebarBorderColor || 'rgba(255, 255, 255, 0.08)'};
+  --sidebar-border-radius: ${(p) => p.$sidebarBorderRadius ?? 16}px;
+  --sidebar-image-border-radius: ${(p) => p.$sidebarImageBorderRadius ?? 12}px;
+  --sidebar-title-color: ${(p) => p.$sidebarTitleColor || 'var(--text-color)'};
+  --bullet-text-color: ${(p) => p.$bulletTextColor || 'var(--text-color)'};
+  --bullet-marker-color: ${(p) => p.$bulletMarkerColor || COLORS.gogo_purple};
+  --key-takeaway-bg-color: ${(p) => p.$keyTakeawayBgColor || COLORS.gogo_purple};
+  --key-takeaway-text-color: ${(p) => p.$keyTakeawayTextColor || '#fff'};
+  --key-takeaway-border-radius: ${(p) => p.$keyTakeawayBorderRadius ?? 12}px;
 `;
 
 const Container = styled.div`
@@ -42,8 +90,8 @@ const Label = styled.span`
   letter-spacing: 0.1em;
   text-transform: uppercase;
   font-size: 0.75rem;
-  background: ${COLORS.gogo_purple};
-  color: #fff;
+  background: var(--primary-color, ${COLORS.gogo_purple});
+  color: var(--label-text-color, #fff);
   margin-bottom: 1.5rem;
 `;
 
@@ -51,14 +99,14 @@ const Headline = styled.h2`
   font-size: clamp(2rem, 4vw, 3.5rem);
   font-weight: 800;
   line-height: 1.1;
-  color: #fff;
+  color: var(--headline-color);
   margin-bottom: 2rem;
 `;
 
 const LeadParagraph = styled.p`
   font-size: 1.25rem;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--lead-paragraph-color);
   margin-bottom: 2rem;
   font-weight: 300;
 `;
@@ -66,7 +114,7 @@ const LeadParagraph = styled.p`
 const BodyText = styled.div`
   font-size: 1.05rem;
   line-height: 1.8;
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--body-text-color);
 
   p {
     margin-bottom: 1.5rem;
@@ -76,11 +124,11 @@ const BodyText = styled.div`
 const PullQuote = styled.blockquote`
   margin: 3rem -2rem 3rem 0;
   padding: 2rem;
-  background: linear-gradient(to right, rgba(124, 77, 255, 0.1), transparent);
-  border-left: 4px solid ${COLORS.gogo_purple};
+  background: linear-gradient(to right, var(--pull-quote-bg-color), transparent);
+  border-left: 4px solid var(--primary-color, ${COLORS.gogo_purple});
   font-size: 1.5rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--pull-quote-text-color);
   font-style: italic;
   line-height: 1.4;
 
@@ -93,7 +141,7 @@ const QuoteAuthor = styled.cite`
   display: block;
   margin-top: 1rem;
   font-size: 0.9rem;
-  color: ${COLORS.gogo_purple};
+  color: var(--pull-quote-author-color, ${COLORS.gogo_purple});
   font-style: normal;
   font-weight: 700;
   text-transform: uppercase;
@@ -101,9 +149,9 @@ const QuoteAuthor = styled.cite`
 `;
 
 const SidebarBox = styled.div`
-  background: #1a1a1a;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+  background: var(--sidebar-bg-color, #1a1a1a);
+  border: 1px solid var(--sidebar-border-color, rgba(255, 255, 255, 0.08));
+  border-radius: var(--sidebar-border-radius, 16px);
   padding: 2rem;
   margin-bottom: 2rem;
 `;
@@ -111,7 +159,7 @@ const SidebarBox = styled.div`
 const SidebarTitle = styled.h3`
   font-size: 1rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--sidebar-title-color);
   margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
@@ -122,7 +170,7 @@ const SidebarTitle = styled.h3`
     display: block;
     width: 4px;
     height: 1.2em;
-    background: ${COLORS.gogo_purple};
+    background: var(--primary-color, ${COLORS.gogo_purple});
     border-radius: 2px;
   }
 `;
@@ -136,7 +184,7 @@ const BulletList = styled.ul`
     position: relative;
     padding-left: 1.5rem;
     margin-bottom: 1rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--bullet-text-color);
     font-size: 0.95rem;
     line-height: 1.5;
 
@@ -144,17 +192,17 @@ const BulletList = styled.ul`
       content: '•';
       position: absolute;
       left: 0;
-      color: ${COLORS.gogo_purple};
+      color: var(--bullet-marker-color, ${COLORS.gogo_purple});
       font-weight: bold;
     }
   }
 `;
 
 const KeyTakeaway = styled.div`
-  background: ${COLORS.gogo_purple};
-  color: #fff;
+  background: var(--key-takeaway-bg-color, ${COLORS.gogo_purple});
+  color: var(--key-takeaway-text-color, #fff);
   padding: 1.5rem;
-  border-radius: 12px;
+  border-radius: var(--key-takeaway-border-radius, 12px);
   font-weight: 600;
   line-height: 1.5;
   font-size: 1.1rem;
@@ -165,57 +213,134 @@ const ImageContainer = styled.div<{ $src: string }>`
   width: 100%;
   height: 300px;
   background: url('${(p) => p.$src}') center/cover no-repeat;
-  border-radius: 12px;
+  border-radius: var(--sidebar-image-border-radius, 12px);
   margin-bottom: 2rem;
 `;
 
-function FlexB(): JSX.Element {
+function FlexB({ previewMode = false, flexBOverride }: FlexBProps): JSX.Element | null {
+  const [internalData, setInternalData] = useState<FlexBContent | null>(null);
+  const [loading, setLoading] = useState(!previewMode);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!previewMode) {
+      const loadContent = async () => {
+        try {
+          setLoading(true);
+          const content = await fetchFlexBContent();
+          if (content) {
+            setInternalData(content);
+          } else {
+            setError('Content not found. Please create it in the admin panel.');
+          }
+        } catch (err) {
+          console.error('Failed to fetch FlexB content:', err);
+          setError('Failed to load content.');
+        } finally {
+          setLoading(false);
+        }
+      };
+      loadContent();
+    }
+  }, [previewMode]);
+
+  const data = previewMode ? flexBOverride : internalData;
+
+  if (loading) {
+    return (
+      <Wrapper>
+        <Container>
+          <div style={{ textAlign: 'center', padding: '4rem', color: 'rgba(255,255,255,0.6)' }}>
+            Loading section...
+          </div>
+        </Container>
+      </Wrapper>
+    );
+  }
+
+  if (error) {
+    return (
+      <Wrapper>
+        <Container>
+          <div style={{ textAlign: 'center', padding: '4rem', color: '#ff6b6b' }}>
+            {error}
+          </div>
+        </Container>
+      </Wrapper>
+    );
+  }
+
+  if (!data || data.visible === false) {
+    return null;
+  }
+
+  const header = data.header ?? { label: '', headline: '' };
+  const pullQuote = data.pullQuote ?? { text: '', author: '', insertAfterParagraph: 1 };
+  const sidebar = data.sidebar ?? { imageUrl: '', imageAlt: '', title: '', bullets: [] };
+  const keyTakeaway = data.keyTakeaway ?? { text: '' };
+  const bodyParagraphs = data.bodyParagraphs ?? [];
+
   return (
-    <Wrapper>
+    <Wrapper
+      aria-label={data.ariaLabel || undefined}
+      $bgGradient={data.sectionBgGradient || undefined}
+      $primaryColor={data.primaryColor || undefined}
+      $textColor={data.textColor || undefined}
+      $labelTextColor={data.labelTextColor || undefined}
+      $headlineColor={data.headlineColor || undefined}
+      $leadParagraphColor={data.leadParagraphColor || undefined}
+      $bodyTextColor={data.bodyTextColor || undefined}
+      $pullQuoteBgColor={data.pullQuoteBgColor || undefined}
+      $pullQuoteTextColor={data.pullQuoteTextColor || undefined}
+      $pullQuoteAuthorColor={data.pullQuoteAuthorColor || undefined}
+      $sidebarBgColor={data.sidebarBgColor || undefined}
+      $sidebarBorderColor={data.sidebarBorderColor || undefined}
+      $sidebarBorderRadius={data.sidebarBorderRadius ?? undefined}
+      $sidebarImageBorderRadius={data.sidebarImageBorderRadius ?? undefined}
+      $sidebarTitleColor={data.sidebarTitleColor || undefined}
+      $bulletTextColor={data.bulletTextColor || undefined}
+      $bulletMarkerColor={data.bulletMarkerColor || undefined}
+      $keyTakeawayBgColor={data.keyTakeawayBgColor || undefined}
+      $keyTakeawayTextColor={data.keyTakeawayTextColor || undefined}
+      $keyTakeawayBorderRadius={data.keyTakeawayBorderRadius ?? undefined}
+    >
       <Container>
-        <Reveal variant="fade-up">
+        <Reveal variant="fade-up" enabled={data.animationsEnabled ?? true}>
           <Grid>
             <MainContent>
-              <Label>Case Study: Restorative Justice</Label>
-              <Headline>Rewriting the Narrative: A Different Outlook on Life</Headline>
-              <LeadParagraph>
-                For youth involved in the justice system, the stories told about them are often written by others—judges, case workers, and society at large. But what happens when you hand them the pen?
-              </LeadParagraph>
+              {header.label && <Label>{header.label}</Label>}
+              {header.headline && <Headline>{header.headline}</Headline>}
+              {data.leadParagraph && <LeadParagraph>{data.leadParagraph}</LeadParagraph>}
               
               <BodyText>
-                <p>
-                  Our "Restorative Storytelling" initiative operates on a fundamental premise: agency is the first step toward healing. Through songwriting, production, and performance, students aren't just learning music; they are authoring counter-narratives that center their humanity, their struggles, and their potential.
-                </p>
-                <p>
-                  Sessions are designed to balance technical craft with deep reflection. A typical workshop might begin with a "check-in" circle, moving into lyric writing prompts that encourage vulnerability, and ending with beat production that channels that energy into sound.
-                </p>
-                
-                <PullQuote>
-                  “I didn’t think anyone wanted to hear me. I thought my voice was just noise. Now I know it matters—and I’ve got the track to prove it.”
-                  <QuoteAuthor>— Participant, Spring 2024 Cohort</QuoteAuthor>
-                </PullQuote>
-
-                <p>
-                  The impact goes beyond the music. By articulating their experiences, students develop emotional literacy and resilience. They learn to process trauma not in isolation, but in a community of creative peers and mentors who listen without judgment. This shift—from being the subject of a file to the artist of a song—can be the turning point in a young person's trajectory.
-                </p>
+                {bodyParagraphs.map((paragraph, idx) => (
+                  <React.Fragment key={idx}>
+                    <p>{paragraph}</p>
+                    {pullQuote.text && pullQuote.insertAfterParagraph === idx && (
+                      <PullQuote>
+                        "{pullQuote.text}"
+                        {pullQuote.author && <QuoteAuthor>— {pullQuote.author}</QuoteAuthor>}
+                      </PullQuote>
+                    )}
+                  </React.Fragment>
+                ))}
               </BodyText>
             </MainContent>
 
             <Sidebar>
               <SidebarBox>
-                <ImageContainer $src={'https://picsum.photos/1000/1200?random=22'} />
-                <SidebarTitle>Program Highlights</SidebarTitle>
-                <BulletList>
-                  <li>Weekly studio sessions focused on lyrical expression</li>
-                  <li>Mentor-guided co-writing and production</li>
-                  <li>Peer circles for feedback and collaborative problem solving</li>
-                  <li>Community showcases to build pride and confidence</li>
-                </BulletList>
+                {sidebar.imageUrl && <ImageContainer $src={sidebar.imageUrl} />}
+                {sidebar.title && <SidebarTitle>{sidebar.title}</SidebarTitle>}
+                {sidebar.bullets && sidebar.bullets.length > 0 && (
+                  <BulletList>
+                    {sidebar.bullets.map((bullet, idx) => (
+                      <li key={idx}>{bullet}</li>
+                    ))}
+                  </BulletList>
+                )}
               </SidebarBox>
 
-              <KeyTakeaway>
-                92% of participants reported increased confidence in expressing their emotions.
-              </KeyTakeaway>
+              {keyTakeaway.text && <KeyTakeaway>{keyTakeaway.text}</KeyTakeaway>}
             </Sidebar>
           </Grid>
         </Reveal>

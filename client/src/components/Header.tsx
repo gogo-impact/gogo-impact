@@ -12,6 +12,7 @@ import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
 import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined';
 import HandshakeOutlinedIcon from '@mui/icons-material/HandshakeOutlined';
 import MailOutlineOutlinedIcon from '@mui/icons-material/MailOutlineOutlined';
+import ViewModuleOutlinedIcon from '@mui/icons-material/ViewModuleOutlined';
 import gogoWideLogo from '../../assets/GOGO_LOGO_WIDE_WH.png';
 
 // Section IDs that participate in scroll-based navigation / URL hashes.
@@ -27,6 +28,9 @@ const SECTION_IDS: string[] = [
   'music',
   'quote',
   'locations',
+  'flex-a',
+  'flex-b',
+  'flex-c',
   'impact-levels',
   'partners',
   'footer',
@@ -35,7 +39,19 @@ const SECTION_IDS: string[] = [
 function Header(): JSX.Element {
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [activeSectionId, setActiveSectionId] = useState<string>('hero');
+  // Initialize activeSectionId from the URL hash if present
+  const [activeSectionId, setActiveSectionId] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash?.replace('#', '');
+      if (hash && SECTION_IDS.includes(hash)) {
+        return hash;
+      }
+    }
+    return 'hero';
+  });
+  // Track whether we've completed the initial hash navigation to prevent
+  // the scroll observer from overwriting the hash before the page has scrolled
+  const [initialNavigationComplete, setInitialNavigationComplete] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -80,15 +96,15 @@ function Header(): JSX.Element {
     [navigateTo],
   );
 
-  // On first load, sync the active section with any existing hash so direct
-  // links like /impact-report#financial correctly highlight the navigator.
+  // Mark initial navigation as complete after a delay that allows the page
+  // to scroll to the hash target. This prevents the scroll observer from
+  // immediately overwriting the hash before the scroll completes.
   useEffect(() => {
-    const hash = window.location.hash?.replace('#', '');
-    if (hash && SECTION_IDS.includes(hash)) {
-      setActiveSectionId(hash);
-    } else {
-      setActiveSectionId('hero');
-    }
+    // Give the page time to load data and scroll to the hash target
+    const timeout = setTimeout(() => {
+      setInitialNavigationComplete(true);
+    }, 1500); // Wait long enough for data to load and smooth scroll to complete
+    return () => clearTimeout(timeout);
   }, []);
 
   // Observe section visibility and update the active nav item as the user
@@ -96,6 +112,12 @@ function Header(): JSX.Element {
   useEffect(() => {
     // Guard against environments where window/document are not available.
     if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return;
+    }
+
+    // Don't start observing until initial navigation is complete to prevent
+    // overwriting the hash before the page has scrolled to the target section
+    if (!initialNavigationComplete) {
       return;
     }
 
@@ -185,12 +207,14 @@ function Header(): JSX.Element {
       observer.disconnect();
       window.removeEventListener('scroll', handleScroll);
     };
-  }, []);
+  }, [initialNavigationComplete]);
 
   // Whenever the active section changes (via scrolling), keep the URL hash in
   // sync so the page can be deep-linked and the back button behaves naturally.
+  // Only update the hash after initial navigation is complete to prevent
+  // overwriting the hash the user navigated to.
   useEffect(() => {
-    if (!activeSectionId) return;
+    if (!activeSectionId || !initialNavigationComplete) return;
     try {
       const newHash = `#${activeSectionId}`;
       if (window.location.hash !== newHash) {
@@ -199,7 +223,7 @@ function Header(): JSX.Element {
     } catch {
       // Ignore history errors in non-browser environments.
     }
-  }, [activeSectionId]);
+  }, [activeSectionId, initialNavigationComplete]);
 
   const navItems: Array<{ label: string; id: string; icon?: JSX.Element }> = [
     { label: 'Hero', id: 'hero' },
@@ -212,6 +236,9 @@ function Header(): JSX.Element {
     { label: 'Hear Our Impact', id: 'music' },
     { label: 'Stories of Impact', id: 'quote' },
     { label: 'Locations', id: 'locations' },
+    { label: 'Flex A', id: 'flex-a' },
+    { label: 'Flex B', id: 'flex-b' },
+    { label: 'Flex C', id: 'flex-c' },
     { label: 'Impact Levels', id: 'impact-levels' },
     { label: 'Partners', id: 'partners' },
     { label: 'Contact', id: 'footer' },
@@ -239,6 +266,10 @@ function Header(): JSX.Element {
         return <FormatQuoteOutlinedIcon fontSize="small" />;
       case 'locations':
         return <PlaceOutlinedIcon fontSize="small" />;
+      case 'flex-a':
+      case 'flex-b':
+      case 'flex-c':
+        return <ViewModuleOutlinedIcon fontSize="small" />;
       case 'impact-levels':
         return <InsightsOutlinedIcon fontSize="small" />;
       case 'partners':

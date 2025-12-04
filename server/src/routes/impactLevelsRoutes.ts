@@ -1,22 +1,22 @@
 import { Router } from 'express';
-import { findMethodBySlug, upsertMethodBySlug } from "../services/methodService.js";
+import { findImpactLevelsBySlug, upsertImpactLevelsBySlug } from "../services/impactLevelsService.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
-router.get("/impact/method", async (req, res, next) => {
+router.get("/impact/impact-levels", async (req, res, next) => {
   try {
     const slug = (req.query.slug as string) ?? "impact-report";
-    console.log("[method] GET", { slug });
-    const method = await findMethodBySlug(slug);
+    console.log("[impact-levels] GET", { slug });
+    const impactLevels = await findImpactLevelsBySlug(slug);
 
-    if (!method) {
-      console.warn("[method] GET not found", { slug });
-      return res.status(404).json({ error: "Method content not found" });
+    if (!impactLevels) {
+      console.warn("[impact-levels] GET not found", { slug });
+      return res.status(404).json({ error: "ImpactLevels content not found" });
     }
 
-    const { _id, slug: storedSlug, ...data } = method;
-    console.log("[method] GET success", {
+    const { _id, slug: storedSlug, ...data } = impactLevels;
+    console.log("[impact-levels] GET success", {
       slug,
       fields: Object.keys(data || {}),
     });
@@ -26,11 +26,11 @@ router.get("/impact/method", async (req, res, next) => {
   }
 });
 
-router.put("/impact/method", requireAuth, async (req, res, next) => {
+router.put("/impact/impact-levels", requireAuth, async (req, res, next) => {
   try {
     const slug = (req.query.slug as string) ?? "impact-report";
     const data = (req.body ?? {}) as Record<string, unknown>;
-    console.log("[method] PUT request", {
+    console.log("[impact-levels] PUT request", {
       slug,
       incomingKeys: Object.keys(data || {}),
     });
@@ -40,26 +40,25 @@ router.put("/impact/method", requireAuth, async (req, res, next) => {
       "visible",
       "animationsEnabled",
       // Background
+      "sectionBgColor",
       "sectionBgGradient",
       "glowColor1",
       "glowColor2",
       // Header
-      "title",
-      "titleGradient",
-      "subtitle",
-      "subtitleColor",
-      // Method cards
+      "header",
+      // Levels
+      "levels",
+      // Card styling
       "cardBgColor",
-      "cardBorderColor",
-      "cardTitleColor",
-      "iconGradient",
-      "methodItems",
-      // Narrative section
-      "leadText",
-      "leadTextColor",
-      "secondaryText",
-      "secondaryTextColor",
-      "secondaryBorderColor",
+      "cardHoverBgColor",
+      "amountColor",
+      "descriptionColor",
+      // CTA
+      "cta",
+      // Sound wave
+      "soundWave",
+      // Accessibility
+      "ariaLabel",
     ];
 
     const sanitized: Record<string, unknown> = {};
@@ -67,14 +66,14 @@ router.put("/impact/method", requireAuth, async (req, res, next) => {
       if (key in data) sanitized[key] = (data as any)[key];
     }
 
-    console.log("[method] PUT sanitized", {
+    console.log("[impact-levels] PUT sanitized", {
       slug,
       sanitizedKeys: Object.keys(sanitized),
     });
 
-    const saved = await upsertMethodBySlug(slug, sanitized as any);
+    const saved = await upsertImpactLevelsBySlug(slug, sanitized as any);
     const { _id, slug: storedSlug, ...response } = saved ?? {};
-    console.log("[method] PUT success", {
+    console.log("[impact-levels] PUT success", {
       slug,
       updatedFields: Object.keys(response || {}),
     });
@@ -85,6 +84,4 @@ router.put("/impact/method", requireAuth, async (req, res, next) => {
 });
 
 export default router;
-
-
 

@@ -83,3 +83,4 @@ export async function upsertHearOurImpactBySlug(slug: string, data: HearOurImpac
   return saved as HearOurImpactDocument;
 }
 
+

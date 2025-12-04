@@ -1,0 +1,50 @@
+{
+  "type": "FlexBSection",
+  "visible": true,
+  "animationsEnabled": true,
+
+  "sectionBgColor": "#141414",
+  "sectionBgGradient": null,
+  "sectionBgImage": null,
+
+  "primaryColor": "#7C4DFF",
+  "textColor": "rgba(255, 255, 255, 0.75)",
+
+  "header": {
+    "label": "Case Study: Restorative Justice",
+    "headline": "Rewriting the Narrative: A Different Outlook on Life"
+  },
+
+  "leadParagraph": "For youth involved in the justice system, the stories told about them are often written by others—judges, case workers, and society at large. But what happens when you hand them the pen?",
+
+  "bodyParagraphs": [
+    "Our \"Restorative Storytelling\" initiative operates on a fundamental premise: agency is the first step toward healing. Through songwriting, production, and performance, students aren't just learning music; they are authoring counter-narratives that center their humanity, their struggles, and their potential.",
+    "Sessions are designed to balance technical craft with deep reflection. A typical workshop might begin with a \"check-in\" circle, moving into lyric writing prompts that encourage vulnerability, and ending with beat production that channels that energy into sound.",
+    "The impact goes beyond the music. By articulating their experiences, students develop emotional literacy and resilience. They learn to process trauma not in isolation, but in a community of creative peers and mentors who listen without judgment. This shift—from being the subject of a file to the artist of a song—can be the turning point in a young person's trajectory."
+  ],
+
+  "pullQuote": {
+    "text": "I didn't think anyone wanted to hear me. I thought my voice was just noise. Now I know it matters—and I've got the track to prove it.",
+    "author": "Participant, Spring 2024 Cohort",
+    "insertAfterParagraph": 1
+  },
+
+  "sidebar": {
+    "imageUrl": "https://picsum.photos/1000/1200?random=22",
+    "imageAlt": "Program participant",
+    "title": "Program Highlights",
+    "bullets": [
+      "Weekly studio sessions focused on lyrical expression",
+      "Mentor-guided co-writing and production",
+      "Peer circles for feedback and collaborative problem solving",
+      "Community showcases to build pride and confidence"
+    ]
+  },
+
+  "keyTakeaway": {
+    "text": "92% of participants reported increased confidence in expressing their emotions."
+  },
+
+  "ariaLabel": "Case study section"
+}
+

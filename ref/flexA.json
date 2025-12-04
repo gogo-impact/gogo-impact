@@ -1,0 +1,49 @@
+{
+  "type": "FlexASection",
+  "visible": true,
+  "animationsEnabled": true,
+
+  "sectionBgColor": "#0f0f0f",
+  "sectionBgGradient": "linear-gradient(180deg, #0f0f0f 0%, #0a0a0a 100%)",
+  "sectionBgImage": null,
+
+  "primaryColor": "#FDE047",
+  "textColor": "rgba(255, 255, 255, 0.85)",
+
+  "header": {
+    "label": "Program Spotlight",
+    "title": "The Heartbeat of",
+    "titleHighlight": "Overtown",
+    "subtitle": "How a historic neighborhood became the stage for our most ambitious summer program yet."
+  },
+
+  "heroImage": {
+    "url": "https://picsum.photos/1400/800?random=21",
+    "alt": "Program spotlight hero image"
+  },
+
+  "paragraphs": [
+    "A staple of Miami's historic Overtown neighborhood, the Overtown Youth Center (OYC) has long been a hub for community empowerment. But this past summer, the halls echoed with a new kind of energy. With a program launch in December 2023, Guitars Over Guns mentors stepped in to facilitate programming that bridged the gap between after-school structure and summer freedom.",
+    "The goal was simple but profound: give students the tools to tell their own stories. Over the course of eight weeks, the studio became a sanctuary. Students who had never touched an instrument were suddenly laying down tracks; shy voices found their volume behind the microphone.",
+    "During the summer camp, students created original songs and emboldened one another through friendly competition. The process culminated in two of the catchiest hits of the summer, tracks that didn't just stay in the classroom but were performed for the entire community.",
+    "Alongside songwriting and performance fundamentals, mentors embedded social-emotional learning throughout every session. Students practiced goal-setting, collaboration, and reflective critique—skills that transfer far beyond music into classrooms, careers, and their communities. The Overtown program stands as a testament to what happens when you combine resources, mentorship, and the raw talent of Miami's youth."
+  ],
+
+  "quote": {
+    "text": "The studio became our safe space. It's where we learned to listen to each other, to lead, and to be heard without judgment.",
+    "author": "OYC Student, Class of 2024",
+    "insertAfterParagraph": 1
+  },
+
+  "sidebar": {
+    "title": "By the Numbers",
+    "stats": [
+      { "id": "mentors", "number": "18", "label": "Active Mentors" },
+      { "id": "songs", "number": "42", "label": "Original Songs" },
+      { "id": "showcases", "number": "12", "label": "Live Showcases" },
+      { "id": "satisfaction", "number": "100%", "label": "Student Satisfaction" }
+    ]
+  },
+
+  "ariaLabel": "Program spotlight section"
+}

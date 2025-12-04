@@ -10,6 +10,10 @@ export { ImpactSectionTabEditor } from './ImpactSectionTabEditor';
 export { HearOurImpactTabEditor } from './HearOurImpactTabEditor';
 export { TestimonialsTabEditor } from './TestimonialsTabEditor';
 export { NationalImpactTabEditor } from './NationalImpactTabEditor';
+export { FlexATabEditor } from './FlexATabEditor';
+export { FlexBTabEditor } from './FlexBTabEditor';
+export { FlexCTabEditor } from './FlexCTabEditor';
+export { ImpactLevelsTabEditor } from './ImpactLevelsTabEditor';
 export { PlaceAutocomplete } from './PlaceAutocomplete';
 export type { PlaceSuggestion, PlaceAutocompleteProps } from './PlaceAutocomplete';
 export { 

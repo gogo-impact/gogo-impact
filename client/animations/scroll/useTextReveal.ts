@@ -245,3 +245,4 @@ export function useTextReveal(
 
 export default useTextReveal;
 
+

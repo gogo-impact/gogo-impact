@@ -1433,6 +1433,543 @@ export async function saveNationalImpactContent(
   }
 }
 
+// =========================
+// FlexA content interfaces
+// =========================
+export interface FlexAStat {
+  id: string;
+  number: string;
+  label: string;
+}
+
+export interface FlexAQuote {
+  text: string;
+  author: string;
+  insertAfterParagraph: number;
+}
+
+export interface FlexASidebar {
+  title: string;
+  stats: FlexAStat[];
+}
+
+export interface FlexAHeader {
+  label: string;
+  title: string;
+  titleHighlight: string;
+  subtitle: string;
+}
+
+export interface FlexAHeroImage {
+  url: string;
+  alt: string;
+}
+
+export interface FlexAContent {
+  // Section visibility
+  visible?: boolean | null;
+  animationsEnabled?: boolean | null;
+
+  // Section background
+  sectionBgColor?: string | null;
+  sectionBgGradient?: string | null;
+  sectionBgImage?: string | null;
+
+  // Colors
+  primaryColor?: string | null;
+  textColor?: string | null;
+
+  // Header
+  header?: FlexAHeader | null;
+
+  // Label/Badge styling
+  labelTextColor?: string | null;
+
+  // Headline styling
+  headlineColor?: string | null;
+
+  // Subtitle styling
+  subtitleColor?: string | null;
+
+  // Hero image
+  heroImage?: FlexAHeroImage | null;
+
+  // Hero image styling
+  heroImageBorderRadius?: number | null;
+  heroOverlayColor?: string | null;
+
+  // Article content
+  paragraphs?: string[] | null;
+
+  // Quote
+  quote?: FlexAQuote | null;
+
+  // Quote styling
+  quoteBgColor?: string | null;
+  quoteTextColor?: string | null;
+  quoteBorderRadius?: number | null;
+  quoteAuthorColor?: string | null;
+
+  // Sidebar
+  sidebar?: FlexASidebar | null;
+
+  // Sidebar styling
+  sidebarBgColor?: string | null;
+  sidebarBorderColor?: string | null;
+  sidebarBorderRadius?: number | null;
+  sidebarTitleColor?: string | null;
+  sidebarTitleBorderColor?: string | null;
+  statNumberColor?: string | null;
+  statLabelColor?: string | null;
+
+  // Accessibility
+  ariaLabel?: string | null;
+}
+
+// =========================
+// FlexA content API
+// =========================
+export async function fetchFlexAContent(): Promise<FlexAContent | null> {
+  try {
+    const url = `${API_BASE_URL}/api/impact/flex-a`;
+    console.log('[client][flex-a] GET', { url });
+    const response = await fetch(url, {
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      if (response.status === 404) {
+        console.log('[client][flex-a] GET not found (404) - data not yet created');
+        return null;
+      }
+      console.warn('[client][flex-a] GET failed', { status: response.status });
+      return null;
+    }
+    const payload = (await response.json()) as HeroApiResponse<FlexAContent>;
+    console.log('[client][flex-a] GET success', { fields: Object.keys(payload?.data || {}) });
+    return payload?.data ?? null;
+  } catch (error) {
+    console.error('[ImpactReport] Failed to fetch flex-a content', error);
+    return null;
+  }
+}
+
+export async function saveFlexAContent(
+  data: Record<string, unknown>,
+  options?: { slug?: string },
+): Promise<FlexAContent | null> {
+  try {
+    const url = new URL(`${API_BASE_URL}/api/impact/flex-a`);
+    if (options?.slug) url.searchParams.set('slug', options.slug);
+    console.log('[client][flex-a] PUT', { url: url.toString(), keys: Object.keys(data || {}) });
+    const response = await fetch(url.toString(), {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      console.warn('[client][flex-a] PUT failed', { status: response.status });
+      return null;
+    }
+    const payload = (await response.json()) as HeroApiResponse<FlexAContent>;
+    console.log('[client][flex-a] PUT success', { fields: Object.keys(payload?.data || {}) });
+    return payload?.data ?? null;
+  } catch (error) {
+    console.error('[ImpactReport] Failed to save flex-a content', error);
+    return null;
+  }
+}
+
+// =========================
+// FlexB content interfaces
+// =========================
+export interface FlexBHeader {
+  label: string;
+  headline: string;
+}
+
+export interface FlexBPullQuote {
+  text: string;
+  author: string;
+  insertAfterParagraph: number;
+}
+
+export interface FlexBSidebar {
+  imageUrl: string;
+  imageAlt: string;
+  title: string;
+  bullets: string[];
+}
+
+export interface FlexBKeyTakeaway {
+  text: string;
+}
+
+export interface FlexBContent {
+  // Section visibility
+  visible?: boolean | null;
+  animationsEnabled?: boolean | null;
+
+  // Section background
+  sectionBgColor?: string | null;
+  sectionBgGradient?: string | null;
+  sectionBgImage?: string | null;
+
+  // Colors
+  primaryColor?: string | null;
+  textColor?: string | null;
+
+  // Header styling
+  labelTextColor?: string | null;
+  headlineColor?: string | null;
+
+  // Text styling
+  leadParagraphColor?: string | null;
+  bodyTextColor?: string | null;
+
+  // Pull quote styling
+  pullQuoteBgColor?: string | null;
+  pullQuoteTextColor?: string | null;
+  pullQuoteAuthorColor?: string | null;
+
+  // Sidebar styling
+  sidebarBgColor?: string | null;
+  sidebarBorderColor?: string | null;
+  sidebarBorderRadius?: number | null;
+  sidebarImageBorderRadius?: number | null;
+  sidebarTitleColor?: string | null;
+  bulletTextColor?: string | null;
+  bulletMarkerColor?: string | null;
+
+  // Key takeaway styling
+  keyTakeawayBgColor?: string | null;
+  keyTakeawayTextColor?: string | null;
+  keyTakeawayBorderRadius?: number | null;
+
+  // Header
+  header?: FlexBHeader | null;
+
+  // Main content
+  leadParagraph?: string | null;
+  bodyParagraphs?: string[] | null;
+
+  // Pull quote
+  pullQuote?: FlexBPullQuote | null;
+
+  // Sidebar
+  sidebar?: FlexBSidebar | null;
+
+  // Key takeaway
+  keyTakeaway?: FlexBKeyTakeaway | null;
+
+  // Accessibility
+  ariaLabel?: string | null;
+}
+
+// =========================
+// FlexB content API
+// =========================
+export async function fetchFlexBContent(): Promise<FlexBContent | null> {
+  try {
+    const url = `${API_BASE_URL}/api/impact/flex-b`;
+    console.log('[client][flex-b] GET', { url });
+    const response = await fetch(url, {
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      if (response.status === 404) {
+        console.log('[client][flex-b] GET not found (404) - data not yet created');
+        return null;
+      }
+      console.warn('[client][flex-b] GET failed', { status: response.status });
+      return null;
+    }
+    const payload = (await response.json()) as HeroApiResponse<FlexBContent>;
+    console.log('[client][flex-b] GET success', { fields: Object.keys(payload?.data || {}) });
+    return payload?.data ?? null;
+  } catch (error) {
+    console.error('[ImpactReport] Failed to fetch flex-b content', error);
+    return null;
+  }
+}
+
+export async function saveFlexBContent(
+  data: Record<string, unknown>,
+  options?: { slug?: string },
+): Promise<FlexBContent | null> {
+  try {
+    const url = new URL(`${API_BASE_URL}/api/impact/flex-b`);
+    if (options?.slug) url.searchParams.set('slug', options.slug);
+    console.log('[client][flex-b] PUT', { url: url.toString(), keys: Object.keys(data || {}) });
+    const response = await fetch(url.toString(), {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      console.warn('[client][flex-b] PUT failed', { status: response.status });
+      return null;
+    }
+    const payload = (await response.json()) as HeroApiResponse<FlexBContent>;
+    console.log('[client][flex-b] PUT success', { fields: Object.keys(payload?.data || {}) });
+    return payload?.data ?? null;
+  } catch (error) {
+    console.error('[ImpactReport] Failed to save flex-b content', error);
+    return null;
+  }
+}
+
+// =========================
+// FlexC content interfaces
+// =========================
+export interface FlexCHeader {
+  label: string;
+  title: string;
+  subtitle: string;
+}
+
+export interface FlexCPoster {
+  imageUrl: string;
+  imageAlt: string;
+  videoUrl: string | null;
+  showPlayButton: boolean;
+}
+
+export interface FlexCDirectorsNotes {
+  label: string;
+  paragraphs: string[];
+}
+
+export interface FlexCCredit {
+  id: string;
+  role: string;
+  value: string;
+}
+
+export interface FlexCContent {
+  // Section visibility
+  visible?: boolean | null;
+  animationsEnabled?: boolean | null;
+
+  // Section background
+  sectionBgColor?: string | null;
+  sectionBgGradient?: string | null;
+  sectionBgImage?: string | null;
+
+  // Colors
+  primaryColor?: string | null;
+
+  // Title styling
+  titleColor?: string | null;
+  subtitleColor?: string | null;
+
+  // Notes styling
+  notesTextColor?: string | null;
+
+  // Credits styling
+  creditRoleColor?: string | null;
+  creditValueColor?: string | null;
+
+  // Border/bar styling
+  borderColor?: string | null;
+
+  // Header
+  header?: FlexCHeader | null;
+
+  // Poster
+  poster?: FlexCPoster | null;
+
+  // Director's notes
+  directorsNotes?: FlexCDirectorsNotes | null;
+
+  // Credits
+  credits?: FlexCCredit[] | null;
+
+  // Accessibility
+  ariaLabel?: string | null;
+}
+
+// =========================
+// FlexC content API
+// =========================
+export async function fetchFlexCContent(): Promise<FlexCContent | null> {
+  try {
+    const url = `${API_BASE_URL}/api/impact/flex-c`;
+    console.log('[client][flex-c] GET', { url });
+    const response = await fetch(url, {
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      if (response.status === 404) {
+        console.log('[client][flex-c] GET not found (404) - data not yet created');
+        return null;
+      }
+      console.warn('[client][flex-c] GET failed', { status: response.status });
+      return null;
+    }
+    const payload = (await response.json()) as HeroApiResponse<FlexCContent>;
+    console.log('[client][flex-c] GET success', { fields: Object.keys(payload?.data || {}) });
+    return payload?.data ?? null;
+  } catch (error) {
+    console.error('[ImpactReport] Failed to fetch flex-c content', error);
+    return null;
+  }
+}
+
+export async function saveFlexCContent(
+  data: Record<string, unknown>,
+  options?: { slug?: string },
+): Promise<FlexCContent | null> {
+  try {
+    const url = new URL(`${API_BASE_URL}/api/impact/flex-c`);
+    if (options?.slug) url.searchParams.set('slug', options.slug);
+    console.log('[client][flex-c] PUT', { url: url.toString(), keys: Object.keys(data || {}) });
+    const response = await fetch(url.toString(), {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      console.warn('[client][flex-c] PUT failed', { status: response.status });
+      return null;
+    }
+    const payload = (await response.json()) as HeroApiResponse<FlexCContent>;
+    console.log('[client][flex-c] PUT success', { fields: Object.keys(payload?.data || {}) });
+    return payload?.data ?? null;
+  } catch (error) {
+    console.error('[ImpactReport] Failed to save flex-c content', error);
+    return null;
+  }
+}
+
+// =========================
+// ImpactLevels content interfaces
+// =========================
+export interface ImpactLevelsHeader {
+  title: string;
+  titleGradient: string;
+  subtitle: string;
+  subtitleColor: string;
+}
+
+export interface ImpactLevel {
+  id: string;
+  imageUrl: string;
+  amount: string;
+  description: string;
+}
+
+export interface ImpactLevelsCTA {
+  text: string;
+  url: string;
+  bgColor: string;
+  textColor: string;
+  hoverBgColor: string;
+}
+
+export interface ImpactLevelsSoundWave {
+  enabled: boolean;
+  color1: string;
+  color2: string;
+}
+
+export interface ImpactLevelsContent {
+  // Section visibility
+  visible?: boolean | null;
+  animationsEnabled?: boolean | null;
+
+  // Section background
+  sectionBgColor?: string | null;
+  sectionBgGradient?: string | null;
+  glowColor1?: string | null;
+  glowColor2?: string | null;
+
+  // Header
+  header?: ImpactLevelsHeader | null;
+
+  // Levels (cards)
+  levels?: ImpactLevel[] | null;
+
+  // Card styling
+  cardBgColor?: string | null;
+  cardHoverBgColor?: string | null;
+  amountColor?: string | null;
+  descriptionColor?: string | null;
+
+  // CTA
+  cta?: ImpactLevelsCTA | null;
+
+  // Sound wave
+  soundWave?: ImpactLevelsSoundWave | null;
+
+  // Accessibility
+  ariaLabel?: string | null;
+}
+
+// =========================
+// ImpactLevels content API
+// =========================
+export async function fetchImpactLevelsContent(): Promise<ImpactLevelsContent | null> {
+  try {
+    const url = `${API_BASE_URL}/api/impact/impact-levels`;
+    console.log('[client][impact-levels] GET', { url });
+    const response = await fetch(url, {
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      if (response.status === 404) {
+        console.log('[client][impact-levels] GET not found (404) - data not yet created');
+        return null;
+      }
+      console.warn('[client][impact-levels] GET failed', { status: response.status });
+      return null;
+    }
+    const payload = (await response.json()) as HeroApiResponse<ImpactLevelsContent>;
+    console.log('[client][impact-levels] GET success', { fields: Object.keys(payload?.data || {}) });
+    return payload?.data ?? null;
+  } catch (error) {
+    console.error('[ImpactReport] Failed to fetch impact-levels content', error);
+    return null;
+  }
+}
+
+export async function saveImpactLevelsContent(
+  data: Record<string, unknown>,
+  options?: { slug?: string },
+): Promise<ImpactLevelsContent | null> {
+  try {
+    const url = new URL(`${API_BASE_URL}/api/impact/impact-levels`);
+    if (options?.slug) url.searchParams.set('slug', options.slug);
+    console.log('[client][impact-levels] PUT', { url: url.toString(), keys: Object.keys(data || {}) });
+    const response = await fetch(url.toString(), {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      console.warn('[client][impact-levels] PUT failed', { status: response.status });
+      return null;
+    }
+    const payload = (await response.json()) as HeroApiResponse<ImpactLevelsContent>;
+    console.log('[client][impact-levels] PUT success', { fields: Object.keys(payload?.data || {}) });
+    return payload?.data ?? null;
+  } catch (error) {
+    console.error('[ImpactReport] Failed to save impact-levels content', error);
+    return null;
+  }
+}
+
 // Validate and geocode an address
 export async function validateAddress(address: string): Promise<AddressValidationResult> {
   try {

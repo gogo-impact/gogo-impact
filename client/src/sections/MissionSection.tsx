@@ -27,6 +27,30 @@ import { fetchMissionContent, fetchNationalImpactContent, fetchHearOurImpactCont
 import EnhancedLeafletMap from '../components/map/EnhancedLeafletMap';
 import { getImpactIconByKey } from '../components/IconSelector';
 
+/**
+ * Converts a regular Spotify URL to an embed URL.
+ * Accepts both regular URLs (https://open.spotify.com/track/xxx) 
+ * and embed URLs (https://open.spotify.com/embed/track/xxx).
+ * Strips query params like ?si=xxx.
+ */
+function toSpotifyEmbedUrl(url: string): string {
+  if (!url) return url;
+  try {
+    const parsed = new URL(url);
+    
+    // Already an embed URL - just return with path only (strips query params)
+    if (parsed.pathname.startsWith('/embed/')) {
+      return `https://open.spotify.com${parsed.pathname}`;
+    }
+    
+    // Convert regular URL: /track/xxx → /embed/track/xxx
+    return `https://open.spotify.com/embed${parsed.pathname}`;
+  } catch {
+    // If URL parsing fails, return as-is
+    return url;
+  }
+}
+
 const ICON_COMPONENTS: Record<string, React.ReactNode> = {
   musicNote: <MusicNoteIcon />,
   graphicEq: <GraphicEqIcon />,
@@ -232,7 +256,7 @@ const AtGlanceLabel = styled.div<{ $color?: string | null }>`
   }
 `;
 
-const StatItem = styled.div<{ $borderColor?: string; $bgColor?: string; $borderWidth?: number }>`
+const StatItem = styled.div<{ $borderColor?: string; $bgColor?: string; $borderWidth?: number; $clickable?: boolean }>`
   position: relative;
   background: ${(p) => p.$bgColor || 'rgba(25, 25, 25, 0.6)'};
   border-radius: 12px;
@@ -241,7 +265,7 @@ const StatItem = styled.div<{ $borderColor?: string; $bgColor?: string; $borderW
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -261,7 +285,10 @@ const StatItem = styled.div<{ $borderColor?: string; $bgColor?: string; $borderW
 
   &:hover {
     transform: translateY(-10px);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+    box-shadow: ${(p) => p.$clickable 
+      ? `0 15px 45px rgba(0, 0, 0, 0.5), 0 0 20px ${p.$borderColor || COLORS.gogo_green}40`
+      : '0 15px 35px rgba(0, 0, 0, 0.5)'};
+    border-color: ${(p) => p.$clickable ? `${p.$borderColor || COLORS.gogo_green}60` : 'rgba(255, 255, 255, 0.05)'};
   }
 
   &:hover::before {
@@ -271,6 +298,38 @@ const StatItem = styled.div<{ $borderColor?: string; $bgColor?: string; $borderW
 
   &.slide-up {
     animation: slideUp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+`;
+
+const ClickHint = styled.div<{ $color?: string }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: ${(p) => p.$color || 'rgba(255, 255, 255, 0.5)'};
+  opacity: 0.7;
+  transition: opacity 0.3s ease, color 0.3s ease;
+
+  svg {
+    width: 14px;
+    height: 14px;
+    transition: transform 0.3s ease;
+  }
+
+  ${StatItem}:hover & {
+    opacity: 1;
+    color: ${(p) => p.$color || 'rgba(255, 255, 255, 0.8)'};
+
+    svg {
+      transform: translateX(3px);
+    }
   }
 `;
 
@@ -918,6 +977,7 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element | null {
                 $borderColor={stat.color}
                 $bgColor={statCardBgColor}
                 $borderWidth={statCardBorderWidth}
+                $clickable={isClickable}
                 style={{
                   animationDelay: animationsEnabled
                     ? `${stat.delay}s`
@@ -928,6 +988,14 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element | null {
                   cursor: isClickable ? "pointer" : undefined,
                 }}
                 onClick={isClickable ? handleClick : undefined}
+                role={isClickable ? "button" : undefined}
+                tabIndex={isClickable ? 0 : undefined}
+                onKeyDown={isClickable ? (e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleClick();
+                  }
+                } : undefined}
               >
                 <StatContent>
                   <StatIcon style={{ color: stat.color }}>
@@ -961,6 +1029,14 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element | null {
                       ),
                     )}
                   </EqualizerBars>
+                )}
+                {isClickable && (
+                  <ClickHint $color={stat.color}>
+                    <span>Click to explore</span>
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
+                    </svg>
+                  </ClickHint>
                 )}
               </StatItem>
             );
@@ -1171,9 +1247,9 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element | null {
             {(hearOurImpact?.allSongsEmbeds || []).map((embed) => (
               <div key={embed.id} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
                 <iframe
-                  src={embed.url}
+                  src={toSpotifyEmbedUrl(embed.url)}
                   width="100%"
-                  height="152"
+                  height="352"
                   frameBorder="0"
                   allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                   loading="lazy"
@@ -1244,9 +1320,9 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element | null {
             {(hearOurImpact?.mentorProfileEmbeds || []).map((embed) => (
               <div key={embed.id} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
                 <iframe
-                  src={embed.url}
+                  src={toSpotifyEmbedUrl(embed.url)}
                   width="100%"
-                  height="152"
+                  height="352"
                   frameBorder="0"
                   allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                   loading="lazy"

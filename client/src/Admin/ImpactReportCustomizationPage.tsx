@@ -39,6 +39,14 @@ import {
   saveTestimonialsContent,
   fetchNationalImpactContent,
   saveNationalImpactContent,
+  fetchFlexAContent,
+  saveFlexAContent,
+  fetchFlexBContent,
+  saveFlexBContent,
+  fetchFlexCContent,
+  saveFlexCContent,
+  fetchImpactLevelsContent,
+  saveImpactLevelsContent,
   fetchDefaults,
   saveDefaults,
   PopulationContent,
@@ -49,6 +57,10 @@ import {
   HearOurImpactContent,
   TestimonialsContent,
   NationalImpactContent,
+  FlexAContent,
+  FlexBContent,
+  FlexCContent,
+  ImpactLevelsContent,
 } from '../services/impact.api';
 import '../../assets/fonts/fonts.css';
 import { useSnackbar } from 'notistack';
@@ -88,6 +100,10 @@ import {
   HearOurImpactTabEditor,
   TestimonialsTabEditor,
   NationalImpactTabEditor,
+  FlexATabEditor,
+  FlexBTabEditor,
+  FlexCTabEditor,
+  ImpactLevelsTabEditor,
   validateFinancialPieCharts,
 } from './components';
 
@@ -98,6 +114,10 @@ import ImpactSection from '../components/ImpactSection';
 import SpotifyEmbedsSection from '../components/SpotifyEmbedsSection';
 import SingleQuoteSection from '../components/SingleQuoteSection';
 import LocationsSection from '../sections/LocationsSection';
+import FlexA from '../components/FlexA';
+import FlexB from '../components/FlexB';
+import FlexC from '../components/FlexC';
+import ImpactLevelsSection from '../components/ImpactLevelsSection';
 
 const MemoHeroSection = React.memo(HeroSection);
 const MemoMissionSection = React.memo(MissionSection);
@@ -109,6 +129,10 @@ const MemoFinancialSection = React.memo(FinancialAnalysisSection);
 const MemoMethodSection = React.memo(OurMethodSection);
 const MemoCurriculumSection = React.memo(CurriculumSection);
 const MemoImpactSection = React.memo(ImpactSection);
+const MemoFlexA = React.memo(FlexA);
+const MemoFlexB = React.memo(FlexB);
+const MemoFlexC = React.memo(FlexC);
+const MemoImpactLevelsSection = React.memo(ImpactLevelsSection);
 
 // Reusable component for showing section load error state
 function SectionLoadError({ sectionName }: { sectionName: string }) {
@@ -164,6 +188,10 @@ function getDefaultFormValues(): ImpactReportForm {
     hearOurImpact: null,
     testimonials: null,
     nationalImpact: null,
+    flexA: null,
+    flexB: null,
+    flexC: null,
+    impactLevels: null,
     // Legacy sections (may still use defaults for now)
     impact: null,
     programs: null,
@@ -811,6 +839,102 @@ function ImpactReportCustomizationPage() {
           break;
         }
 
+        case "flexA": {
+          const flexA = await fetchFlexAContent();
+          if (!flexA) {
+            setSectionLoadError("flexA");
+            enqueueSnackbar("Failed to load Flex A data.", {
+              variant: "error",
+            });
+            break;
+          }
+          setImpactReportForm((prev) => {
+            const next = {
+              ...prev,
+              flexA: { ...prev.flexA, ...flexA },
+            };
+            setSavedSnapshot((prevSnapshot) =>
+              prevSnapshot
+                ? { ...prevSnapshot, flexA: next.flexA }
+                : next,
+            );
+            return next;
+          });
+          break;
+        }
+
+        case "flexB": {
+          const flexB = await fetchFlexBContent();
+          if (!flexB) {
+            setSectionLoadError("flexB");
+            enqueueSnackbar("Failed to load Flex B data.", {
+              variant: "error",
+            });
+            break;
+          }
+          setImpactReportForm((prev) => {
+            const next = {
+              ...prev,
+              flexB: { ...prev.flexB, ...flexB },
+            };
+            setSavedSnapshot((prevSnapshot) =>
+              prevSnapshot
+                ? { ...prevSnapshot, flexB: next.flexB }
+                : next,
+            );
+            return next;
+          });
+          break;
+        }
+
+        case "flexC": {
+          const flexC = await fetchFlexCContent();
+          if (!flexC) {
+            setSectionLoadError("flexC");
+            enqueueSnackbar("Failed to load Flex C data.", {
+              variant: "error",
+            });
+            break;
+          }
+          setImpactReportForm((prev) => {
+            const next = {
+              ...prev,
+              flexC: { ...prev.flexC, ...flexC },
+            };
+            setSavedSnapshot((prevSnapshot) =>
+              prevSnapshot
+                ? { ...prevSnapshot, flexC: next.flexC }
+                : next,
+            );
+            return next;
+          });
+          break;
+        }
+
+        case "impactLevels": {
+          const impactLevels = await fetchImpactLevelsContent();
+          if (!impactLevels) {
+            setSectionLoadError("impactLevels");
+            enqueueSnackbar("Failed to load Impact Levels data.", {
+              variant: "error",
+            });
+            break;
+          }
+          setImpactReportForm((prev) => {
+            const next = {
+              ...prev,
+              impactLevels: { ...prev.impactLevels, ...impactLevels },
+            };
+            setSavedSnapshot((prevSnapshot) =>
+              prevSnapshot
+                ? { ...prevSnapshot, impactLevels: next.impactLevels }
+                : next,
+            );
+            return next;
+          });
+          break;
+        }
+
         case "defaults":
           // Defaults are loaded globally on mount
           break;
@@ -1239,6 +1363,58 @@ function ImpactReportCustomizationPage() {
             throw new Error("Failed to save National Impact section.");
           break;
         }
+
+        case "flexA": {
+          console.log(
+            "[admin][flexA] save payload",
+            impactReportForm.flexA,
+          );
+          const result = await saveFlexAContent({
+            ...impactReportForm.flexA,
+          });
+          if (!result)
+            throw new Error("Failed to save Flex A section.");
+          break;
+        }
+
+        case "flexB": {
+          console.log(
+            "[admin][flexB] save payload",
+            impactReportForm.flexB,
+          );
+          const result = await saveFlexBContent({
+            ...impactReportForm.flexB,
+          });
+          if (!result)
+            throw new Error("Failed to save Flex B section.");
+          break;
+        }
+
+        case "flexC": {
+          console.log(
+            "[admin][flexC] save payload",
+            impactReportForm.flexC,
+          );
+          const result = await saveFlexCContent({
+            ...impactReportForm.flexC,
+          });
+          if (!result)
+            throw new Error("Failed to save Flex C section.");
+          break;
+        }
+
+        case "impactLevels": {
+          console.log(
+            "[admin][impactLevels] save payload",
+            impactReportForm.impactLevels,
+          );
+          const result = await saveImpactLevelsContent({
+            ...impactReportForm.impactLevels,
+          });
+          if (!result)
+            throw new Error("Failed to save Impact Levels section.");
+          break;
+        }
       }
 
       const sectionLabel = currentTabConfig?.label ?? "Section";
@@ -1558,6 +1734,42 @@ function ImpactReportCustomizationPage() {
     300,
   );
 
+  const liveFlexAOverride = useMemo(
+    () => impactReportForm.flexA,
+    [impactReportForm.flexA],
+  );
+  const debouncedFlexAOverride = useDebouncedValue(
+    liveFlexAOverride,
+    300,
+  );
+
+  const liveFlexBOverride = useMemo(
+    () => impactReportForm.flexB,
+    [impactReportForm.flexB],
+  );
+  const debouncedFlexBOverride = useDebouncedValue(
+    liveFlexBOverride,
+    300,
+  );
+
+  const liveFlexCOverride = useMemo(
+    () => impactReportForm.flexC,
+    [impactReportForm.flexC],
+  );
+  const debouncedFlexCOverride = useDebouncedValue(
+    liveFlexCOverride,
+    300,
+  );
+
+  const liveImpactLevelsOverride = useMemo(
+    () => impactReportForm.impactLevels,
+    [impactReportForm.impactLevels],
+  );
+  const debouncedImpactLevelsOverride = useDebouncedValue(
+    liveImpactLevelsOverride,
+    300,
+  );
+
   // Viewport simulator
   const [viewportIdx, setViewportIdx] = useState<number>(0);
   const artboardRef = useRef<HTMLDivElement | null>(null);
@@ -1714,6 +1926,50 @@ function ImpactReportCustomizationPage() {
           <MemoLocationsSection
             previewMode
             nationalImpactOverride={debouncedNationalImpactOverride}
+          />
+        );
+      case 11:
+        // Only show error if section finished loading but has error or no data
+        if (loadedSections.has("flexA") && (sectionLoadErrors.has("flexA") || !impactReportForm.flexA)) {
+          return <PreviewError sectionName="Flex A" />;
+        }
+        return (
+          <MemoFlexA
+            previewMode
+            flexAOverride={debouncedFlexAOverride}
+          />
+        );
+      case 12:
+        // Only show error if section finished loading but has error or no data
+        if (loadedSections.has("flexB") && (sectionLoadErrors.has("flexB") || !impactReportForm.flexB)) {
+          return <PreviewError sectionName="Flex B" />;
+        }
+        return (
+          <MemoFlexB
+            previewMode
+            flexBOverride={debouncedFlexBOverride}
+          />
+        );
+      case 13:
+        // Only show error if section finished loading but has error or no data
+        if (loadedSections.has("flexC") && (sectionLoadErrors.has("flexC") || !impactReportForm.flexC)) {
+          return <PreviewError sectionName="Flex C" />;
+        }
+        return (
+          <MemoFlexC
+            previewMode
+            flexCOverride={debouncedFlexCOverride}
+          />
+        );
+      case 14:
+        // Only show error if section finished loading but has error or no data
+        if (loadedSections.has("impactLevels") && (sectionLoadErrors.has("impactLevels") || !impactReportForm.impactLevels)) {
+          return <PreviewError sectionName="Impact Levels" />;
+        }
+        return (
+          <MemoImpactLevelsSection
+            previewMode
+            impactLevelsOverride={debouncedImpactLevelsOverride}
           />
         );
       default:
@@ -1907,6 +2163,70 @@ function ImpactReportCustomizationPage() {
             defaultSwatch={defaultSwatch}
             onNationalImpactChange={(field, value) =>
               handleSectionChange("nationalImpact", field, value)
+            }
+          />
+        );
+      case 11:
+        if (!loadedSections.has("flexA")) {
+          return <SectionLoading sectionName="Flex A" />;
+        }
+        if (sectionLoadErrors.has("flexA") || !impactReportForm.flexA) {
+          return <SectionLoadError sectionName="Flex A" />;
+        }
+        return (
+          <FlexATabEditor
+            flexA={impactReportForm.flexA}
+            defaultSwatch={defaultSwatch}
+            onFlexAChange={(field, value) =>
+              handleSectionChange("flexA", field, value)
+            }
+          />
+        );
+      case 12:
+        if (!loadedSections.has("flexB")) {
+          return <SectionLoading sectionName="Flex B" />;
+        }
+        if (sectionLoadErrors.has("flexB") || !impactReportForm.flexB) {
+          return <SectionLoadError sectionName="Flex B" />;
+        }
+        return (
+          <FlexBTabEditor
+            flexB={impactReportForm.flexB}
+            defaultSwatch={defaultSwatch}
+            onFlexBChange={(field, value) =>
+              handleSectionChange("flexB", field, value)
+            }
+          />
+        );
+      case 13:
+        if (!loadedSections.has("flexC")) {
+          return <SectionLoading sectionName="Flex C" />;
+        }
+        if (sectionLoadErrors.has("flexC") || !impactReportForm.flexC) {
+          return <SectionLoadError sectionName="Flex C" />;
+        }
+        return (
+          <FlexCTabEditor
+            flexC={impactReportForm.flexC}
+            defaultSwatch={defaultSwatch}
+            onFlexCChange={(field, value) =>
+              handleSectionChange("flexC", field, value)
+            }
+          />
+        );
+      case 14:
+        if (!loadedSections.has("impactLevels")) {
+          return <SectionLoading sectionName="Impact Levels" />;
+        }
+        if (sectionLoadErrors.has("impactLevels") || !impactReportForm.impactLevels) {
+          return <SectionLoadError sectionName="Impact Levels" />;
+        }
+        return (
+          <ImpactLevelsTabEditor
+            impactLevels={impactReportForm.impactLevels}
+            defaultSwatch={defaultSwatch}
+            onImpactLevelsChange={(field, value) =>
+              handleSectionChange("impactLevels", field, value)
             }
           />
         );

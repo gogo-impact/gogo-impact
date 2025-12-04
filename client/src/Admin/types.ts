@@ -235,8 +235,8 @@ export interface TestimonialSectionForm {
   enabled: boolean;
 }
 
-// Re-export PopulationContent, FinancialContent, MethodContent, CurriculumContent, and ImpactSectionContent from impact.api for convenience
-export type { PopulationContent, FinancialContent, MethodContent, CurriculumContent, ImpactSectionContent } from '../services/impact.api';
+// Re-export content types from impact.api for convenience
+export type { PopulationContent, FinancialContent, MethodContent, CurriculumContent, ImpactSectionContent, FlexAContent, FlexBContent, FlexCContent, ImpactLevelsContent } from '../services/impact.api';
 
 export interface ImpactReportForm {
   hero: HeroSectionForm | null;
@@ -249,6 +249,10 @@ export interface ImpactReportForm {
   hearOurImpact: import('../services/impact.api').HearOurImpactContent | null;
   testimonials: import('../services/impact.api').TestimonialsContent | null;
   nationalImpact: import('../services/impact.api').NationalImpactContent | null;
+  flexA: import('../services/impact.api').FlexAContent | null;
+  flexB: import('../services/impact.api').FlexBContent | null;
+  flexC: import('../services/impact.api').FlexCContent | null;
+  impactLevels: import('../services/impact.api').ImpactLevelsContent | null;
   impact: ImpactSectionForm | null;
   programs: ProgramsSectionForm | null;
   locations: LocationsSectionForm | null;
@@ -267,6 +271,10 @@ export const ADMIN_TABS = [
   { label: 'Hear Our Impact', value: 8, routeKey: 'hearOurImpact' as const },
   { label: 'Testimonials', value: 9, routeKey: 'testimonials' as const },
   { label: 'National Impact', value: 10, routeKey: 'nationalImpact' as const },
+  { label: 'Flex A', value: 11, routeKey: 'flexA' as const },
+  { label: 'Flex B', value: 12, routeKey: 'flexB' as const },
+  { label: 'Flex C', value: 13, routeKey: 'flexC' as const },
+  { label: 'Impact Levels', value: 14, routeKey: 'impactLevels' as const },
 ] as const;
 
 export type AdminTabRouteKey = (typeof ADMIN_TABS)[number]['routeKey'];

@@ -549,20 +549,24 @@ function ImpactReportPage() {
 
   // Debug-only log removed for performance
 
-  // Support hash-based deep links on initial load
+  // Support hash-based deep links on initial load - must wait for data to be loaded
+  // so the section elements exist in the DOM
   useEffect(() => {
+    // Don't attempt to scroll until data is loaded and sections are rendered
+    if (loading || !reportData) return;
+
     let timeoutId: number | undefined;
     const hash = window.location.hash?.replace("#", "");
     if (hash) {
       timeoutId = window.setTimeout(() => {
         const el = document.getElementById(hash);
         if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 300);
+      }, 100);
     }
     return () => {
       if (timeoutId !== undefined) clearTimeout(timeoutId);
     };
-  }, []);
+  }, [loading, reportData]);
 
   // Show error dialog (only after loading completes and there's an error)
   if (!loading && (loadError || !reportData)) {
@@ -658,10 +662,16 @@ function ImpactReportPage() {
         <div id="locations" ref={locationsRef}>
           <LocationsSection />
         </div>
-        <div id="flex" ref={flexRef} style={{ opacity: 1 }}>
-          <FlexA />
-          <FlexB />
-          <FlexC />
+        <div ref={flexRef} style={{ opacity: 1 }}>
+          <div id="flex-a">
+            <FlexA />
+          </div>
+          <div id="flex-b">
+            <FlexB />
+          </div>
+          <div id="flex-c">
+            <FlexC />
+          </div>
         </div>
         <div id="impact-levels">
           <ImpactLevelsSection />

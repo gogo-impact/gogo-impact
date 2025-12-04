@@ -17,6 +17,10 @@ import impactSectionRoutes from "./routes/impactSectionRoutes.js";
 import hearOurImpactRoutes from "./routes/hearOurImpactRoutes.js";
 import testimonialsRoutes from "./routes/testimonialsRoutes.js";
 import nationalImpactRoutes from "./routes/nationalImpactRoutes.js";
+import flexARoutes from "./routes/flexARoutes.js";
+import flexBRoutes from "./routes/flexBRoutes.js";
+import flexCRoutes from "./routes/flexCRoutes.js";
+import impactLevelsRoutes from "./routes/impactLevelsRoutes.js";
 import { requireAuth } from "./middleware/authMiddleware.js";
 
 const app = express();
@@ -66,6 +70,10 @@ app.use("/api", impactSectionRoutes);
 app.use("/api", hearOurImpactRoutes);
 app.use("/api", testimonialsRoutes);
 app.use("/api", nationalImpactRoutes);
+app.use("/api", flexARoutes);
+app.use("/api", flexBRoutes);
+app.use("/api", flexCRoutes);
+app.use("/api", impactLevelsRoutes);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
