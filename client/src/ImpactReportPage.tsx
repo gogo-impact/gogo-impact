@@ -38,12 +38,16 @@ import {
   fetchPopulationContent,
   fetchFinancialContent,
   fetchMethodContent,
+  fetchDefaults,
   HeroContent,
   MissionContent,
   PopulationContent,
   FinancialContent,
   MethodContent,
+  ReorderableSectionKey,
+  DEFAULT_SECTION_ORDER,
 } from './services/impact.api';
+import FooterSection from './components/FooterSection';
 
 // Types for centralized data loading
 interface ImpactReportData {
@@ -269,6 +273,8 @@ function ImpactReportPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [reportData, setReportData] = useState<ImpactReportData | null>(null);
+  // Section order from defaults
+  const [sectionOrder, setSectionOrder] = useState<ReorderableSectionKey[]>([...DEFAULT_SECTION_ORDER]);
 
   // Refs for each section to animate
   const heroRef = useRef<HTMLDivElement>(null);
@@ -305,16 +311,17 @@ function ImpactReportPage() {
 
       try {
         // Race between data loading and timeout
-        const [hero, mission, population, financial, method] = await Promise.race([
+        const [hero, mission, population, financial, method, defaults] = await Promise.race([
           Promise.all([
             fetchHeroContent(),
             fetchMissionContent(),
             fetchPopulationContent(),
             fetchFinancialContent(),
             fetchMethodContent(),
+            fetchDefaults(),
           ]),
           timeoutPromise,
-        ]) as [HeroContent | null, MissionContent | null, PopulationContent | null, FinancialContent | null, MethodContent | null];
+        ]) as [HeroContent | null, MissionContent | null, PopulationContent | null, FinancialContent | null, MethodContent | null, { sectionOrder?: ReorderableSectionKey[] } | null];
 
         // Clear timeout on success
         clearTimeout(timeoutId);
@@ -332,6 +339,14 @@ function ImpactReportPage() {
           });
           setLoadError(true);
           return;
+        }
+
+        // Load section order from defaults
+        if (defaults?.sectionOrder && Array.isArray(defaults.sectionOrder) && defaults.sectionOrder.length > 0) {
+          // Ensure all sections are present (add any missing ones at the end)
+          const loadedOrder = defaults.sectionOrder as ReorderableSectionKey[];
+          const missingSections = DEFAULT_SECTION_ORDER.filter(s => !loadedOrder.includes(s));
+          setSectionOrder([...loadedOrder, ...missingSections]);
         }
 
         setReportData({ hero, mission, population, financial, method });
@@ -612,6 +627,112 @@ function ImpactReportPage() {
     );
   }
 
+  // Render a section based on its key
+  const renderSection = (sectionKey: ReorderableSectionKey) => {
+    if (!reportData) return null;
+    
+    switch (sectionKey) {
+      case 'hero':
+        return (
+          <div key="hero" id="hero" ref={heroRef}>
+            <HeroSection heroData={reportData.hero} />
+          </div>
+        );
+      case 'mission':
+        return (
+          <div key="mission" id="mission" ref={missionRef} style={{ position: 'relative', zIndex: 2 }}>
+            <MissionSection missionData={reportData.mission} />
+          </div>
+        );
+      case 'population':
+        return (
+          <div key="population" id="population" style={{ position: 'relative', zIndex: 2 }}>
+            <Population inline populationData={reportData.population} />
+          </div>
+        );
+      case 'financial':
+        return (
+          <div key="financial" id="financial" ref={financialRef} style={{ position: 'relative', zIndex: 2 }}>
+            <FinancialAnalysisSection financialData={reportData.financial} />
+          </div>
+        );
+      case 'method':
+        return (
+          <div key="method" id="method" ref={methodRef} style={{ position: 'relative', zIndex: 2 }}>
+            <OurMethodSection methodData={reportData.method} />
+          </div>
+        );
+      case 'curriculum':
+        return (
+          <div key="curriculum" id="curriculum" style={{ position: 'relative', zIndex: 2 }}>
+            <CurriculumSection />
+          </div>
+        );
+      case 'impactSection':
+        return (
+          <div key="impact" id="impact" ref={impactRef} style={{ position: 'relative', zIndex: 2 }}>
+            <ImpactSection />
+          </div>
+        );
+      case 'hearOurImpact':
+        return (
+          <div key="music" id="music" ref={musicRef} style={{ position: 'relative', zIndex: 2 }}>
+            <SpotifyEmbedsSection />
+          </div>
+        );
+      case 'testimonials':
+        return (
+          <div key="quote" id="quote" ref={testimonialRef} style={{ position: 'relative', zIndex: 2 }}>
+            <SingleQuoteSection />
+          </div>
+        );
+      case 'nationalImpact':
+        return (
+          <div key="locations" id="locations" ref={locationsRef} style={{ position: 'relative', zIndex: 2 }}>
+            <LocationsSection />
+          </div>
+        );
+      case 'flexA':
+        return (
+          <div key="flex-a" id="flex-a" style={{ position: 'relative', zIndex: 2 }}>
+            <FlexA />
+          </div>
+        );
+      case 'flexB':
+        return (
+          <div key="flex-b" id="flex-b" style={{ position: 'relative', zIndex: 2 }}>
+            <FlexB />
+          </div>
+        );
+      case 'flexC':
+        return (
+          <div key="flex-c" id="flex-c" style={{ position: 'relative', zIndex: 2 }}>
+            <FlexC />
+          </div>
+        );
+      case 'impactLevels':
+        return (
+          <div key="impact-levels" id="impact-levels" style={{ position: 'relative', zIndex: 2 }}>
+            <ImpactLevelsSection />
+          </div>
+        );
+      case 'partners':
+        return (
+          <div key="partners" id="partners" ref={partnersRef} style={{ position: 'relative', zIndex: 2 }}>
+            <PartnersSection />
+          </div>
+        );
+      case 'footer':
+        return (
+          <div key="footer" id="footer-section" ref={footerRef} style={{ position: 'relative', zIndex: 2 }}>
+            <FooterSection />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="impact-report">
       {!introComplete && <IntroOverlay onFinish={handleIntroFinish} isLoading={loading} />}
@@ -620,209 +741,16 @@ function ImpactReportPage() {
       <div className="main-content" style={{ paddingBottom: 0 }}>
         {reportData && (
           <>
-            {/* Sticky scroll container for hero and following sections */}
-            <div style={{ position: 'relative' }}>
-              <div id="hero" ref={heroRef}>
-                <HeroSection heroData={reportData.hero} />
-              </div>
-              <div id="mission" ref={missionRef} style={{ position: 'sticky', top: 0, zIndex: 2 }}>
-                <MissionSection missionData={reportData.mission} />
-              </div>
-            </div>
-            {/* Who We Serve (moved up) */}
-            <div id="population">
-              <Population inline populationData={reportData.population} />
-            </div>
-            {/* Financial Overview (moved higher) */}
-            <div id="financial" ref={financialRef}>
-              <FinancialAnalysisSection financialData={reportData.financial} />
-            </div>
-            <div id="method" ref={methodRef}>
-              <OurMethodSection methodData={reportData.method} />
-            </div>
+            {/* Render sections in order from sectionOrder */}
+            {sectionOrder
+              .filter(key => key !== 'footer') // Footer rendered separately at the end
+              .map(sectionKey => renderSection(sectionKey))}
           </>
         )}
-        {/* ArtisticDisciplinesSection removed; content now appears in Mission modal */}
-        <div id="curriculum">
-          <CurriculumSection />
-        </div>
-
-        {/* ProgramsSection removed as it was redundant with Flex sections */}
-        {/* Impact section (moved lower, includes measurement) */}
-        <div id="impact" ref={impactRef}>
-          <ImpactSection />
-        </div>
-        {/* Hear Our Impact (Spotify) moved later */}
-        <div id="music" ref={musicRef}>
-          <SpotifyEmbedsSection />
-        </div>
-        <div id="quote" ref={testimonialRef}>
-          <SingleQuoteSection />
-        </div>
-        <div id="locations" ref={locationsRef}>
-          <LocationsSection />
-        </div>
-        <div ref={flexRef} style={{ opacity: 1 }}>
-          <div id="flex-a">
-            <FlexA />
-          </div>
-          <div id="flex-b">
-            <FlexB />
-          </div>
-          <div id="flex-c">
-            <FlexC />
-          </div>
-        </div>
-        <div id="impact-levels">
-          <ImpactLevelsSection />
-        </div>
-        <div id="partners" ref={partnersRef}>
-          <PartnersSection />
-        </div>
-        {/* FutureVisionSection removed per redesign */}
       </div>
 
-      <SpotifyFooter id="footer" className="spotify-footer" ref={footerRef}>
-        <FooterPattern />
-        <FooterGrid>
-          <FooterColumn>
-            <FooterLogo>
-              <img
-                src={gogoWideLogo}
-                alt="Guitars Over Guns Logo"
-                loading="lazy"
-                decoding="async"
-              />
-            </FooterLogo>
-            <FooterAbout>
-              Guitars Over Guns is a 501(c)(3) organization that connects youth
-              with professional musician mentors to help them overcome hardship,
-              find their voice and reach their potential through music, art and
-              mentorship.
-            </FooterAbout>
-            <SocialLinks>
-              <SocialIcon
-                href="https://facebook.com/guitarsoverguns"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <FacebookIcon />
-              </SocialIcon>
-              <SocialIcon
-                href="https://instagram.com/guitarsoverguns"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <InstagramIcon />
-              </SocialIcon>
-              <SocialIcon
-                href="https://twitter.com/guitarsoverguns"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <TwitterIcon />
-              </SocialIcon>
-              <SocialIcon
-                href="https://youtube.com/guitarsoverguns"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <YouTubeIcon />
-              </SocialIcon>
-            </SocialLinks>
-          </FooterColumn>
-
-          <FooterColumn>
-            <FooterColumnTitle>Company</FooterColumnTitle>
-            <FooterLinks>
-              <FooterLink>
-                <a href="/about">About</a>
-              </FooterLink>
-              <FooterLink>
-                <a href="/programs">Programs</a>
-              </FooterLink>
-              <FooterLink>
-                <a href="/impact">Impact</a>
-              </FooterLink>
-              <FooterLink>
-                <a href="/team">Our Team</a>
-              </FooterLink>
-              <FooterLink>
-                <a href="/careers">Careers</a>
-              </FooterLink>
-              <FooterLink>
-                <a href="/press">Press</a>
-              </FooterLink>
-            </FooterLinks>
-          </FooterColumn>
-
-          <FooterColumn>
-            <FooterColumnTitle>Communities</FooterColumnTitle>
-            <FooterLinks>
-              <FooterLink>
-                <a href="/locations/miami">Miami</a>
-              </FooterLink>
-              <FooterLink>
-                <a href="/locations/chicago">Chicago</a>
-              </FooterLink>
-              <FooterLink>
-                <a href="/locations/new-york">New York</a>
-              </FooterLink>
-              <FooterLink>
-                <a href="/locations/los-angeles">Los Angeles</a>
-              </FooterLink>
-              <FooterLink>
-                <a href="/mentors">For Mentors</a>
-              </FooterLink>
-              <FooterLink>
-                <a href="/educators">For Educators</a>
-              </FooterLink>
-            </FooterLinks>
-          </FooterColumn>
-
-          <FooterColumn>
-            <FooterColumnTitle>Get Involved</FooterColumnTitle>
-            <FooterLinks>
-              <FooterLink>
-                <a
-                  href="https://www.classy.org/give/352794/#!/donation/checkout"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Donate
-                </a>
-              </FooterLink>
-              <FooterLink>
-                <a href="/volunteer">Volunteer</a>
-              </FooterLink>
-              <FooterLink>
-                <a href="/partnerships">Partnerships</a>
-              </FooterLink>
-              <FooterLink>
-                <a href="/events">Events</a>
-              </FooterLink>
-              <FooterLink>
-                <a href="/newsletter">Newsletter</a>
-              </FooterLink>
-              <FooterLink>
-                <a href="/contact">Contact Us</a>
-              </FooterLink>
-            </FooterLinks>
-          </FooterColumn>
-        </FooterGrid>
-
-        <FooterBottom>
-          <FooterCopyright>
-            © 2024 Guitars Over Guns. All rights reserved.
-          </FooterCopyright>
-          <FooterLegal>
-            <a href="/privacy">Privacy Policy</a>
-            <a href="/terms">Terms of Use</a>
-            <a href="/accessibility">Accessibility</a>
-          </FooterLegal>
-        </FooterBottom>
-      </SpotifyFooter>
-      {/* Music player removed */}
+      {/* Footer section - rendered via dynamic section order */}
+      {renderSection('footer')}
     </div>
   );
 }

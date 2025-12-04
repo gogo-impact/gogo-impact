@@ -28,6 +28,8 @@ export interface ImageCropperProps {
   /** Maximum output dimension for freeform crops (default 1200). Ignored when aspectRatio is set. */
   maxOutputSize?: number;
   title?: string;
+  /** How the image fits in the cropper. 'contain' (default), 'horizontal-cover', or 'vertical-cover'. */
+  objectFit?: 'contain' | 'horizontal-cover' | 'vertical-cover';
 }
 
 /**
@@ -137,6 +139,7 @@ export function ImageCropper({
   outputHeight,
   maxOutputSize = DEFAULT_MAX_OUTPUT_SIZE,
   title = 'Crop Image',
+  objectFit = 'contain',
 }: ImageCropperProps) {
   // Apply defaults only when aspectRatio is provided (fixed ratio mode)
   const effectiveOutputWidth = aspectRatio !== undefined ? (outputWidth ?? DEFAULT_OUTPUT_WIDTH) : outputWidth;
@@ -224,6 +227,37 @@ export function ImageCropper({
             width: '100%',
             height: 400,
             bgcolor: '#0a0a0a',
+            // Add corner handle styles for freeform cropping
+            ...(aspectRatio === undefined && {
+              '& .reactEasyCrop_CropArea': {
+                '&::before, &::after': {
+                  content: '""',
+                  position: 'absolute',
+                  width: '20px',
+                  height: '20px',
+                  border: '3px solid #1ed760',
+                },
+                // Top-left corner
+                '&::before': {
+                  top: '-3px',
+                  left: '-3px',
+                  borderRight: 'none',
+                  borderBottom: 'none',
+                },
+                // Bottom-right corner
+                '&::after': {
+                  bottom: '-3px',
+                  right: '-3px',
+                  borderLeft: 'none',
+                  borderTop: 'none',
+                },
+              },
+              // Add additional corner handles via sibling pseudo-elements would require wrapper
+              // Instead, add visual cue via the crop area cursor
+              '& .reactEasyCrop_CropArea:hover': {
+                cursor: 'move',
+              },
+            }),
           }}
         >
           <Cropper
@@ -231,6 +265,7 @@ export function ImageCropper({
             crop={crop}
             zoom={zoom}
             aspect={aspectRatio}
+            objectFit={objectFit}
             onCropChange={onCropChange}
             onZoomChange={onZoomChange}
             onCropComplete={onCropCompleteCallback}
@@ -241,7 +276,7 @@ export function ImageCropper({
                 backgroundColor: '#0a0a0a',
               },
               cropAreaStyle: {
-                border: '2px solid #1ed760',
+                border: '3px solid #1ed760',
               },
             }}
           />
@@ -294,7 +329,9 @@ export function ImageCropper({
             textAlign: 'center',
           }}
         >
-          Drag to reposition • Scroll or use slider to zoom
+          {aspectRatio === undefined 
+            ? 'Drag edges/corners to resize • Drag center to reposition • Scroll or use slider to zoom'
+            : 'Drag to reposition • Scroll or use slider to zoom'}
         </Typography>
       </DialogContent>
 

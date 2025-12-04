@@ -1,20 +1,26 @@
 import React, { useState } from 'react';
 import { Grid, Box, Typography, Button, Divider } from '@mui/material';
 import ColorPickerPopover from '../../components/ColorPickerPopover';
+import SectionOrderEditor from './SectionOrderEditor';
 import { CustomPaper } from '../styles';
 import { toHex, getReadableTextColor, withAlphaHex } from '../utils';
 import { DEFAULT_SWATCH_SIZE } from '../types';
+import { ReorderableSectionKey, DEFAULT_SECTION_ORDER } from '../../services/impact.api';
 import COLORS from '../../../assets/colors';
 
 export interface DefaultsTabEditorProps {
   defaultSwatch: string[] | null;
+  sectionOrder: ReorderableSectionKey[];
   onSwatchChange: (swatch: string[]) => void;
+  onSectionOrderChange: (order: ReorderableSectionKey[]) => void;
   onDirtyChange: () => void;
 }
 
 export function DefaultsTabEditor({
   defaultSwatch,
+  sectionOrder,
   onSwatchChange,
+  onSectionOrderChange,
   onDirtyChange,
 }: DefaultsTabEditorProps) {
   const [defaultsPickerAnchor, setDefaultsPickerAnchor] = useState<HTMLElement | null>(null);
@@ -140,6 +146,18 @@ export function DefaultsTabEditor({
               </Button>
             </Box>
           )}
+        </Grid>
+
+        {/* Section Order */}
+        <Grid item xs={12}>
+          <Divider sx={{ my: 2, bgcolor: 'rgba(255,255,255,0.1)' }} />
+          <SectionOrderEditor
+            value={sectionOrder}
+            onChange={(newOrder) => {
+              onSectionOrderChange(newOrder);
+              onDirtyChange();
+            }}
+          />
         </Grid>
       </Grid>
     </Box>

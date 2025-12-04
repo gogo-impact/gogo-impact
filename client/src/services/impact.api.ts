@@ -33,6 +33,11 @@ export interface HeroContent {
   bubbleTextColor?: string;
   bubbleBgColor?: string;
   bubbleBorderColor?: string;
+  // Waveform & Music Toy
+  showWaveform?: boolean;
+  showMusicToy?: boolean;
+  waveformGradient?: string | null;
+  waveformRainbow?: boolean;
   title?: string;
   subtitle?: string;
   year?: string;
@@ -556,8 +561,69 @@ export interface ImpactToolItem {
 // =========================
 // Defaults content interfaces
 // =========================
+
+// Section keys that can be reordered (excludes 'defaults' which is always first)
+export type ReorderableSectionKey = 
+  | 'hero'
+  | 'mission'
+  | 'population'
+  | 'financial'
+  | 'method'
+  | 'curriculum'
+  | 'impactSection'
+  | 'hearOurImpact'
+  | 'testimonials'
+  | 'nationalImpact'
+  | 'flexA'
+  | 'flexB'
+  | 'flexC'
+  | 'impactLevels'
+  | 'partners'
+  | 'footer';
+
+// Default section order
+export const DEFAULT_SECTION_ORDER: ReorderableSectionKey[] = [
+  'hero',
+  'mission',
+  'population',
+  'financial',
+  'method',
+  'curriculum',
+  'impactSection',
+  'hearOurImpact',
+  'testimonials',
+  'nationalImpact',
+  'flexA',
+  'flexB',
+  'flexC',
+  'impactLevels',
+  'partners',
+  'footer',
+];
+
+// Section display names for the reorder UI
+export const SECTION_DISPLAY_NAMES: Record<ReorderableSectionKey, string> = {
+  hero: 'Hero Section',
+  mission: 'Mission Section',
+  population: 'Population Section',
+  financial: 'Financial Section',
+  method: 'Method Section',
+  curriculum: 'Curriculum Section',
+  impactSection: 'Impact Section',
+  hearOurImpact: 'Hear Our Impact',
+  testimonials: 'Testimonials',
+  nationalImpact: 'National Impact',
+  flexA: 'Flex A',
+  flexB: 'Flex B',
+  flexC: 'Flex C',
+  impactLevels: 'Impact Levels',
+  partners: 'Partners',
+  footer: 'Footer',
+};
+
 export interface DefaultsContent {
   colorSwatch?: string[] | null;
+  sectionOrder?: ReorderableSectionKey[] | null;
 }
 
 // =========================
@@ -2116,6 +2182,178 @@ export async function validateAddress(address: string): Promise<AddressValidatio
   } catch (error) {
     console.error('[ImpactReport] Failed to validate address', error);
     return { valid: false, error: 'Network error' };
+  }
+}
+
+// =========================
+// Footer content interfaces
+// =========================
+
+// Social link item
+export interface FooterSocialLink {
+  id: string;
+  iconKey: string;
+  url: string;
+  label: string;
+}
+
+// Link item in a column
+export interface FooterLinkItem {
+  id: string;
+  label: string;
+  url: string;
+}
+
+// Footer column
+export interface FooterColumn {
+  id: string;
+  title: string;
+  titleColor?: string | null;
+  stackWithNext: boolean;  // If true, stacks vertically with the next column
+  links: FooterLinkItem[];
+}
+
+// Bottom bar link
+export interface FooterBottomLink {
+  id: string;
+  label: string;
+  url: string;
+}
+
+// Bottom bar configuration
+export interface FooterBottomBar {
+  copyrightText: string;
+  copyrightColor?: string | null;
+  bgColor?: string | null;
+  borderColor?: string | null;
+  links: FooterBottomLink[];
+  linkColor?: string | null;
+  linkHoverColor?: string | null;
+  linkSeparator?: string | null;
+}
+
+// Newsletter configuration
+export interface FooterNewsletter {
+  enabled: boolean;
+  title?: string | null;
+  titleColor?: string | null;
+  placeholder?: string | null;
+  buttonText?: string | null;
+  buttonBgColor?: string | null;
+  buttonTextColor?: string | null;
+  inputBgColor?: string | null;
+  inputBorderColor?: string | null;
+  inputTextColor?: string | null;
+}
+
+// Mailing address
+export interface FooterMailingAddress {
+  enabled: boolean;
+  text?: string | null;
+  textColor?: string | null;
+}
+
+// Logo configuration
+export interface FooterLogo {
+  imageUrl?: string | null;
+  alt?: string | null;
+  width?: number | null;
+}
+
+export interface FooterContent {
+  // Section visibility
+  visible?: boolean | null;
+
+  // Section background
+  sectionBgGradient?: string | null;
+  sectionBgColor?: string | null;
+
+  // Top border/pattern gradient
+  topBorderGradient?: string | null;
+
+  // Logo & Branding
+  logo?: FooterLogo | null;
+
+  // Description text
+  description?: string | null;
+  descriptionColor?: string | null;
+
+  // Social/Icon bubbles
+  socialLinks?: FooterSocialLink[] | null;
+  socialBubbleBgColor?: string | null;
+  socialBubbleHoverBgColor?: string | null;
+  socialBubbleIconColor?: string | null;
+  socialBubbleBorderColor?: string | null;
+
+  // Link columns
+  columns?: FooterColumn[] | null;
+  columnTitleColor?: string | null;
+  columnLinkColor?: string | null;
+  columnLinkHoverColor?: string | null;
+
+  // Bottom bar
+  bottomBar?: FooterBottomBar | null;
+
+  // Newsletter (optional)
+  newsletter?: FooterNewsletter | null;
+
+  // Mailing address (optional)
+  mailingAddress?: FooterMailingAddress | null;
+}
+
+// =========================
+// Footer content API
+// =========================
+export async function fetchFooterContent(): Promise<FooterContent | null> {
+  try {
+    const url = `${API_BASE_URL}/api/impact/footer`;
+    console.log('[client][footer] GET', { url });
+    const response = await fetch(url, {
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      if (response.status === 404) {
+        console.log('[client][footer] GET not found (404) - data not yet created');
+        return null;
+      }
+      console.warn('[client][footer] GET failed', { status: response.status });
+      return null;
+    }
+    const payload = (await response.json()) as HeroApiResponse<FooterContent>;
+    console.log('[client][footer] GET success', { fields: Object.keys(payload?.data || {}) });
+    return payload?.data ?? null;
+  } catch (error) {
+    console.error('[ImpactReport] Failed to fetch footer content', error);
+    return null;
+  }
+}
+
+export async function saveFooterContent(
+  data: Record<string, unknown>,
+  options?: { slug?: string },
+): Promise<FooterContent | null> {
+  try {
+    const url = new URL(`${API_BASE_URL}/api/impact/footer`);
+    if (options?.slug) url.searchParams.set('slug', options.slug);
+    console.log('[client][footer] PUT', { url: url.toString(), keys: Object.keys(data || {}) });
+    const response = await fetch(url.toString(), {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      console.warn('[client][footer] PUT failed', { status: response.status });
+      return null;
+    }
+    const payload = (await response.json()) as HeroApiResponse<FooterContent>;
+    console.log('[client][footer] PUT success', { fields: Object.keys(payload?.data || {}) });
+    return payload?.data ?? null;
+  } catch (error) {
+    console.error('[ImpactReport] Failed to save footer content', error);
+    return null;
   }
 }
 

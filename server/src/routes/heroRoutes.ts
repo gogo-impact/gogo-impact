@@ -53,6 +53,11 @@ router.put("/impact/hero", requireAuth, async (req, res, next) => {
       "bubbleTextColor",
       "bubbleBgColor",
       "bubbleBorderColor",
+      // Waveform & Music Toy
+      "showWaveform",
+      "showMusicToy",
+      "waveformGradient",
+      "waveformRainbow",
       "title",
       "subtitle",
       "year",

@@ -1,7 +1,27 @@
 import { getDatabase } from '../config/database.js';
 
+// Section keys that can be reordered
+export type ReorderableSectionKey = 
+  | 'hero'
+  | 'mission'
+  | 'population'
+  | 'financial'
+  | 'method'
+  | 'curriculum'
+  | 'impactSection'
+  | 'hearOurImpact'
+  | 'testimonials'
+  | 'nationalImpact'
+  | 'flexA'
+  | 'flexB'
+  | 'flexC'
+  | 'impactLevels'
+  | 'partners'
+  | 'footer';
+
 export interface DefaultsContent {
   colorSwatch?: string[] | null;
+  sectionOrder?: ReorderableSectionKey[] | null;
 }
 
 export interface DefaultsDocument extends DefaultsContent {

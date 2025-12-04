@@ -88,6 +88,11 @@ export interface HeroSectionForm {
   bubbleTextColor?: string;
   bubbleBgColor?: string;
   bubbleBorderColor?: string;
+  // NEW: Waveform & Music Toy controls
+  showWaveform?: boolean;
+  showMusicToy?: boolean;
+  waveformGradient?: string | null;
+  waveformRainbow?: boolean;
 }
 
 export interface MissionSectionForm {
@@ -236,7 +241,7 @@ export interface TestimonialSectionForm {
 }
 
 // Re-export content types from impact.api for convenience
-export type { PopulationContent, FinancialContent, MethodContent, CurriculumContent, ImpactSectionContent, FlexAContent, FlexBContent, FlexCContent, ImpactLevelsContent, PartnersContent } from '../services/impact.api';
+export type { PopulationContent, FinancialContent, MethodContent, CurriculumContent, ImpactSectionContent, FlexAContent, FlexBContent, FlexCContent, ImpactLevelsContent, PartnersContent, FooterContent } from '../services/impact.api';
 
 export interface ImpactReportForm {
   hero: HeroSectionForm | null;
@@ -254,6 +259,7 @@ export interface ImpactReportForm {
   flexC: import('../services/impact.api').FlexCContent | null;
   impactLevels: import('../services/impact.api').ImpactLevelsContent | null;
   partners: import('../services/impact.api').PartnersContent | null;
+  footer: import('../services/impact.api').FooterContent | null;
   impact: ImpactSectionForm | null;
   programs: ProgramsSectionForm | null;
   locations: LocationsSectionForm | null;
@@ -277,6 +283,7 @@ export const ADMIN_TABS = [
   { label: 'Flex C', value: 13, routeKey: 'flexC' as const },
   { label: 'Impact Levels', value: 14, routeKey: 'impactLevels' as const },
   { label: 'Partners', value: 15, routeKey: 'partners' as const },
+  { label: 'Footer', value: 16, routeKey: 'footer' as const },
 ] as const;
 
 export type AdminTabRouteKey = (typeof ADMIN_TABS)[number]['routeKey'];

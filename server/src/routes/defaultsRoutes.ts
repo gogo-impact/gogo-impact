@@ -32,7 +32,7 @@ router.put("/impact/defaults", requireAuth, async (req, res, next) => {
       slug,
       incomingKeys: Object.keys(data || {}),
     });
-    const allowedKeys = ["colorSwatch"];
+    const allowedKeys = ["colorSwatch", "sectionOrder"];
     const sanitized: Record<string, unknown> = {};
     for (const key of allowedKeys) {
       if (key in data) sanitized[key] = (data as any)[key];
@@ -40,6 +40,17 @@ router.put("/impact/defaults", requireAuth, async (req, res, next) => {
     // Defensive: ensure swatch is an array of strings
     if (Array.isArray(sanitized.colorSwatch)) {
       sanitized.colorSwatch = (sanitized.colorSwatch as any[]).filter((c) => typeof c === "string");
+    }
+    // Defensive: ensure sectionOrder is an array of valid section keys
+    const validSectionKeys = [
+      'hero', 'mission', 'population', 'financial', 'method', 'curriculum',
+      'impactSection', 'hearOurImpact', 'testimonials', 'nationalImpact',
+      'flexA', 'flexB', 'flexC', 'impactLevels', 'partners', 'footer'
+    ];
+    if (Array.isArray(sanitized.sectionOrder)) {
+      sanitized.sectionOrder = (sanitized.sectionOrder as any[]).filter(
+        (s) => typeof s === "string" && validSectionKeys.includes(s)
+      );
     }
     const saved = await upsertDefaultsBySlug(slug, sanitized as any);
     const { _id, slug: storedSlug, ...response } = saved ?? {};

@@ -33,6 +33,11 @@ export interface HeroContent {
   bubbleTextColor?: string | null;
   bubbleBgColor?: string | null;
   bubbleBorderColor?: string | null;
+  // Waveform & Music Toy
+  showWaveform?: boolean | null;
+  showMusicToy?: boolean | null;
+  waveformGradient?: string | null;
+  waveformRainbow?: boolean | null;
   title?: string;
   subtitle?: string;
   year?: string;

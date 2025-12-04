@@ -170,6 +170,68 @@ const mixHslColors = (base: string, accent: string, ratio: number): string => {
 
 const midiToFrequency = (midi: number) => 440 * Math.pow(2, (midi - 69) / 12);
 
+// Parse a linear gradient string into colors array
+const parseGradientColors = (gradient: string): string[] => {
+  // Match colors in linear-gradient, e.g. linear-gradient(90deg, #5038a0, #1946f5, #68369a)
+  const colorMatch = gradient.match(
+    /(?:#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)|hsla?\([^)]+\)|[a-z]+)/gi
+  );
+  if (!colorMatch) return ["#5038a0", "#1946f5", "#68369a"];
+  // Filter out degree values like "90deg"
+  return colorMatch.filter((c) => !/^\d+deg$/i.test(c));
+};
+
+// Convert hex to RGB
+const hexToRgb = (hex: string): [number, number, number] => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (result) {
+    return [
+      parseInt(result[1], 16),
+      parseInt(result[2], 16),
+      parseInt(result[3], 16),
+    ];
+  }
+  // Handle 3-char hex
+  const short = /^#?([a-f\d])([a-f\d])([a-f\d])$/i.exec(hex);
+  if (short) {
+    return [
+      parseInt(short[1] + short[1], 16),
+      parseInt(short[2] + short[2], 16),
+      parseInt(short[3] + short[3], 16),
+    ];
+  }
+  return [80, 56, 160]; // Default purple
+};
+
+// Interpolate between gradient colors based on position
+const interpolateGradient = (
+  colors: string[],
+  position: number,
+  time: number
+): string => {
+  if (colors.length === 0) return "rgb(80, 56, 160)";
+  if (colors.length === 1) {
+    const [r, g, b] = hexToRgb(colors[0]);
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+
+  // Add subtle animation to lightness
+  const lightOffset = Math.sin(position * Math.PI * 2 + time * 0.001) * 15;
+
+  const scaledPos = position * (colors.length - 1);
+  const idx = Math.floor(scaledPos);
+  const t = scaledPos - idx;
+
+  const c1 = hexToRgb(colors[Math.min(idx, colors.length - 1)]);
+  const c2 = hexToRgb(colors[Math.min(idx + 1, colors.length - 1)]);
+
+  const r = Math.round(c1[0] + (c2[0] - c1[0]) * t + lightOffset);
+  const g = Math.round(c1[1] + (c2[1] - c1[1]) * t + lightOffset);
+  const b = Math.round(c1[2] + (c2[2] - c1[2]) * t + lightOffset);
+
+  return `rgb(${Math.max(0, Math.min(255, r))}, ${Math.max(0, Math.min(255, g))}, ${Math.max(0, Math.min(255, b))})`;
+};
+
 // Main container with Spotify-like gradient background - now sticky full-page slide
 const HeroContainer = styled.section<{
   $background?: string;
@@ -182,8 +244,9 @@ const HeroContainer = styled.section<{
   align-items: center;
   position: sticky;
   top: 0;
-  /* Pull up to be flush with the top of the viewport (overlapping the header is ok) */
-  margin-top: -80px;
+  /* Pull up to be flush with the top of the viewport (overlapping the header is ok)
+     Compensates for: .main-content padding-top (80px) + body.has-spotify-header padding-top (64px) = 144px */
+  margin-top: -144px;
   background: ${(props) => props.$background ?? "transparent"};
   background-size: cover;
   background-position: center;
@@ -900,9 +963,9 @@ interface HeroSectionProps {
 
 function HeroSection(props: HeroSectionProps = {}): JSX.Element {
   const { heroData, previewMode = false, heroOverride } = props;
-  // In preview mode, disable audio and sequencer but keep waveform animation running
+  // In preview mode, disable audio but keep sequencer visible (just silent)
   const disableAudio = previewMode;
-  const disableSequencer = previewMode;
+  const disableSequencer = false; // Always show sequencer if showMusicToy is true
   // Entrance animations (text fly-in) disabled in preview for faster updates
   const disableEntranceAnimations = previewMode;
   // Waveform animation should always run (unless reduced motion is preferred)
@@ -977,17 +1040,34 @@ function HeroSection(props: HeroSectionProps = {}): JSX.Element {
     "play" | "toggles" | "grid" | "done"
   >("play");
 
-  // Color function: dynamic HSL cycling with ripple hue offsets
-  const getWaveBarColor = useCallback((index: number, total: number) => {
-    const position = index / Math.max(1, total - 1);
-    const t = timeRef.current * 0.001;
-    const hue = (position * 220 + t * 20) % 360; // slow, continuous hue drift
-    const saturation = 55 + Math.sin(position * Math.PI * 2 + t) * 10; // subtle
-    const lightness = 40 + Math.cos(position * Math.PI * 2 + t * 0.8) * 8; // subtle
-    return `hsl(${Math.round(hue)}, ${Math.round(saturation)}%, ${Math.round(
-      lightness,
-    )}%)`;
-  }, []);
+  // Refs for waveform settings (used in animation loop)
+  const waveformRainbowRef = useRef(false);
+  const waveformGradientRef = useRef<string | undefined>(undefined);
+
+  // Color function: dynamic HSL cycling (rainbow) or gradient-based
+  const getWaveBarColor = useCallback(
+    (index: number, total: number, useRainbow: boolean, gradient?: string) => {
+      const position = index / Math.max(1, total - 1);
+      const t = timeRef.current * 0.001;
+
+      if (useRainbow) {
+        // Original rainbow mode: dynamic HSL cycling with ripple hue offsets
+        const hue = (position * 220 + t * 20) % 360; // slow, continuous hue drift
+        const saturation = 55 + Math.sin(position * Math.PI * 2 + t) * 10; // subtle
+        const lightness = 40 + Math.cos(position * Math.PI * 2 + t * 0.8) * 8; // subtle
+        return `hsl(${Math.round(hue)}, ${Math.round(saturation)}%, ${Math.round(
+          lightness,
+        )}%)`;
+      } else {
+        // Gradient mode: interpolate colors from gradient
+        const colors = parseGradientColors(
+          gradient || "linear-gradient(90deg, #5038a0, #1946f5, #68369a)",
+        );
+        return interpolateGradient(colors, position, timeRef.current);
+      }
+    },
+    [],
+  );
 
   // Lightweight value noise (1D over position, evolving over time)
   const smoothstep = useCallback((t: number) => t * t * (3 - 2 * t), []);
@@ -1303,7 +1383,8 @@ function HeroSection(props: HeroSectionProps = {}): JSX.Element {
         const track = padConfigMap[padId];
         if (track) {
           setSrMessage(
-            `${track.label} step ${stepIndex + 1} ${nextRow[stepIndex] ? "enabled" : "muted"
+            `${track.label} step ${stepIndex + 1} ${
+              nextRow[stepIndex] ? "enabled" : "muted"
             }`,
           );
         }
@@ -1479,14 +1560,16 @@ function HeroSection(props: HeroSectionProps = {}): JSX.Element {
           const baseColor = getWaveBarColor(
             index,
             waveAnimatablesRef.current.length,
+            waveformRainbowRef.current,
+            waveformGradientRef.current,
           );
           elem.style.backgroundColor =
             burstColor && burstInfluence > 0
               ? mixHslColors(
-                baseColor,
-                burstColor,
-                Math.min(1, burstInfluence * 1.3),
-              )
+                  baseColor,
+                  burstColor,
+                  Math.min(1, burstInfluence * 1.3),
+                )
               : baseColor;
         },
       );
@@ -1545,6 +1628,17 @@ function HeroSection(props: HeroSectionProps = {}): JSX.Element {
     };
   }, [disableSequencer, triggerPad, triggerSynthVoice]);
 
+  // Handle heroOverride updates in preview mode - separate effect for responsiveness
+  useEffect(() => {
+    if (previewMode && heroOverride) {
+      setHero((prev) => ({
+        ...(prev ?? ({} as HeroContent)),
+        ...(heroOverride as HeroContent),
+      }));
+      setLoading(false);
+    }
+  }, [previewMode, heroOverride]);
+
   // Set up everything on mount and handle cleanup
   useEffect(() => {
     // Load hero content unless heroData is provided or in preview mode
@@ -1562,13 +1656,6 @@ function HeroSection(props: HeroSectionProps = {}): JSX.Element {
         }
         setLoading(false);
       });
-    } else if (heroOverride) {
-      // Preview mode with override
-      setHero((prev) => ({
-        ...(prev ?? ({} as HeroContent)),
-        ...(heroOverride as HeroContent),
-      }));
-      setLoading(false);
     }
 
     // Initialize animations for text elements using direct AnimeJS calls
@@ -1743,7 +1830,7 @@ function HeroSection(props: HeroSectionProps = {}): JSX.Element {
     startAnimationLoop,
     heroData,
     previewMode,
-    heroOverride,
+    // heroOverride is handled by a separate useEffect for responsiveness
   ]);
 
   // Re-initialize wave animatables when hero data loads (fixes race condition where
@@ -1997,6 +2084,18 @@ function HeroSection(props: HeroSectionProps = {}): JSX.Element {
   const bubbleBorderColor = (hero as any)?.bubbleBorderColor as
     | string
     | undefined;
+  // NEW: Waveform & Music Toy controls
+  const showWaveform = (hero as any)?.showWaveform !== false; // Default to true
+  const showMusicToy = (hero as any)?.showMusicToy !== false; // Default to true
+  const waveformGradient = (hero as any)?.waveformGradient as
+    | string
+    | undefined;
+  const waveformRainbow = (hero as any)?.waveformRainbow === true; // Default to false
+
+  // Keep refs in sync for animation loop
+  waveformRainbowRef.current = waveformRainbow;
+  waveformGradientRef.current = waveformGradient;
+
   const showPlayTooltip =
     sequencerOpen && tooltipStage === "play" && !hasPlayedGroove;
   const showToggleTooltip = sequencerOpen && tooltipStage === "toggles";
@@ -2051,27 +2150,34 @@ function HeroSection(props: HeroSectionProps = {}): JSX.Element {
         </>
       )}
       {/* Music waveform visualization */}
-      <WaveBackground ref={waveBackgroundRef}>
-        {Array.from({ length: numWaveBars }).map((_, i) => {
-          const uniqueId = `wave-bar-${i}`;
-          const position = i / numWaveBars;
-          const initialHeight = 5 + Math.abs(position - 0.5) * 15;
-          const initialScale = initialHeight / BASE_WAVE_HEIGHT;
+      {showWaveform && (
+        <WaveBackground ref={waveBackgroundRef}>
+          {Array.from({ length: numWaveBars }).map((_, i) => {
+            const uniqueId = `wave-bar-${i}`;
+            const position = i / numWaveBars;
+            const initialHeight = 5 + Math.abs(position - 0.5) * 15;
+            const initialScale = initialHeight / BASE_WAVE_HEIGHT;
 
-          return (
-            <WaveBar
-              key={uniqueId}
-              className="wave-bar"
-              style={{
-                backgroundColor: getWaveBarColor(i, numWaveBars),
-                height: `${BASE_WAVE_HEIGHT}px`,
-                opacity: 0.7,
-                transform: `scaleY(${initialScale}) translateZ(0)`,
-              }}
-            />
-          );
-        })}
-      </WaveBackground>
+            return (
+              <WaveBar
+                key={uniqueId}
+                className="wave-bar"
+                style={{
+                  backgroundColor: getWaveBarColor(
+                    i,
+                    numWaveBars,
+                    waveformRainbow,
+                    waveformGradient,
+                  ),
+                  height: `${BASE_WAVE_HEIGHT}px`,
+                  opacity: 0.7,
+                  transform: `scaleY(${initialScale}) translateZ(0)`,
+                }}
+              />
+            );
+          })}
+        </WaveBackground>
+      )}
 
       <ContentWrapper>
         <LeftContent>
@@ -2199,8 +2305,8 @@ function HeroSection(props: HeroSectionProps = {}): JSX.Element {
           </HeroTextBlock>
         </LeftContent>
       </ContentWrapper>
-      {/* Hide sequencer in preview mode since audio is disabled */}
-      {!disableSequencer && (
+      {/* Hide sequencer in preview mode since audio is disabled, or when showMusicToy is false */}
+      {!disableSequencer && showMusicToy && (
         <SequencerFloat>
           {!hasOpenedSequencer && (
             <SequencerTip>Make your own sound</SequencerTip>
@@ -2305,8 +2411,9 @@ function HeroSection(props: HeroSectionProps = {}): JSX.Element {
                                   $active={isActive}
                                   $current={isCurrent}
                                   aria-pressed={isActive}
-                                  aria-label={`${pad.label} step ${stepIdx + 1
-                                    } ${ariaState}`}
+                                  aria-label={`${pad.label} step ${
+                                    stepIdx + 1
+                                  } ${ariaState}`}
                                   onClick={() =>
                                     handleStepToggle(pad.id, stepIdx)
                                   }

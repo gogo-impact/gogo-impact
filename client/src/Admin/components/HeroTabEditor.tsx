@@ -14,7 +14,6 @@ import ClearIcon from '@mui/icons-material/Clear';
 import ColorPickerPopover from '../../components/ColorPickerPopover';
 import { CustomTextField } from '../styles';
 import { GradientEditor, parseGradientString, composeGradient } from './GradientEditor';
-import { ImageCropper } from "./ImageCropper";
 import { HeroSectionForm } from '../types';
 import COLORS from '../../../assets/colors';
 
@@ -32,7 +31,8 @@ type HeroColorPickerField =
   | 'titleUnderlineColor'
   | 'bubbleTextColor'
   | 'bubbleBgColor'
-  | 'bubbleBorderColor';
+  | 'bubbleBorderColor'
+  | 'waveformGradientColor';
 
 export interface HeroTabEditorProps {
   hero: HeroSectionForm;
@@ -65,11 +65,14 @@ export function HeroTabEditor({
     useState<number>(0);
   const gradientPickerOpen = Boolean(gradientPickerAnchor);
 
-  // State for image cropper
-  const [cropperOpen, setCropperOpen] = useState(false);
-  const [cropperImageSrc, setCropperImageSrc] = useState("");
+  // State for waveform gradient color picker
+  const [waveformPickerAnchor, setWaveformPickerAnchor] =
+    useState<HTMLElement | null>(null);
+  const [waveformPickerColorIndex, setWaveformPickerColorIndex] =
+    useState<number>(0);
+  const waveformPickerOpen = Boolean(waveformPickerAnchor);
 
-  // Handle file selection - opens cropper
+  // Handle file selection - directly use the file without cropping
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !e.target.files[0]) return;
     const file = e.target.files[0];
@@ -82,43 +85,13 @@ export function HeroTabEditor({
       return;
     }
 
-    const objectUrl = URL.createObjectURL(file);
-    setCropperImageSrc(objectUrl);
-    setCropperOpen(true);
-
-    // Reset the input
-    e.target.value = "";
-  };
-
-  // Handle cropped image
-  const handleCropComplete = (croppedBlob: Blob) => {
-    // Close cropper
-    setCropperOpen(false);
-
-    // Clean up object URL
-    if (cropperImageSrc) {
-      URL.revokeObjectURL(cropperImageSrc);
-    }
-    setCropperImageSrc("");
-
-    // Create preview URL and File from cropped blob
-    const preview = URL.createObjectURL(croppedBlob);
-    const croppedFile = new File([croppedBlob], "cropped-background.jpg", {
-      type: "image/jpeg",
-    });
-
-    // Update form with cropped image
+    // Create preview URL and use the original file directly
+    const preview = URL.createObjectURL(file);
     onHeroChange("backgroundImagePreview", preview);
-    onHeroChange("backgroundImageFile", croppedFile);
-  };
+    onHeroChange("backgroundImageFile", file);
 
-  // Handle closing the cropper
-  const handleCropperClose = () => {
-    setCropperOpen(false);
-    if (cropperImageSrc) {
-      URL.revokeObjectURL(cropperImageSrc);
-    }
-    setCropperImageSrc("");
+    // Reset the input so the same file can be selected again
+    e.target.value = "";
   };
 
   // Get the current background gradient - use full string if available, otherwise compose from legacy fields
@@ -153,6 +126,40 @@ export function HeroTabEditor({
       parsed.opacity,
     );
     onHeroChange("backgroundGradient", newGradient);
+  };
+
+  // Get the current waveform gradient - use full string if available, otherwise default
+  const getWaveformGradient = (): string => {
+    return (
+      hero.waveformGradient ||
+      `linear-gradient(90deg, #5038a0, #1946f5, #68369a)`
+    );
+  };
+
+  // Get current waveform gradient color for the picker
+  const getWaveformPickerColor = (): string => {
+    const gradient = getWaveformGradient();
+    const parsed = parseGradientString(gradient);
+    return parsed.colors[waveformPickerColorIndex] || "#5038a0";
+  };
+
+  const openWaveformPicker = (el: HTMLElement, colorIndex: number) => {
+    setWaveformPickerColorIndex(colorIndex);
+    setWaveformPickerAnchor(el);
+  };
+
+  const handleWaveformColorChange = (val: string) => {
+    const currentGradient = getWaveformGradient();
+    const parsed = parseGradientString(currentGradient);
+    const newColors = [...parsed.colors];
+    newColors[waveformPickerColorIndex] = val;
+    const newGradient = composeGradient(
+      parsed.type,
+      parsed.degree,
+      newColors,
+      parsed.opacity,
+    );
+    onHeroChange("waveformGradient", newGradient);
   };
 
   // Helper to check if a color field is missing
@@ -782,16 +789,104 @@ export function HeroTabEditor({
             fullWidth
           />
         </Grid>
+
+        {/* Waveform & Music Toy */}
+        <Grid item xs={12}>
+          <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
+          <Typography variant="subtitle1" gutterBottom>
+            Waveform & Music Toy
+          </Typography>
+        </Grid>
+        <Grid item xs={12}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={hero.showWaveform !== false}
+                  onChange={(e) =>
+                    onHeroChange("showWaveform", e.target.checked)
+                  }
+                  sx={{
+                    "& .MuiSwitch-switchBase.Mui-checked": {
+                      color: COLORS.gogo_blue,
+                    },
+                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                      backgroundColor: COLORS.gogo_blue,
+                    },
+                  }}
+                />
+              }
+              label="Show Waveform (animated background bars)"
+              sx={{ color: "white" }}
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={hero.showMusicToy !== false}
+                  onChange={(e) =>
+                    onHeroChange("showMusicToy", e.target.checked)
+                  }
+                  sx={{
+                    "& .MuiSwitch-switchBase.Mui-checked": {
+                      color: COLORS.gogo_blue,
+                    },
+                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                      backgroundColor: COLORS.gogo_blue,
+                    },
+                  }}
+                />
+              }
+              label="Show Music Toy (interactive drum machine)"
+              sx={{ color: "white" }}
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={hero.waveformRainbow === true}
+                  onChange={(e) =>
+                    onHeroChange("waveformRainbow", e.target.checked)
+                  }
+                  sx={{
+                    "& .MuiSwitch-switchBase.Mui-checked": {
+                      color: COLORS.gogo_blue,
+                    },
+                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                      backgroundColor: COLORS.gogo_blue,
+                    },
+                  }}
+                />
+              }
+              label="Rainbow Waveform (animated color cycling)"
+              sx={{ color: "white" }}
+            />
+          </Box>
+        </Grid>
+
+        {/* Waveform Gradient Editor - only show when rainbow is disabled and waveform is enabled */}
+        {hero.showWaveform !== false && !hero.waveformRainbow && (
+          <Grid item xs={12}>
+            <GradientEditor
+              label="Waveform Gradient"
+              value={getWaveformGradient()}
+              onChange={(gradient) =>
+                onHeroChange("waveformGradient", gradient)
+              }
+              onPickColor={(el, colorIndex) => openWaveformPicker(el, colorIndex)}
+            />
+          </Grid>
+        )}
       </Grid>
 
-      {/* Image Cropper Dialog */}
-      <ImageCropper
-        open={cropperOpen}
-        imageSrc={cropperImageSrc}
-        onClose={handleCropperClose}
-        onCropComplete={handleCropComplete}
-        title="Crop Background Image"
-        // No aspectRatio = freeform crop
+      {/* Waveform gradient color picker */}
+      <ColorPickerPopover
+        open={waveformPickerOpen}
+        anchorEl={waveformPickerAnchor}
+        onClose={() => {
+          setWaveformPickerAnchor(null);
+        }}
+        value={getWaveformPickerColor()}
+        onChange={handleWaveformColorChange}
+        presets={defaultSwatch ?? undefined}
       />
     </Box>
   );

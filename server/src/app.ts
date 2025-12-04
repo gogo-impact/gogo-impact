@@ -22,6 +22,7 @@ import flexBRoutes from "./routes/flexBRoutes.js";
 import flexCRoutes from "./routes/flexCRoutes.js";
 import impactLevelsRoutes from "./routes/impactLevelsRoutes.js";
 import partnersRoutes from "./routes/partnersRoutes.js";
+import footerRoutes from "./routes/footerRoutes.js";
 import { requireAuth } from "./middleware/authMiddleware.js";
 
 const app = express();
@@ -76,6 +77,7 @@ app.use("/api", flexBRoutes);
 app.use("/api", flexCRoutes);
 app.use("/api", impactLevelsRoutes);
 app.use("/api", partnersRoutes);
+app.use("/api", footerRoutes);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });

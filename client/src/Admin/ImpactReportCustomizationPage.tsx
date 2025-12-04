@@ -49,8 +49,13 @@ import {
   saveImpactLevelsContent,
   fetchPartnersContent,
   savePartnersContent,
+  fetchFooterContent,
+  saveFooterContent,
   fetchDefaults,
   saveDefaults,
+  ReorderableSectionKey,
+  DEFAULT_SECTION_ORDER,
+  SECTION_DISPLAY_NAMES,
   PopulationContent,
   FinancialContent,
   MethodContent,
@@ -64,6 +69,7 @@ import {
   FlexCContent,
   ImpactLevelsContent,
   PartnersContent,
+  FooterContent,
 } from '../services/impact.api';
 import '../../assets/fonts/fonts.css';
 import { useSnackbar } from 'notistack';
@@ -108,6 +114,7 @@ import {
   FlexCTabEditor,
   ImpactLevelsTabEditor,
   PartnersTabEditor,
+  FooterTabEditor,
   validateFinancialPieCharts,
 } from './components';
 
@@ -123,6 +130,7 @@ import FlexB from '../components/FlexB';
 import FlexC from '../components/FlexC';
 import ImpactLevelsSection from '../components/ImpactLevelsSection';
 import PartnersSection from '../components/PartnersSection';
+import FooterSection from '../components/FooterSection';
 
 const MemoHeroSection = React.memo(HeroSection);
 const MemoMissionSection = React.memo(MissionSection);
@@ -139,6 +147,7 @@ const MemoFlexB = React.memo(FlexB);
 const MemoFlexC = React.memo(FlexC);
 const MemoImpactLevelsSection = React.memo(ImpactLevelsSection);
 const MemoPartnersSection = React.memo(PartnersSection);
+const MemoFooterSection = React.memo(FooterSection);
 
 // Reusable component for showing section load error state
 function SectionLoadError({ sectionName }: { sectionName: string }) {
@@ -198,6 +207,8 @@ function getDefaultFormValues(): ImpactReportForm {
     flexB: null,
     flexC: null,
     impactLevels: null,
+    partners: null,
+    footer: null,
     // Legacy sections (may still use defaults for now)
     impact: null,
     programs: null,
@@ -236,21 +247,21 @@ function ImpactReportCustomizationPage() {
   // Keep tab selection in sync with URL segment and remember last used tab.
   useEffect(() => {
     const fromUrl =
-      tab && ADMIN_TABS.find((t) => t.routeKey === (tab as AdminTabRouteKey));
+      tab && orderedTabs.find((t) => t.routeKey === (tab as AdminTabRouteKey));
 
-    let fromStorage: (typeof ADMIN_TABS)[number] | undefined;
+    let fromStorage: (typeof orderedTabs)[number] | undefined;
     if (!fromUrl) {
       try {
         const storedKey = window.localStorage.getItem(
           LAST_ADMIN_TAB_STORAGE_KEY,
         ) as AdminTabRouteKey | null;
         if (storedKey) {
-          fromStorage = ADMIN_TABS.find((t) => t.routeKey === storedKey);
+          fromStorage = orderedTabs.find((t) => t.routeKey === storedKey);
         }
       } catch {}
     }
 
-    const fallback = fromUrl ?? fromStorage ?? ADMIN_TABS[0];
+    const fallback = fromUrl ?? fromStorage ?? orderedTabs[0];
 
     if (currentTab !== fallback.value) {
       setCurrentTab(fallback.value);
@@ -296,6 +307,23 @@ function ImpactReportCustomizationPage() {
 
   // Defaults swatch editor state
   const [defaultSwatch, setDefaultSwatch] = useState<string[] | null>(null);
+  // Section order state
+  const [sectionOrder, setSectionOrder] = useState<ReorderableSectionKey[]>([...DEFAULT_SECTION_ORDER]);
+
+  // Dynamic tabs based on section order
+  const orderedTabs = useMemo(() => {
+    // Defaults tab is always first and not reorderable
+    const defaultsTab = { label: 'Defaults', value: 0, routeKey: 'defaults' as const };
+    
+    // Map section order to tab configs
+    const sectionTabs = sectionOrder.map((sectionKey, index) => ({
+      label: SECTION_DISPLAY_NAMES[sectionKey],
+      value: index + 1, // +1 because defaults is at 0
+      routeKey: sectionKey,
+    }));
+    
+    return [defaultsTab, ...sectionTabs];
+  }, [sectionOrder]);
 
   // Track which sections have been loaded from API
   const [loadedSections, setLoadedSections] = useState<Set<AdminTabRouteKey>>(
@@ -445,6 +473,11 @@ function ImpactReportCustomizationPage() {
             primaryCtaHref: hero.primaryCta?.href ?? "",
             secondaryCtaLabel: hero.secondaryCta?.label ?? "",
             secondaryCtaHref: hero.secondaryCta?.href ?? "",
+            // Waveform & Music Toy
+            showWaveform: (hero as any)?.showWaveform !== false,
+            showMusicToy: (hero as any)?.showMusicToy !== false,
+            waveformGradient: (hero as any)?.waveformGradient ?? null,
+            waveformRainbow: (hero as any)?.waveformRainbow === true,
           };
 
           setImpactReportForm((prev) => {
@@ -965,6 +998,30 @@ function ImpactReportCustomizationPage() {
           break;
         }
 
+        case "footer": {
+          const footer = await fetchFooterContent();
+          if (!footer) {
+            setSectionLoadError("footer");
+            enqueueSnackbar("Failed to load Footer data.", {
+              variant: "error",
+            });
+            break;
+          }
+          setImpactReportForm((prev) => {
+            const next = {
+              ...prev,
+              footer: { ...prev.footer, ...footer },
+            };
+            setSavedSnapshot((prevSnapshot) =>
+              prevSnapshot
+                ? { ...prevSnapshot, footer: next.footer }
+                : next,
+            );
+            return next;
+          });
+          break;
+        }
+
         case "defaults":
           // Defaults are loaded globally on mount
           break;
@@ -983,13 +1040,13 @@ function ImpactReportCustomizationPage() {
 
   // Load section when tab changes
   useEffect(() => {
-    const currentTabConfig = ADMIN_TABS.find((t) => t.value === currentTab);
+    const currentTabConfig = orderedTabs.find((t) => t.value === currentTab);
     if (currentTabConfig) {
       loadSection(currentTabConfig.routeKey);
     }
   }, [currentTab]);
 
-  // Prefill defaults (swatch) from backend - always loaded globally
+  // Prefill defaults (swatch + section order) from backend - always loaded globally
   useEffect(() => {
     (async () => {
       const defs = await fetchDefaults();
@@ -1011,19 +1068,27 @@ function ImpactReportCustomizationPage() {
         (_, i) => incoming[i] ?? brand[i % brand.length],
       );
       setDefaultSwatch(normalized);
+      
+      // Load section order
+      if (defs?.sectionOrder && Array.isArray(defs.sectionOrder) && defs.sectionOrder.length > 0) {
+        // Ensure all sections are present (add any missing ones at the end)
+        const loadedOrder = defs.sectionOrder as ReorderableSectionKey[];
+        const missingSections = DEFAULT_SECTION_ORDER.filter(s => !loadedOrder.includes(s));
+        setSectionOrder([...loadedOrder, ...missingSections]);
+      }
     })();
   }, []);
 
   // Handle form submission - only saves the current section + defaults
   const handleSave = async () => {
     setIsSubmitting(true);
-    const currentTabConfig = ADMIN_TABS.find((t) => t.value === currentTab);
+    const currentTabConfig = orderedTabs.find((t) => t.value === currentTab);
     const sectionKey = currentTabConfig?.routeKey ?? "defaults";
 
     try {
-      // Always save defaults (color swatch) since it's shared
+      // Always save defaults (color swatch + section order) since they're shared
       if (defaultSwatch && defaultSwatch.length > 0) {
-        await saveDefaults({ colorSwatch: defaultSwatch });
+        await saveDefaults({ colorSwatch: defaultSwatch, sectionOrder });
       }
 
       // Save the current section based on tab
@@ -1150,6 +1215,11 @@ function ImpactReportCustomizationPage() {
               impactReportForm.hero.secondaryCtaBgColor || undefined,
             secondaryCtaHoverBgColor:
               impactReportForm.hero.secondaryCtaHoverBgColor || undefined,
+            // Waveform & Music Toy
+            showWaveform: impactReportForm.hero.showWaveform,
+            showMusicToy: impactReportForm.hero.showMusicToy,
+            waveformGradient: impactReportForm.hero.waveformGradient || undefined,
+            waveformRainbow: impactReportForm.hero.waveformRainbow,
           };
           console.log("[admin][hero] save payload", heroPayload);
           const heroResult = await saveHeroContent(heroPayload);
@@ -1458,6 +1528,19 @@ function ImpactReportCustomizationPage() {
             throw new Error("Failed to save Partners section.");
           break;
         }
+
+        case "footer": {
+          console.log(
+            "[admin][footer] save payload",
+            impactReportForm.footer,
+          );
+          const result = await saveFooterContent({
+            ...impactReportForm.footer,
+          });
+          if (!result)
+            throw new Error("Failed to save Footer section.");
+          break;
+        }
       }
 
       const sectionLabel = currentTabConfig?.label ?? "Section";
@@ -1485,7 +1568,7 @@ function ImpactReportCustomizationPage() {
 
   // Discard changes - refetch the current section from API
   const handleDiscard = async () => {
-    const currentTabConfig = ADMIN_TABS.find((t) => t.value === currentTab);
+    const currentTabConfig = orderedTabs.find((t) => t.value === currentTab);
     const sectionKey = currentTabConfig?.routeKey ?? "defaults";
 
     // Mark section as not loaded so it will be refetched
@@ -1495,7 +1578,7 @@ function ImpactReportCustomizationPage() {
       return next;
     });
 
-    // Refetch defaults (color swatch)
+    // Refetch defaults (color swatch + section order)
     try {
       const defs = await fetchDefaults();
       const brand = [
@@ -1516,6 +1599,15 @@ function ImpactReportCustomizationPage() {
         (_, i) => incoming[i] ?? brand[i % brand.length],
       );
       setDefaultSwatch(normalized);
+      
+      // Restore section order
+      if (defs?.sectionOrder && Array.isArray(defs.sectionOrder) && defs.sectionOrder.length > 0) {
+        const loadedOrder = defs.sectionOrder as ReorderableSectionKey[];
+        const missingSections = DEFAULT_SECTION_ORDER.filter(s => !loadedOrder.includes(s));
+        setSectionOrder([...loadedOrder, ...missingSections]);
+      } else {
+        setSectionOrder([...DEFAULT_SECTION_ORDER]);
+      }
     } catch {}
 
     // Refetch the current section (force reload since we just removed it from loadedSections)
@@ -1582,6 +1674,11 @@ function ImpactReportCustomizationPage() {
         null,
       backgroundImageGrayscale: impactReportForm.hero.backgroundGrayscale,
       ariaLabel: impactReportForm.hero.ariaLabel,
+      // Waveform & Music Toy
+      showWaveform: impactReportForm.hero.showWaveform,
+      showMusicToy: impactReportForm.hero.showMusicToy,
+      waveformGradient: impactReportForm.hero.waveformGradient,
+      waveformRainbow: impactReportForm.hero.waveformRainbow,
     };
   }, [impactReportForm.hero]);
 
@@ -1822,6 +1919,15 @@ function ImpactReportCustomizationPage() {
     300,
   );
 
+  const liveFooterOverride = useMemo(
+    () => impactReportForm.footer,
+    [impactReportForm.footer],
+  );
+  const debouncedFooterOverride = useDebouncedValue(
+    liveFooterOverride,
+    300,
+  );
+
   // Viewport simulator
   const [viewportIdx, setViewportIdx] = useState<number>(0);
   const artboardRef = useRef<HTMLDivElement | null>(null);
@@ -1869,10 +1975,14 @@ function ImpactReportCustomizationPage() {
   );
 
   const renderPreview = () => {
-    switch (currentTab) {
-      case 0:
+    // Use routeKey to determine which preview to show (supports dynamic tab ordering)
+    const currentTabConfig = orderedTabs.find((t) => t.value === currentTab);
+    const routeKey = currentTabConfig?.routeKey;
+    
+    switch (routeKey) {
+      case "defaults":
         return <DefaultsPreview defaultSwatch={defaultSwatch} />;
-      case 1:
+      case "hero":
         // Only show error if section finished loading but has error or no data
         if (loadedSections.has("hero") && (sectionLoadErrors.has("hero") || !impactReportForm.hero)) {
           return <PreviewError sectionName="Hero" />;
@@ -1880,7 +1990,7 @@ function ImpactReportCustomizationPage() {
         return (
           <MemoHeroSection previewMode heroOverride={debouncedHeroOverride} />
         );
-      case 2:
+      case "mission":
         // Only show error if section finished loading but has error or no data
         if (loadedSections.has("mission") && (sectionLoadErrors.has("mission") || !impactReportForm.mission)) {
           return <PreviewError sectionName="Mission" />;
@@ -1891,7 +2001,7 @@ function ImpactReportCustomizationPage() {
             missionOverride={debouncedMissionOverride as any}
           />
         );
-      case 3:
+      case "population":
         // Only show error if section finished loading but has error or no data
         if (loadedSections.has("population") && (sectionLoadErrors.has("population") || !impactReportForm.population)) {
           return <PreviewError sectionName="Population" />;
@@ -1903,7 +2013,7 @@ function ImpactReportCustomizationPage() {
             populationOverride={debouncedPopulationOverride}
           />
         );
-      case 4:
+      case "financial":
         // Only show error if section finished loading but has error or no data
         if (loadedSections.has("financial") && (sectionLoadErrors.has("financial") || !impactReportForm.financial)) {
           return <PreviewError sectionName="Financial" />;
@@ -1914,7 +2024,7 @@ function ImpactReportCustomizationPage() {
             financialOverride={debouncedFinancialOverride}
           />
         );
-      case 5:
+      case "method":
         // Only show error if section finished loading but has error or no data
         if (loadedSections.has("method") && (sectionLoadErrors.has("method") || !impactReportForm.method)) {
           return <PreviewError sectionName="Method" />;
@@ -1925,7 +2035,7 @@ function ImpactReportCustomizationPage() {
             methodOverride={debouncedMethodOverride}
           />
         );
-      case 6:
+      case "curriculum":
         // Only show error if section finished loading but has error or no data
         if (loadedSections.has("curriculum") && (sectionLoadErrors.has("curriculum") || !impactReportForm.curriculum)) {
           return <PreviewError sectionName="Curriculum" />;
@@ -1936,7 +2046,7 @@ function ImpactReportCustomizationPage() {
             curriculumOverride={debouncedCurriculumOverride}
           />
         );
-      case 7:
+      case "impactSection":
         // Only show error if section finished loading but has error or no data
         if (loadedSections.has("impactSection") && (sectionLoadErrors.has("impactSection") || !impactReportForm.impactSection)) {
           return <PreviewError sectionName="Impact Section" />;
@@ -1947,7 +2057,7 @@ function ImpactReportCustomizationPage() {
             impactSectionOverride={debouncedImpactSectionOverride}
           />
         );
-      case 8:
+      case "hearOurImpact":
         // Only show error if section finished loading but has error or no data
         if (loadedSections.has("hearOurImpact") && (sectionLoadErrors.has("hearOurImpact") || !impactReportForm.hearOurImpact)) {
           return <PreviewError sectionName="Hear Our Impact" />;
@@ -1958,7 +2068,7 @@ function ImpactReportCustomizationPage() {
             hearOurImpactOverride={debouncedHearOurImpactOverride}
           />
         );
-      case 9:
+      case "testimonials":
         // Only show error if section finished loading but has error or no data
         if (loadedSections.has("testimonials") && (sectionLoadErrors.has("testimonials") || !impactReportForm.testimonials)) {
           return <PreviewError sectionName="Testimonials" />;
@@ -1969,7 +2079,7 @@ function ImpactReportCustomizationPage() {
             testimonialsOverride={debouncedTestimonialsOverride}
           />
         );
-      case 10:
+      case "nationalImpact":
         // Only show error if section finished loading but has error or no data
         if (loadedSections.has("nationalImpact") && (sectionLoadErrors.has("nationalImpact") || !impactReportForm.nationalImpact)) {
           return <PreviewError sectionName="National Impact" />;
@@ -1980,7 +2090,7 @@ function ImpactReportCustomizationPage() {
             nationalImpactOverride={debouncedNationalImpactOverride}
           />
         );
-      case 11:
+      case "flexA":
         // Only show error if section finished loading but has error or no data
         if (loadedSections.has("flexA") && (sectionLoadErrors.has("flexA") || !impactReportForm.flexA)) {
           return <PreviewError sectionName="Flex A" />;
@@ -1991,7 +2101,7 @@ function ImpactReportCustomizationPage() {
             flexAOverride={debouncedFlexAOverride}
           />
         );
-      case 12:
+      case "flexB":
         // Only show error if section finished loading but has error or no data
         if (loadedSections.has("flexB") && (sectionLoadErrors.has("flexB") || !impactReportForm.flexB)) {
           return <PreviewError sectionName="Flex B" />;
@@ -2002,7 +2112,7 @@ function ImpactReportCustomizationPage() {
             flexBOverride={debouncedFlexBOverride}
           />
         );
-      case 13:
+      case "flexC":
         // Only show error if section finished loading but has error or no data
         if (loadedSections.has("flexC") && (sectionLoadErrors.has("flexC") || !impactReportForm.flexC)) {
           return <PreviewError sectionName="Flex C" />;
@@ -2013,7 +2123,7 @@ function ImpactReportCustomizationPage() {
             flexCOverride={debouncedFlexCOverride}
           />
         );
-      case 14:
+      case "impactLevels":
         // Only show error if section finished loading but has error or no data
         if (loadedSections.has("impactLevels") && (sectionLoadErrors.has("impactLevels") || !impactReportForm.impactLevels)) {
           return <PreviewError sectionName="Impact Levels" />;
@@ -2024,7 +2134,7 @@ function ImpactReportCustomizationPage() {
             impactLevelsOverride={debouncedImpactLevelsOverride}
           />
         );
-      case 15:
+      case "partners":
         // Only show error if section finished loading but has error or no data
         if (loadedSections.has("partners") && (sectionLoadErrors.has("partners") || !impactReportForm.partners)) {
           return <PreviewError sectionName="Partners" />;
@@ -2033,6 +2143,17 @@ function ImpactReportCustomizationPage() {
           <MemoPartnersSection
             previewMode
             partnersOverride={debouncedPartnersOverride}
+          />
+        );
+      case "footer":
+        // Only show error if section finished loading but has error or no data
+        if (loadedSections.has("footer") && (sectionLoadErrors.has("footer") || !impactReportForm.footer)) {
+          return <PreviewError sectionName="Footer" />;
+        }
+        return (
+          <MemoFooterSection
+            previewMode
+            footerOverride={debouncedFooterOverride}
           />
         );
       default:
@@ -2045,7 +2166,7 @@ function ImpactReportCustomizationPage() {
   // Render editor based on current tab
   const renderEditor = () => {
     // Show loading state while section is being fetched
-    const currentTabConfig = ADMIN_TABS.find((t) => t.value === currentTab);
+    const currentTabConfig = orderedTabs.find((t) => t.value === currentTab);
     if (sectionLoading === currentTabConfig?.routeKey) {
       return (
         <Box sx={{ p: 4, textAlign: "center" }}>
@@ -2056,17 +2177,21 @@ function ImpactReportCustomizationPage() {
       );
     }
 
-    switch (currentTab) {
-      case 0:
+    // Use routeKey to determine which editor to show (supports dynamic tab ordering)
+    const routeKey = currentTabConfig?.routeKey;
+    
+    switch (routeKey) {
+      case "defaults":
         return (
           <DefaultsTabEditor
             defaultSwatch={defaultSwatch}
+            sectionOrder={sectionOrder}
             onSwatchChange={setDefaultSwatch}
+            onSectionOrderChange={setSectionOrder}
             onDirtyChange={() => setIsDirty(true)}
           />
         );
-      case 1:
-        // Show loading if hero hasn't been loaded yet
+      case "hero":
         if (!loadedSections.has("hero")) {
           return <SectionLoading sectionName="Hero" />;
         }
@@ -2085,7 +2210,7 @@ function ImpactReportCustomizationPage() {
             onClearBackground={handleClearHeroBackground}
           />
         );
-      case 2:
+      case "mission":
         if (!loadedSections.has("mission")) {
           return <SectionLoading sectionName="Mission" />;
         }
@@ -2101,7 +2226,7 @@ function ImpactReportCustomizationPage() {
             }
           />
         );
-      case 3:
+      case "population":
         if (!loadedSections.has("population")) {
           return <SectionLoading sectionName="Population" />;
         }
@@ -2117,7 +2242,7 @@ function ImpactReportCustomizationPage() {
             }
           />
         );
-      case 4:
+      case "financial":
         if (!loadedSections.has("financial")) {
           return <SectionLoading sectionName="Financial" />;
         }
@@ -2133,7 +2258,7 @@ function ImpactReportCustomizationPage() {
             }
           />
         );
-      case 5:
+      case "method":
         if (!loadedSections.has("method")) {
           return <SectionLoading sectionName="Method" />;
         }
@@ -2149,7 +2274,7 @@ function ImpactReportCustomizationPage() {
             }
           />
         );
-      case 6:
+      case "curriculum":
         if (!loadedSections.has("curriculum")) {
           return <SectionLoading sectionName="Curriculum" />;
         }
@@ -2165,7 +2290,7 @@ function ImpactReportCustomizationPage() {
             }
           />
         );
-      case 7:
+      case "impactSection":
         if (!loadedSections.has("impactSection")) {
           return <SectionLoading sectionName="Impact" />;
         }
@@ -2181,7 +2306,7 @@ function ImpactReportCustomizationPage() {
             }
           />
         );
-      case 8:
+      case "hearOurImpact":
         if (!loadedSections.has("hearOurImpact")) {
           return <SectionLoading sectionName="Hear Our Impact" />;
         }
@@ -2197,7 +2322,7 @@ function ImpactReportCustomizationPage() {
             }
           />
         );
-      case 9:
+      case "testimonials":
         if (!loadedSections.has("testimonials")) {
           return <SectionLoading sectionName="Testimonials" />;
         }
@@ -2213,7 +2338,7 @@ function ImpactReportCustomizationPage() {
             }
           />
         );
-      case 10:
+      case "nationalImpact":
         if (!loadedSections.has("nationalImpact")) {
           return <SectionLoading sectionName="National Impact" />;
         }
@@ -2229,7 +2354,7 @@ function ImpactReportCustomizationPage() {
             }
           />
         );
-      case 11:
+      case "flexA":
         if (!loadedSections.has("flexA")) {
           return <SectionLoading sectionName="Flex A" />;
         }
@@ -2245,7 +2370,7 @@ function ImpactReportCustomizationPage() {
             }
           />
         );
-      case 12:
+      case "flexB":
         if (!loadedSections.has("flexB")) {
           return <SectionLoading sectionName="Flex B" />;
         }
@@ -2261,7 +2386,7 @@ function ImpactReportCustomizationPage() {
             }
           />
         );
-      case 13:
+      case "flexC":
         if (!loadedSections.has("flexC")) {
           return <SectionLoading sectionName="Flex C" />;
         }
@@ -2277,7 +2402,7 @@ function ImpactReportCustomizationPage() {
             }
           />
         );
-      case 14:
+      case "impactLevels":
         if (!loadedSections.has("impactLevels")) {
           return <SectionLoading sectionName="Impact Levels" />;
         }
@@ -2293,7 +2418,7 @@ function ImpactReportCustomizationPage() {
             }
           />
         );
-      case 15:
+      case "partners":
         if (sectionLoading === "partners") {
           return <LoadingEditor />;
         }
@@ -2309,6 +2434,23 @@ function ImpactReportCustomizationPage() {
             }
           />
         );
+      case "footer":
+        if (sectionLoading === "footer") {
+          return <LoadingEditor />;
+        }
+        if (sectionLoadErrors.has("footer") || !impactReportForm.footer) {
+          return <SectionLoadError sectionName="Footer" />;
+        }
+        return (
+          <FooterTabEditor
+            footer={impactReportForm.footer}
+            defaultSwatch={defaultSwatch}
+            onFooterChange={(field, value) =>
+              handleSectionChange("footer", field, value)
+            }
+          />
+        );
+
       default:
         return null;
     }
@@ -2558,8 +2700,8 @@ function ImpactReportCustomizationPage() {
                     setCurrentTab(newValue);
 
                     const nextTab =
-                      ADMIN_TABS.find((t) => t.value === newValue) ??
-                      ADMIN_TABS[0];
+                      orderedTabs.find((t) => t.value === newValue) ??
+                      orderedTabs[0];
 
                     try {
                       window.localStorage.setItem(
@@ -2596,9 +2738,9 @@ function ImpactReportCustomizationPage() {
                     },
                   }}
                 >
-                  {ADMIN_TABS.map((t) => (
+                  {orderedTabs.map((t) => (
                     <Tab
-                      key={t.value}
+                      key={t.routeKey}
                       label={t.label}
                       value={t.value}
                       disabled={isDirty}
