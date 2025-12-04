@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, memo } from 'react';
+import React, { useEffect, useRef, useState, memo, lazy, Suspense } from 'react';
 import 'leaflet/dist/leaflet.css'; // Ensure Leaflet CSS is imported first
 import './ImpactReportStructure.css';
 import '../assets/fonts/fonts.css'; // Import GOGO fonts
@@ -17,21 +17,28 @@ import COLORS from '../assets/colors';
 import Header from './components/Header';
 import HeroSection from './components/HeroSection';
 import MissionSection from './sections/MissionSection';
-import ImpactSection from './components/ImpactSection';
-import OurMethodSection from "./components/OurMethodSection";
-import CurriculumSection from './components/CurriculumSection';
-import LocationsSection from "./sections/LocationsSection";
-import SingleQuoteSection from './components/SingleQuoteSection';
-import FlexA from './components/FlexA';
-import FlexB from './components/FlexB';
-import FlexC from './components/FlexC';
-import PartnersSection from "./components/PartnersSection";
-import ImpactLevelsSection from './components/ImpactLevelsSection';
-import Population from './components/Population';
-import gogoWideLogo from '../assets/GOGO_LOGO_WIDE_WH.png';
-import SpotifyEmbedsSection from './components/SpotifyEmbedsSection';
-import FinancialAnalysisSection from './components/FinancialAnalysisSection';
 import IntroOverlay from "./components/IntroOverlay";
+import gogoWideLogo from '../assets/GOGO_LOGO_WIDE_WH.png';
+
+// Lazy load heavy components below the fold for better initial load performance
+const ImpactSection = lazy(() => import('./components/ImpactSection'));
+const OurMethodSection = lazy(() => import("./components/OurMethodSection"));
+const CurriculumSection = lazy(() => import('./components/CurriculumSection'));
+const LocationsSection = lazy(() => import("./sections/LocationsSection"));
+const SingleQuoteSection = lazy(() => import('./components/SingleQuoteSection'));
+const FlexA = lazy(() => import('./components/FlexA'));
+const FlexB = lazy(() => import('./components/FlexB'));
+const FlexC = lazy(() => import('./components/FlexC'));
+const PartnersSection = lazy(() => import("./components/PartnersSection"));
+const ImpactLevelsSection = lazy(() => import('./components/ImpactLevelsSection'));
+const Population = lazy(() => import('./components/Population'));
+const SpotifyEmbedsSection = lazy(() => import('./components/SpotifyEmbedsSection'));
+const FinancialAnalysisSection = lazy(() => import('./components/FinancialAnalysisSection'));
+
+// Simple fallback for lazy-loaded sections
+const SectionFallback = () => (
+  <div style={{ minHeight: '200px', background: 'transparent' }} />
+);
 import {
   fetchHeroContent,
   fetchMissionContent,
@@ -656,79 +663,105 @@ function ImpactReportPage() {
       case 'population':
         return (
           <div key="population" id="population" style={{ position: 'relative', zIndex: 2 }}>
-            <Population inline populationData={reportData.population} />
+            <Suspense fallback={<SectionFallback />}>
+              <Population inline populationData={reportData.population} />
+            </Suspense>
           </div>
         );
       case 'financial':
         return (
           <div key="financial" id="financial" ref={financialRef} style={{ position: 'relative', zIndex: 2 }}>
-            <FinancialAnalysisSection financialData={reportData.financial} />
+            <Suspense fallback={<SectionFallback />}>
+              <FinancialAnalysisSection financialData={reportData.financial} />
+            </Suspense>
           </div>
         );
       case 'method':
         return (
           <div key="method" id="method" ref={methodRef} style={{ position: 'relative', zIndex: 2 }}>
-            <OurMethodSection methodData={reportData.method} />
+            <Suspense fallback={<SectionFallback />}>
+              <OurMethodSection methodData={reportData.method} />
+            </Suspense>
           </div>
         );
       case 'curriculum':
         return (
           <div key="curriculum" id="curriculum" style={{ position: 'relative', zIndex: 2 }}>
-            <CurriculumSection />
+            <Suspense fallback={<SectionFallback />}>
+              <CurriculumSection />
+            </Suspense>
           </div>
         );
       case 'impactSection':
         return (
           <div key="impact" id="impact" ref={impactRef} style={{ position: 'relative', zIndex: 2 }}>
-            <ImpactSection />
+            <Suspense fallback={<SectionFallback />}>
+              <ImpactSection />
+            </Suspense>
           </div>
         );
       case 'hearOurImpact':
         return (
           <div key="music" id="music" ref={musicRef} style={{ position: 'relative', zIndex: 2 }}>
-            <SpotifyEmbedsSection />
+            <Suspense fallback={<SectionFallback />}>
+              <SpotifyEmbedsSection />
+            </Suspense>
           </div>
         );
       case 'testimonials':
         return (
           <div key="quote" id="quote" ref={testimonialRef} style={{ position: 'relative', zIndex: 2 }}>
-            <SingleQuoteSection />
+            <Suspense fallback={<SectionFallback />}>
+              <SingleQuoteSection />
+            </Suspense>
           </div>
         );
       case 'nationalImpact':
         return (
           <div key="locations" id="locations" ref={locationsRef} style={{ position: 'relative', zIndex: 2 }}>
-            <LocationsSection />
+            <Suspense fallback={<SectionFallback />}>
+              <LocationsSection />
+            </Suspense>
           </div>
         );
       case 'flexA':
         return (
           <div key="flex-a" id="flex-a" style={{ position: 'relative', zIndex: 2 }}>
-            <FlexA />
+            <Suspense fallback={<SectionFallback />}>
+              <FlexA />
+            </Suspense>
           </div>
         );
       case 'flexB':
         return (
           <div key="flex-b" id="flex-b" style={{ position: 'relative', zIndex: 2 }}>
-            <FlexB />
+            <Suspense fallback={<SectionFallback />}>
+              <FlexB />
+            </Suspense>
           </div>
         );
       case 'flexC':
         return (
           <div key="flex-c" id="flex-c" style={{ position: 'relative', zIndex: 2 }}>
-            <FlexC />
+            <Suspense fallback={<SectionFallback />}>
+              <FlexC />
+            </Suspense>
           </div>
         );
       case 'impactLevels':
         return (
           <div key="impact-levels" id="impact-levels" style={{ position: 'relative', zIndex: 2 }}>
-            <ImpactLevelsSection />
+            <Suspense fallback={<SectionFallback />}>
+              <ImpactLevelsSection />
+            </Suspense>
           </div>
         );
       case 'partners':
         return (
           <div key="partners" id="partners" ref={partnersRef} style={{ position: 'relative', zIndex: 2 }}>
-            <PartnersSection />
+            <Suspense fallback={<SectionFallback />}>
+              <PartnersSection />
+            </Suspense>
           </div>
         );
       case 'footer':

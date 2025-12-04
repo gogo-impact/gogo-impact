@@ -5,6 +5,7 @@ import React, {
   useState,
   useMemo,
   useCallback,
+  memo,
 } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -1137,4 +1138,4 @@ function EnhancedLeafletMap({
   );
 }
 
-export default EnhancedLeafletMap;
+export default memo(EnhancedLeafletMap);

@@ -270,12 +270,13 @@ const WaveBackground = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between; /* Spread bars across full width */
-  gap: 3px; /* Larger gap for fewer bars */
+  gap: 6px; /* Larger gap for fewer bars */
   z-index: 2; /* Above gradient overlay, below content */
   opacity: 0;
   padding: 0 1%; /* Small padding to prevent edge cutoff */
   pointer-events: none; /* Don't catch events directly - parent will handle them */
   background: transparent;
+  contain: layout style; /* CSS containment for better performance */
 `;
 
 // Backdrop image behind everything - always fills the container
@@ -308,14 +309,15 @@ const GradientOverlay = styled.div<{ $background?: string }>`
 
 // Individual wave bar styled for a music waveform
 const WaveBar = styled.div`
-  width: 6px; /* Thicker bars to allow fewer of them */
+  width: 10px; /* Thicker bars to allow fewer of them */
   height: 4px; /* Default minimal height */
-  border-radius: 2px;
+  border-radius: 3px;
   transform-origin: center;
-  opacity: 0.6;
+  opacity: 1; /* Full opacity - let gradient colors control transparency */
   pointer-events: none;
-  will-change: transform, height, opacity; /* Better performance with transform */
+  will-change: transform; /* Only transform for GPU acceleration */
   transform: translateZ(0); /* Hardware acceleration */
+  contain: layout style; /* CSS containment for better performance */
 `;
 
 // Content wrapper with better Spotify-like spacing
@@ -1220,7 +1222,7 @@ function HeroSection(props: HeroSectionProps = {}): JSX.Element {
     // Create animatable for each bar
     waveBars.forEach((bar, index) => {
       const animatable = createAnimatable(bar, {
-        opacity: 0.7,
+        opacity: 1,
         scale: 1,
         scaleY: 0.05,
         ease: "out(4)",
@@ -1551,9 +1553,10 @@ function HeroSection(props: HeroSectionProps = {}): JSX.Element {
           const scaleY = height / BASE_WAVE_HEIGHT;
 
           // Transform-only updates (no layout): scaleY and opacity
+          // Higher base opacity so gradient colors control transparency
           animatable
             .scaleY(scaleY, 80, "linear")
-            .opacity(0.18 + amplitude * 0.65, 120, "linear");
+            .opacity(0.5 + amplitude * 0.5, 120, "linear");
 
           // Update color directly for richer palettes
           const elem = el as HTMLElement;
@@ -2040,7 +2043,7 @@ function HeroSection(props: HeroSectionProps = {}): JSX.Element {
   }, [hero, disableEntranceAnimations]);
 
   // Reduced number of wave bars for better performance
-  const numWaveBars = 120;
+  const numWaveBars = 60;
   const BASE_WAVE_HEIGHT = 160;
 
   const title = hero?.title;
@@ -2170,7 +2173,7 @@ function HeroSection(props: HeroSectionProps = {}): JSX.Element {
                     waveformGradient,
                   ),
                   height: `${BASE_WAVE_HEIGHT}px`,
-                  opacity: 0.7,
+                  opacity: 1,
                   transform: `scaleY(${initialScale}) translateZ(0)`,
                 }}
               />

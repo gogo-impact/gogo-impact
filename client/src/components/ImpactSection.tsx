@@ -4,6 +4,7 @@ import React, {
   useRef,
   useCallback,
   FC,
+  memo,
 } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
@@ -1257,4 +1258,4 @@ function ImpactSection({
   );
 }
 
-export default ImpactSection;
+export default memo(ImpactSection);

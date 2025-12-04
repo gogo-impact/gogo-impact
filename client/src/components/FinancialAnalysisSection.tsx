@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, memo } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { ResponsivePieCanvas } from '@nivo/pie';
 import COLORS from '../../assets/colors';
@@ -829,4 +829,4 @@ function FinancialAnalysisSection({
   );
 }
 
-export default FinancialAnalysisSection;
+export default memo(FinancialAnalysisSection);

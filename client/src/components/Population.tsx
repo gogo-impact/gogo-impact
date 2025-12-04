@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, memo } from 'react';
 import { ResponsivePie } from "@nivo/pie";
 import styled from "styled-components";
 import Dialog from "@mui/material/Dialog";
@@ -933,7 +933,7 @@ function PopulationComponent({
       {!inline && (
         <ImageStrip className="animate-in">
           {photos.map((photo, i) => (
-            <StripImage key={i} src={photo} alt={`GOGO Student ${i + 1}`} />
+            <StripImage key={i} src={photo} alt={`GOGO Student ${i + 1}`} loading="lazy" decoding="async" />
           ))}
         </ImageStrip>
       )}
@@ -991,4 +991,4 @@ function PopulationComponent({
   );
 }
 
-export default PopulationComponent;
+export default memo(PopulationComponent);

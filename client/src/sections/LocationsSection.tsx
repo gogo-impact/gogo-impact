@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, memo } from 'react';
 import styled from 'styled-components';
 import EnhancedLeafletMap from '../components/map/EnhancedLeafletMap';
 import COLORS from '../../assets/colors.ts';
@@ -138,4 +138,4 @@ function LocationsSection({
   );
 }
 
-export default LocationsSection;
+export default memo(LocationsSection);
