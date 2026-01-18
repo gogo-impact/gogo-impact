@@ -276,8 +276,14 @@ const LoadingContainer = styled.div`
 `;
 
 
+// Props interface for ImpactReportPage
+interface ImpactReportPageProps {
+  /** When true, skips intro overlay and optimizes for PDF conversion */
+  printMode?: boolean;
+}
+
 // Main component
-function ImpactReportPage() {
+function ImpactReportPage({ printMode = false }: ImpactReportPageProps) {
   // Centralized data loading state
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -305,8 +311,8 @@ function ImpactReportPage() {
     new URLSearchParams(window.location.search).get('skipIntro') === 'true';
     
   // Only show the intro once per tab: initialize from the module-level flag.
-  // Also skip if ?skipIntro=true is in the URL (for PDF export)
-  const [introComplete, setIntroComplete] = useState(hasShownIntroInThisTab || shouldSkipIntro);
+  // In print mode, always skip the intro overlay.
+  const [introComplete, setIntroComplete] = useState(printMode || hasShownIntroInThisTab);
 
   // Timeout duration for loading data (30 seconds)
   const LOAD_TIMEOUT_MS = 30000;
@@ -363,7 +369,7 @@ function ImpactReportPage() {
           const missingSections = DEFAULT_SECTION_ORDER.filter(s => !loadedOrder.includes(s));
           setSectionOrder([...loadedOrder, ...missingSections]);
         }
-        
+
         // Load disabled sections from defaults
         if (defaults?.disabledSections && Array.isArray(defaults.disabledSections)) {
           setDisabledSections(defaults.disabledSections as ReorderableSectionKey[]);
@@ -650,10 +656,10 @@ function ImpactReportPage() {
   // Render a section based on its key
   const renderSection = (sectionKey: ReorderableSectionKey) => {
     if (!reportData) return null;
-    
+
     // Skip disabled sections
     if (disabledSections.includes(sectionKey)) return null;
-    
+
     switch (sectionKey) {
       case 'hero':
         return (

@@ -5,6 +5,7 @@ import ImpactReportPage from './src/ImpactReportPage.tsx';
 import { ImpactReportCustomizationPage, AdminLoginPage } from './src/Admin';
 import NotFoundPage from './src/pages/NotFoundPage';
 import ProtectedRoute from "./src/components/ProtectedRoute.tsx";
+import ImpactReportPrintView from './src/components/ImpactReportPrintView.tsx';
 import { Provider } from "react-redux";
 import { store } from "./src/util/redux/store.ts";
 import { SnackbarProvider } from "notistack";
@@ -38,6 +39,8 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
               </ProtectedRoute>
             }
           />
+          {/* Print-ready view with cover slide - public for Sejda PDF conversion */}
+          <Route path="/print" element={<ImpactReportPrintView />} />
           {/* Catch-all 404 route */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
