@@ -35,6 +35,35 @@ body {
   position: relative;
 }
 
+/* Mobile-specific global overflow fix */
+@media (max-width: 768px) {
+  html {
+    overflow-x: hidden !important;
+    max-width: 100vw;
+    width: 100%;
+  }
+  
+  body {
+    overflow-x: hidden !important;
+    max-width: 100vw;
+    width: 100%;
+    position: relative;
+  }
+
+  /* Ensure main containers don't cause horizontal scroll */
+  .impact-report,
+  .main-content {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* Allow images and videos to scale properly */
+  img, video, iframe {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
 html {
   scroll-padding-top: 80px; /* Prevents scrolling behind the header */
   scroll-padding-bottom: 90px; /* Prevents scrolling behind the now playing bar */
@@ -488,39 +517,89 @@ section:hover h2::after {
 /* Responsive adjustments */
 @media (max-width: 768px) {
   section {
-    padding: 60px 20px;
+    padding: 50px 16px;
   }
 
   .hero-section {
-    padding: 100px 20px 60px;
+    padding: 80px 16px 50px;
   }
 
   .hero-section h1 {
-    font-size: 3rem;
+    font-size: 2.5rem;
   }
 
   .hero-section h2 {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
   }
 
   .stat-item h3,
   .impact-stat h3 {
-    font-size: 2.5rem;
+    font-size: 2rem;
   }
 
   .mission-section,
   .locations-section {
-    margin: 20px;
+    margin: 16px;
+    border-radius: 8px;
+  }
+
+  /* Fix horizontal overflow on mobile */
+  .impact-report,
+  .main-content,
+  body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  /* Stats grid adjustment */
+  .stats-container {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin: 40px 0 16px;
+  }
+
+  .impact-stats {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  /* Program list adjustment */
+  .program-list {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  /* Locations grid adjustment */
+  .locations-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 }
 
 @media (max-width: 480px) {
   section {
-    padding: 44px 16px;
+    padding: 36px 12px;
   }
 
   section h2 {
-    font-size: 2rem;
+    font-size: 1.6rem;
+    margin-bottom: 24px;
+  }
+
+  /* Even tighter spacing on small phones */
+  .stat-item h3,
+  .impact-stat h3 {
+    font-size: 1.8rem;
+  }
+
+  .stat-item,
+  .impact-stat {
+    padding: 24px 16px;
+  }
+
+  .mission-section p {
+    font-size: 1rem;
+    line-height: 1.6;
   }
 }
 
@@ -1409,14 +1488,14 @@ section:hover h2::after {
 }
 
 .spotify-header.scrolled {
-  background-color: rgba(18, 18, 18, 0.8);
+  background-color: rgba(18, 18, 18, 0.95);
 }
 
 .header-left {
   display: flex;
   align-items: center;
   flex: 0 0 auto;
-  z-index: 1001; /* Ensure it stays above the center */
+  z-index: 1001;
 }
 
 .header-center {
@@ -1425,101 +1504,228 @@ section:hover h2::after {
   top: 50%;
   transform: translate(-50%, -50%);
   z-index: 1000;
-  text-align: center; /* Ensure text is centered */
+  text-align: center;
+}
+
+/* Mobile header adjustments */
+@media (max-width: 768px) {
+  .spotify-header {
+    padding: 10px 12px;
+    height: 60px;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .header-center {
+    position: static;
+    transform: none;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    padding: 0 8px;
+  }
+
+  .header-left {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .spotify-header {
+    padding: 8px 10px;
+    height: 56px;
+    gap: 4px;
+  }
 }
 
 .header-title {
   font-size: 1.4rem;
   font-weight: 700;
-  margin: 0 !important; /* Override any default margins */
-  padding: 0 !important; /* Override any default padding */
+  margin: 0 !important;
+  padding: 0 !important;
   color: white;
   letter-spacing: 0.02em;
   line-height: 1.2;
   white-space: nowrap;
   text-align: center;
   display: block;
-  /* Reset any browser defaults */
   border: none;
   background: none;
   box-sizing: border-box;
 }
 
 .logo-container {
-  margin-left: 16px;
+  margin-left: 0;
 }
 
-/* No longer needed for text - keeping for spacing
-.header-logo {
-  height: 32px;
-  max-width: 150px;
-  object-fit: contain;
+.header-logo-img {
+  height: 60px;
+  width: 180px;
+  object-fit: cover;
+  object-position: center;
 }
-*/
 
-/* Make the menu button bigger and more like Spotify's pause button */
-.menu-button {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background-color: var(--spotify-green, #1db954);
+@media (max-width: 768px) {
+  .header-logo-img {
+    height: 40px;
+    width: 120px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-logo-img {
+    height: 36px;
+    width: 100px;
+  }
+}
+
+/* ============================================
+   Sticky Table of Contents
+   ============================================ */
+.sticky-toc {
+  position: fixed;
+  left: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 900;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.sticky-toc.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* TOC items container */
+.toc-items {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  cursor: pointer;
-  margin-right: 16px;
-  transition: transform 0.2s ease, background-color 0.2s ease;
-  color: white;
-  flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  flex-direction: column;
   position: relative;
 }
 
-.menu-button:hover {
-  transform: scale(1.05);
-  background-color: #20c95c;
-}
-
-.pause-icon {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-}
-
-.pause-icon::before,
-.pause-icon::after {
+/* Connecting line between dots - runs through center */
+.toc-items::before {
   content: '';
   position: absolute;
-  width: 4px;
-  height: 16px;
-  background-color: white;
-  border-radius: 2px;
-  transition: transform 0.3s ease;
+  left: 5px;
+  top: 12px;
+  bottom: 12px;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 1px;
 }
 
-.pause-icon::before {
-  left: 2px;
+/* Progress track (sits on top of the base line) */
+.toc-progress-track {
+  position: absolute;
+  left: 5px;
+  top: 12px;
+  bottom: 12px;
+  width: 2px;
+  background: transparent;
+  border-radius: 1px;
+  overflow: hidden;
 }
 
-.pause-icon::after {
-  right: 2px;
+.toc-progress-fill {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 1px;
+  transition: height 0.3s ease;
 }
 
-.menu-button.active .pause-icon::before {
-  transform: rotate(45deg);
-  left: 6px;
+/* Individual TOC item */
+.toc-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 12px 8px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+  position: relative;
 }
 
-.menu-button.active .pause-icon::after {
-  transform: rotate(-45deg);
-  right: 6px;
+.toc-item:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
-/* Spotify-style icon buttons */
+/* Dot indicator */
+.toc-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(30, 30, 30, 1);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.toc-item:hover .toc-dot {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.toc-item.past .toc-dot {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(255, 255, 255, 0.7);
+}
+
+.toc-item.active .toc-dot {
+  background: #fff;
+  border-color: #fff;
+  transform: scale(1.25);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.15);
+}
+
+/* Label text */
+.toc-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  opacity: 0;
+  transform: translateX(-6px);
+}
+
+.toc-item:hover .toc-label {
+  opacity: 1;
+  transform: translateX(0);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.toc-item.past .toc-label {
+  opacity: 0;
+}
+
+.toc-item.past:hover .toc-label {
+  opacity: 1;
+}
+
+.toc-item.active .toc-label {
+  opacity: 1;
+  transform: translateX(0);
+  color: #fff;
+}
+
+/* Hide TOC on smaller screens */
+@media (max-width: 1200px) {
+  .sticky-toc {
+    display: none;
+  }
+}
+
+/* Legacy icon button styles - kept for any remaining icon buttons */
 .spotify-icon-button {
   width: 32px;
   height: 32px;
@@ -1548,260 +1754,6 @@ section:hover h2::after {
   fill: white;
 }
 
-/* Side navigation */
-.side-nav {
-  position: fixed;
-  top: 64px;
-  left: 0;
-  bottom: 0;
-  width: 240px;
-  background-color: var(--spotify-black);
-  transform: translateX(-100%);
-  transition: transform 0.3s ease;
-  z-index: 900;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--spotify-gray) var(--spotify-black);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-}
-
-.side-nav.open {
-  transform: translateX(0);
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-}
-
-.nav-content {
-  padding: 16px;
-}
-
-.section-group h3 {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--spotify-light-gray);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  margin: 8px 24px 12px;
-}
-
-.nav-item .section-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 12px;
-  background-color: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  transition: background-color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
-}
-
-.nav-item:hover .section-icon {
-  background-color: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.12);
-  transform: scale(1.02);
-}
-
-.nav-item .section-icon svg {
-  width: 16px;
-  height: 16px;
-  /* Use a lighter visual weight for MUI icons */
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.nav-section {
-  margin-bottom: 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding-bottom: 16px;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  padding: 10px 24px;
-  color: var(--spotify-light-gray);
-  font-size: 14px;
-  margin-bottom: 6px;
-  transition: color 0.2s ease;
-  position: relative;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-.nav-item:hover {
-  color: white;
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.nav-item.active {
-  color: white;
-  font-weight: 600;
-}
-
-.nav-icon {
-  margin-right: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.nav-icon svg {
-  fill: currentColor;
-}
-
-.playlist-section h3 {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--spotify-light-gray);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 24px 16px 16px;
-}
-
-.playlist-links {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 0 16px 8px;
-}
-
-.playlist-button {
-  margin: 0;
-  padding: 10px 18px;
-  border-radius: 999px;
-  position: relative;
-  overflow: hidden;
-  color: #ffffff;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow:
-    0 10px 25px rgba(0, 0, 0, 0.45),
-    0 0 0 1px rgba(255, 255, 255, 0.04);
-  background-image:
-    radial-gradient(circle at 0% 0%, rgba(86, 204, 242, 0.45), transparent 55%),
-    radial-gradient(circle at 100% 0%, rgba(123, 97, 255, 0.6), transparent 55%),
-    radial-gradient(circle at 0% 100%, rgba(251, 139, 36, 0.5), transparent 55%),
-    radial-gradient(circle at 100% 100%, rgba(58, 227, 116, 0.6), transparent 55%),
-    linear-gradient(135deg, #1b1b2f 0%, #111827 40%, #020617 100%);
-  background-size: 180% 180%;
-  animation: playlist-marble 18s ease infinite;
-}
-
-.playlist-button span {
-  position: relative;
-  z-index: 1;
-}
-
-.playlist-button::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-      circle at 20% 20%,
-      rgba(255, 255, 255, 0.12),
-      transparent 55%
-    ),
-    radial-gradient(
-      circle at 80% 80%,
-      rgba(255, 255, 255, 0.06),
-      transparent 55%
-    );
-  mix-blend-mode: screen;
-  opacity: 0.6;
-}
-
-.playlist-button:hover {
-  transform: translateY(-1px) scale(1.01);
-  box-shadow:
-    0 16px 35px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(255, 255, 255, 0.06);
-}
-
-.playlist-button:active {
-  transform: translateY(0) scale(0.99);
-  box-shadow:
-    0 8px 18px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(255, 255, 255, 0.04);
-}
-
-@keyframes playlist-marble {
-  0% {
-    background-position: 0% 50%, 100% 50%, 0% 100%, 100% 0%, 50% 50%;
-  }
-  50% {
-    background-position: 100% 50%, 0% 50%, 100% 0%, 0% 100%, 50% 100%;
-  }
-  100% {
-    background-position: 0% 50%, 100% 50%, 0% 100%, 100% 0%, 50% 50%;
-  }
-}
-
-.playlist-icon {
-  width: 24px;
-  height: 24px;
-  background-color: var(--spotify-light-gray);
-  border-radius: 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.playlist-icon-inner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.playlist-icon-inner svg {
-  fill: var(--spotify-black);
-}
-
-.nav-item:hover .playlist-icon {
-  background-color: white;
-}
-
-.playlist-thumb {
-  width: 24px;
-  height: 24px;
-  margin-right: 16px;
-  border-radius: 2px;
-  background: linear-gradient(
-    135deg,
-    var(--spotify-blue),
-    var(--spotify-purple)
-  );
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.playlist-thumb.special {
-  background: linear-gradient(
-    135deg,
-    var(--spotify-green),
-    var(--spotify-blue)
-  );
-}
-
-.playlist-thumb svg {
-  fill: rgba(255, 255, 255, 0.8);
-}
-
-/* Overlay for when menu is open */
-.overlay {
-  position: fixed;
-  top: 64px;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 800;
-  backdrop-filter: blur(2px);
-}
-
 /* Padding for body to account for fixed header */
 body.has-spotify-header {
   padding-top: 64px;
@@ -1810,20 +1762,50 @@ body.has-spotify-header {
 /* Media queries for responsive header */
 @media (max-width: 768px) {
   .spotify-header {
-    padding: 16px;
+    padding: 10px 12px;
+    height: 60px;
   }
 
   .header-title {
-    font-size: 1rem;
+    font-size: 0.8rem;
+    max-width: 120px;
+    white-space: normal;
+    line-height: 1.1;
   }
 
-  .header-logo {
-    height: 24px;
+  .header-center {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    flex: 1;
+    text-align: center;
+    padding: 0 8px;
   }
 
-  .side-nav {
-    width: 75%;
-    max-width: 280px;
+  .header-left {
+    flex: 0 0 auto;
+  }
+
+  .logo-container img {
+    height: 40px !important;
+    width: 120px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .spotify-header {
+    padding: 8px 10px;
+    height: 56px;
+  }
+
+  .header-title {
+    font-size: 0.7rem;
+  }
+
+  .logo-container img {
+    height: 36px !important;
+    width: 100px !important;
   }
 }
 
@@ -1857,6 +1839,20 @@ body.has-spotify-header {
   position: relative;
   width: 100%;
   overflow-x: clip; /* Use clip instead of hidden to preserve sticky behavior */
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding-top: 60px;
+    min-height: calc(100vh - 120px);
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding-top: 56px;
+    min-height: calc(100vh - 116px);
+  }
 }
 
 /* Add playlist track-like items */
@@ -2219,49 +2215,6 @@ body.has-spotify-header {
   color: var(--spotify-light-gray);
 }
 
-/* Adjustments to existing elements */
-.side-nav {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-}
-
-.nav-item .playlist-icon {
-  width: 24px;
-  height: 24px;
-  background-color: #333;
-  border-radius: 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.nav-item .playlist-icon-inner {
-  width: 16px;
-  height: 16px;
-  background: linear-gradient(135deg, #450af5, #c4efd9);
-  border-radius: 1px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.nav-item .playlist-icon-inner svg {
-  fill: white;
-}
-
-.playlist-thumb {
-  width: 24px;
-  height: 24px;
-  background-color: #333;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 12px;
-}
-
-.playlist-thumb.special {
-  background: linear-gradient(135deg, #450af5, #c4efd9);
-}
 
 /* Makes main content areas work with the new fixed elements */
 .main-content {

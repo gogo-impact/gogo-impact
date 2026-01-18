@@ -90,3 +90,5 @@ router.put("/impact/footer", requireAuth, async (req, res, next) => {
 
 export default router;
 
+
+

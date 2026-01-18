@@ -1,79 +1,124 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
-import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
-import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
-import SavingsOutlinedIcon from '@mui/icons-material/SavingsOutlined';
-import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
-import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
-import QueueMusicOutlinedIcon from '@mui/icons-material/QueueMusicOutlined';
-import EqualizerOutlinedIcon from '@mui/icons-material/EqualizerOutlined';
-import FormatQuoteOutlinedIcon from '@mui/icons-material/FormatQuoteOutlined';
-import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
-import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined';
-import HandshakeOutlinedIcon from '@mui/icons-material/HandshakeOutlined';
-import MailOutlineOutlinedIcon from '@mui/icons-material/MailOutlineOutlined';
-import ViewModuleOutlinedIcon from '@mui/icons-material/ViewModuleOutlined';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import gogoWideLogo from '../../assets/GOGO_LOGO_WIDE_WH.png';
+import type { ReorderableSectionKey } from '../services/impact.api';
 
-// Section IDs that participate in scroll-based navigation / URL hashes.
-// Keep this ordered to match the layout in ImpactReportPage.
-const SECTION_IDS: string[] = [
-  'hero',
-  'mission',
-  'population',
-  'financial',
-  'method',
-  'curriculum',
-  'impact',
-  'music',
-  'quote',
-  'locations',
-  'flex-a',
-  'flex-b',
-  'flex-c',
-  'impact-levels',
-  'partners',
-  'footer',
-];
+// Section configuration for the sticky TOC
+// Maps section keys to their DOM IDs and display labels
+export interface TocSection {
+  key: ReorderableSectionKey;
+  id: string;
+  label: string;
+}
 
-function Header(): JSX.Element {
+// Master list mapping section keys to DOM IDs and labels
+// This is the source of truth for all possible sections
+const SECTION_CONFIG: Record<ReorderableSectionKey, { id: string; label: string }> = {
+  hero: { id: 'hero', label: 'Hero' },
+  mission: { id: 'mission', label: 'Mission' },
+  population: { id: 'population', label: 'Who We Serve' },
+  financial: { id: 'financial', label: 'Financials' },
+  method: { id: 'method', label: 'Our Method' },
+  curriculum: { id: 'curriculum', label: 'Curriculum' },
+  impactSection: { id: 'impact', label: 'Impact' },
+  hearOurImpact: { id: 'music', label: 'Hear Our Impact' },
+  testimonials: { id: 'quote', label: 'Stories' },
+  nationalImpact: { id: 'locations', label: 'Locations' },
+  flexA: { id: 'flex-a', label: 'Featured Content' },
+  flexB: { id: 'flex-b', label: 'Featured Content' },
+  flexC: { id: 'flex-c', label: 'Featured Content' },
+  impactLevels: { id: 'impact-levels', label: 'Impact Levels' },
+  partners: { id: 'partners', label: 'Partners' },
+  footer: { id: 'footer-section', label: 'Contact' },
+};
+
+interface HeaderProps {
+  /** Section order from defaults - dynamically controls TOC order */
+  sectionOrder?: ReorderableSectionKey[];
+  /** Disabled sections from defaults - these will be hidden from TOC */
+  disabledSections?: ReorderableSectionKey[];
+  /** Year from hero section - used for flex section labels */
+  heroYear?: string;
+}
+
+function Header({ sectionOrder, disabledSections = [], heroYear }: HeaderProps): JSX.Element {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  // Initialize activeSectionId from the URL hash if present
-  const [activeSectionId, setActiveSectionId] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      const hash = window.location.hash?.replace('#', '');
-      if (hash && SECTION_IDS.includes(hash)) {
-        return hash;
-      }
-    }
-    return 'hero';
-  });
-  // Track whether we've completed the initial hash navigation to prevent
-  // the scroll observer from overwriting the hash before the page has scrolled
+  const [activeSectionId, setActiveSectionId] = useState<string>('hero');
+  const [tocVisible, setTocVisible] = useState(false);
   const [initialNavigationComplete, setInitialNavigationComplete] = useState(false);
 
+  // Build dynamic TOC sections based on sectionOrder and disabledSections from defaults
+  const tocSections = useMemo<TocSection[]>(() => {
+    // Use provided order or fall back to the keys of SECTION_CONFIG (default order)
+    const order = sectionOrder ?? (Object.keys(SECTION_CONFIG) as ReorderableSectionKey[]);
+    
+    // Generate the flex label based on hero year
+    const flexLabel = heroYear ? `${heroYear} Featured Content` : 'Featured Content';
+    
+    return order
+      // Filter out disabled sections
+      .filter(key => !disabledSections.includes(key))
+      // Map to full section config
+      .map(key => {
+        const config = SECTION_CONFIG[key];
+        if (!config) return null;
+        
+        // Override flex section labels with year-based label
+        let label = config.label;
+        if (key === 'flexA' || key === 'flexB' || key === 'flexC') {
+          label = flexLabel;
+        }
+        
+        return {
+          key,
+          id: config.id,
+          label,
+        };
+      })
+      .filter((section): section is TocSection => section !== null);
+  }, [sectionOrder, disabledSections, heroYear]);
+
+  // Handle scroll state for header opacity
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      const scrolled = window.scrollY > 50;
+      setIsScrolled(scrolled);
+      // Show TOC after scrolling past hero
+      setTocVisible(window.scrollY > 200);
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll(); // Check initial state
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const toggleMenu = () => setMenuOpen(!menuOpen);
+  // Initialize active section from URL hash
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash?.replace('#', '');
+      const section = tocSections.find(s => s.id === hash);
+      if (section) {
+        setActiveSectionId(section.id);
+      }
+    }
+  }, [tocSections]);
 
+  // Mark initial navigation as complete after a delay
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setInitialNavigationComplete(true);
+    }, 1500);
+    return () => clearTimeout(timeout);
+  }, []);
+
+  // Navigate to section
   const navigateTo = useCallback((id: string) => {
-    setMenuOpen(false);
-    // Explicitly encode the section id in the URL hash for deep-link support
     try {
       const newHash = `#${id}`;
       if (window.location.hash !== newHash) {
         window.history.replaceState(null, '', newHash);
       }
     } catch {
-      // Ignore history errors (e.g. SSR or restricted environments)
+      // Ignore history errors
     }
 
     const el = document.getElementById(id);
@@ -82,82 +127,55 @@ function Header(): JSX.Element {
     }
   }, []);
 
-  const triggerMusicModal = useCallback(
-    (type: 'student' | 'mentor') => {
-      navigateTo('music');
-      try {
-        const eventName =
-          type === 'student' ? 'openStudentMusicModal' : 'openMentorMusicModal';
-        window.dispatchEvent(new Event(eventName));
-      } catch {
-        // Ignore dispatch errors in non-browser environments.
-      }
-    },
-    [navigateTo],
-  );
-
-  // Mark initial navigation as complete after a delay that allows the page
-  // to scroll to the hash target. This prevents the scroll observer from
-  // immediately overwriting the hash before the scroll completes.
+  // Observe section visibility and update active section
   useEffect(() => {
-    // Give the page time to load data and scroll to the hash target
-    const timeout = setTimeout(() => {
-      setInitialNavigationComplete(true);
-    }, 1500); // Wait long enough for data to load and smooth scroll to complete
-    return () => clearTimeout(timeout);
-  }, []);
-
-  // Observe section visibility and update the active nav item as the user
-  // scrolls through the impact report.
-  useEffect(() => {
-    // Guard against environments where window/document are not available.
     if (typeof window === 'undefined' || typeof document === 'undefined') {
       return;
     }
 
-    // Don't start observing until initial navigation is complete to prevent
-    // overwriting the hash before the page has scrolled to the target section
     if (!initialNavigationComplete) {
       return;
     }
 
-    // Track which sections are currently visible
-    const visibleSections = new Map<string, IntersectionObserverEntry>();
-
-    // Find the section that is closest to the target point in the viewport
-    // (40% from the top - a point where we consider a section "active")
     const updateActiveSection = () => {
       const viewportHeight = window.innerHeight;
-      const targetPoint = viewportHeight * 0.4; // 40% from top of viewport
+      const targetPoint = viewportHeight * 0.35;
+      
+      // Check if user has scrolled to the bottom of the page
+      // This fixes the issue where the last section (Contact/Footer) can never be highlighted
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight;
+      const isAtBottom = scrollTop + viewportHeight >= scrollHeight - 50; // 50px threshold
+      
+      // If at bottom, highlight the last section
+      if (isAtBottom && tocSections.length > 0) {
+        const lastSection = tocSections[tocSections.length - 1];
+        setActiveSectionId((prev) => (prev === lastSection.id ? prev : lastSection.id));
+        return;
+      }
 
       let bestSection: string | null = null;
       let bestDistance = Infinity;
 
-      for (const id of SECTION_IDS) {
-        const el = document.getElementById(id);
+      for (const section of tocSections) {
+        const el = document.getElementById(section.id);
         if (!el) continue;
 
         const rect = el.getBoundingClientRect();
-        // Check if section is at least partially visible
         if (rect.bottom < 0 || rect.top > viewportHeight) continue;
 
-        // Calculate how close the section's top is to our target point
-        // Give preference to sections whose top is at or above the target point
         let distance: number;
         if (rect.top <= targetPoint && rect.bottom >= targetPoint) {
-          // Target point is inside this section - highest priority
           distance = 0;
         } else if (rect.top > targetPoint) {
-          // Section is below target point
           distance = rect.top - targetPoint;
         } else {
-          // Section is above target point (section's bottom is above target)
-          distance = targetPoint - rect.bottom + 1000; // Penalize sections that have scrolled past
+          distance = targetPoint - rect.bottom + 1000;
         }
 
         if (distance < bestDistance) {
           bestDistance = distance;
-          bestSection = id;
+          bestSection = section.id;
         }
       }
 
@@ -167,36 +185,21 @@ function Header(): JSX.Element {
     };
 
     const observer = new IntersectionObserver(
-      (entries) => {
-        // Update our visibility tracking
-        for (const entry of entries) {
-          const target = entry.target as HTMLElement;
-          if (!SECTION_IDS.includes(target.id)) continue;
-
-          if (entry.isIntersecting) {
-            visibleSections.set(target.id, entry);
-          } else {
-            visibleSections.delete(target.id);
-          }
-        }
-
-        // Determine the active section based on viewport position
+      () => {
         updateActiveSection();
       },
       {
         root: null,
-        // Observe when any part of the section enters the viewport
         rootMargin: '0px 0px 0px 0px',
         threshold: [0, 0.1, 0.25, 0.5, 0.75, 1],
       },
     );
 
-    SECTION_IDS.forEach((id) => {
+    tocSections.forEach(({ id }) => {
       const el = document.getElementById(id);
       if (el) observer.observe(el);
     });
 
-    // Also listen to scroll events for smoother updates
     const handleScroll = () => {
       requestAnimationFrame(updateActiveSection);
     };
@@ -207,12 +210,9 @@ function Header(): JSX.Element {
       observer.disconnect();
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [initialNavigationComplete]);
+  }, [initialNavigationComplete, tocSections]);
 
-  // Whenever the active section changes (via scrolling), keep the URL hash in
-  // sync so the page can be deep-linked and the back button behaves naturally.
-  // Only update the hash after initial navigation is complete to prevent
-  // overwriting the hash the user navigated to.
+  // Sync URL hash with active section
   useEffect(() => {
     if (!activeSectionId || !initialNavigationComplete) return;
     try {
@@ -221,93 +221,25 @@ function Header(): JSX.Element {
         window.history.replaceState(null, '', newHash);
       }
     } catch {
-      // Ignore history errors in non-browser environments.
+      // Ignore history errors
     }
   }, [activeSectionId, initialNavigationComplete]);
 
-  const navItems: Array<{ label: string; id: string; icon?: JSX.Element }> = [
-    { label: 'Hero', id: 'hero' },
-    { label: 'Our Mission', id: 'mission' },
-    { label: 'Who We Serve', id: 'population' },
-    { label: 'Financial Overview', id: 'financial' },
-    { label: 'Our Method', id: 'method' },
-    { label: 'Curriculum', id: 'curriculum' },
-    { label: 'Impact', id: 'impact' },
-    { label: 'Hear Our Impact', id: 'music' },
-    { label: 'Stories of Impact', id: 'quote' },
-    { label: 'Locations', id: 'locations' },
-    { label: 'Flex A', id: 'flex-a' },
-    { label: 'Flex B', id: 'flex-b' },
-    { label: 'Flex C', id: 'flex-c' },
-    { label: 'Impact Levels', id: 'impact-levels' },
-    { label: 'Partners', id: 'partners' },
-    { label: 'Contact', id: 'footer' },
-  ];
-
-  const renderIcon = (id: string): JSX.Element => {
-    switch (id) {
-      case 'hero':
-        return <HomeOutlinedIcon fontSize="small" />;
-      case 'mission':
-        return <FlagOutlinedIcon fontSize="small" />;
-      case 'population':
-        return <GroupsOutlinedIcon fontSize="small" />;
-      case 'financial':
-        return <SavingsOutlinedIcon fontSize="small" />;
-      case 'method':
-        return <TuneOutlinedIcon fontSize="small" />;
-      case 'music':
-        return <QueueMusicOutlinedIcon fontSize="small" />;
-      case 'impact':
-        return <EqualizerOutlinedIcon fontSize="small" />;
-      case 'curriculum':
-        return <MenuBookOutlinedIcon fontSize="small" />;
-      case 'quote':
-        return <FormatQuoteOutlinedIcon fontSize="small" />;
-      case 'locations':
-        return <PlaceOutlinedIcon fontSize="small" />;
-      case 'flex-a':
-      case 'flex-b':
-      case 'flex-c':
-        return <ViewModuleOutlinedIcon fontSize="small" />;
-      case 'impact-levels':
-        return <InsightsOutlinedIcon fontSize="small" />;
-      case 'partners':
-        return <HandshakeOutlinedIcon fontSize="small" />;
-      case 'footer':
-        return <MailOutlineOutlinedIcon fontSize="small" />;
-      default:
-        return (
-          <svg viewBox="0 0 24 24" aria-hidden>
-            <circle cx="12" cy="12" r="10" />
-          </svg>
-        );
-    }
-  };
+  // Calculate progress for visual indicator
+  const activeIndex = tocSections.findIndex(s => s.id === activeSectionId);
+  const progress = activeIndex >= 0 ? ((activeIndex + 1) / tocSections.length) * 100 : 0;
 
   return (
     <>
+      {/* Minimal Header */}
       <header className={`spotify-header ${isScrolled ? 'scrolled' : ''}`}>
         <div className="header-left">
-          <button
-            type="button"
-            className={`menu-button ${menuOpen ? 'active' : ''}`}
-            onClick={toggleMenu}
-            aria-label="Toggle menu"
-          >
-            <div className="pause-icon" />
-          </button>
           <div className="logo-container">
             <div className="header-brand">
               <img
                 src={gogoWideLogo}
                 alt="GOGO Logo"
-                style={{
-                  height: '60px',
-                  width: '180px',
-                  objectFit: 'cover',
-                  objectPosition: 'center',
-                }}
+                className="header-logo-img"
               />
             </div>
           </div>
@@ -318,68 +250,39 @@ function Header(): JSX.Element {
         </div>
       </header>
 
-      <div className={`side-nav ${menuOpen ? 'open' : ''}`}>
-        <nav className="nav-content">
-          <div className="nav-section section-group">
-            <h3>Sections</h3>
-            {navItems.map((item, idx) => (
-              <div
-                key={`nav-${item.id}`}
-                className={`nav-item ${
-                  activeSectionId === item.id ? 'active' : ''
-                }`}
-                onClick={() => navigateTo(item.id)}
-                onKeyDown={(e) => e.key === 'Enter' && navigateTo(item.id)}
-                role="button"
-                tabIndex={0}
-              >
-                <div className="section-icon">{renderIcon(item.id)}</div>
-                <span>{item.label}</span>
-              </div>
-            ))}
-          </div>
+      {/* Sticky Table of Contents */}
+      <nav 
+        className={`sticky-toc ${tocVisible ? 'visible' : ''}`}
+        aria-label="Table of contents"
+      >
+        {/* Progress line */}
+        <div className="toc-progress-track">
+          <div 
+            className="toc-progress-fill" 
+            style={{ height: `${progress}%` }}
+          />
+        </div>
 
-          <div className="playlist-section">
-            <h3>Playlists</h3>
-            <div className="playlist-links">
-              <div
-                className="nav-item playlist-button"
-                role="button"
-                tabIndex={0}
-                onClick={() => triggerMusicModal('student')}
-                onKeyDown={(e) =>
-                  e.key === 'Enter' && triggerMusicModal('student')
-                }
+        {/* Section links */}
+        <div className="toc-items">
+          {tocSections.map((section, index) => {
+            const isActive = activeSectionId === section.id;
+            const isPast = index < activeIndex;
+            
+            return (
+              <button
+                key={section.id}
+                className={`toc-item ${isActive ? 'active' : ''} ${isPast ? 'past' : ''}`}
+                onClick={() => navigateTo(section.id)}
+                aria-current={isActive ? 'true' : undefined}
               >
-                <span>Student Music</span>
-              </div>
-              <div
-                className="nav-item playlist-button"
-                role="button"
-                tabIndex={0}
-                onClick={() => triggerMusicModal('mentor')}
-                onKeyDown={(e) =>
-                  e.key === 'Enter' && triggerMusicModal('mentor')
-                }
-              >
-                <span>Mentor Music</span>
-              </div>
-            </div>
-          </div>
-        </nav>
-      </div>
-
-      {menuOpen && (
-        <div
-          className="overlay"
-          onClick={toggleMenu}
-          onKeyDown={(e) => e.key === 'Enter' && toggleMenu()}
-          role="button"
-          tabIndex={0}
-          aria-label="Close menu"
-        />
-      )}
-
+                <span className="toc-dot" />
+                <span className="toc-label">{section.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
     </>
   );
 }

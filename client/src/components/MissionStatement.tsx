@@ -69,6 +69,12 @@ const SectionContainer = styled.div`
   );
   z-index: 1;
 
+  @media (max-width: 768px) {
+    padding: 1.5rem 0.75rem;
+    border-radius: 10px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+  }
+
   &::before {
     content: "";
     position: absolute;
@@ -104,6 +110,12 @@ const BgLogoSvg = styled.svg`
   filter: blur(0.2px);
   transform: translate(-50%, -50%) rotate(90deg);
   transform-origin: 50% 50%;
+
+  @media (max-width: 768px) {
+    width: 75%;
+    transform: translate(-50%, -50%) rotate(0deg);
+    top: 45%;
+  }
 `;
 
 const TicketContainer = styled.div`
@@ -113,6 +125,11 @@ const TicketContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+
+  @media (max-width: 768px) {
+    margin: 1.5rem auto;
+    padding: 0 1rem;
+  }
 `;
 
 const Ticket = styled.div`
@@ -167,8 +184,48 @@ const Ticket = styled.div`
   }
 
   @media (max-width: 768px) {
-    mask-image: none;
-    -webkit-mask-image: none;
+    /* Vertical ticket orientation for mobile */
+    width: min(320px, 85vw);
+    min-height: 480px;
+    border-radius: 18px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+
+    /* Notches on left and right for vertical ticket (bottom section) */
+    --notch-size: 10px;
+    --notch-offset: 72px; /* Distance from bottom to notch center */
+    mask-image: 
+      radial-gradient(circle at 0 calc(100% - var(--notch-offset)), transparent var(--notch-size), black calc(var(--notch-size) + 0.5px)),
+      radial-gradient(circle at 100% calc(100% - var(--notch-offset)), transparent var(--notch-size), black calc(var(--notch-size) + 0.5px));
+    mask-composite: intersect;
+    -webkit-mask-image: 
+      radial-gradient(circle at 0 calc(100% - var(--notch-offset)), transparent var(--notch-size), black calc(var(--notch-size) + 0.5px)),
+      radial-gradient(circle at 100% calc(100% - var(--notch-offset)), transparent var(--notch-size), black calc(var(--notch-size) + 0.5px));
+    -webkit-mask-composite: source-in;
+
+    /* Stripe at top instead of left */
+    &::before {
+      top: 0;
+      bottom: auto;
+      left: 0;
+      right: 0;
+      width: auto;
+      height: 5px;
+      background: var(--ticket-stripe-gradient, linear-gradient(90deg, ${COLORS.gogo_blue}, ${COLORS.gogo_purple}, ${COLORS.gogo_teal}));
+    }
+
+    &::after {
+      background: radial-gradient(
+          300px 400px at 50% 20%,
+          var(--ticket-blotch1-color, ${COLORS.gogo_blue}22),
+          transparent 60%
+        ),
+        radial-gradient(
+          250px 300px at 50% 80%,
+          var(--ticket-blotch2-color, ${COLORS.gogo_purple}22),
+          transparent 60%
+        );
+    }
   }
 `;
 
@@ -179,10 +236,14 @@ const TicketInner = styled.div`
   grid-template-columns: 1fr auto;
   gap: 0;
   padding: 18px 20px 18px 24px;
+  height: 100%;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
-    row-gap: 10px;
+    grid-template-rows: 1fr auto;
+    gap: 0;
+    padding: 20px 16px 16px 16px;
+    min-height: 480px;
   }
 `;
 
@@ -191,6 +252,11 @@ const TicketLeft = styled.div`
   grid-template-rows: auto auto 1fr auto;
   gap: 8px;
   text-align: left;
+
+  @media (max-width: 768px) {
+    gap: 12px;
+    text-align: center;
+  }
 `;
 
 const TicketRight = styled.div`
@@ -202,14 +268,12 @@ const TicketRight = styled.div`
   position: relative;
 
   @media (max-width: 768px) {
-    border-left: 0;
+    /* Show barcode at bottom for vertical ticket */
     padding-left: 0;
-    justify-content: flex-start;
-    
+    padding-top: 12px;
+    border-left: none;
     border-top: 2px dashed rgba(255, 255, 255, 0.25);
-    padding-top: 18px;
-    margin-top: 12px;
-    width: 100%;
+    justify-content: center;
   }
 `;
 
@@ -217,6 +281,10 @@ const BadgeRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: flex-end;
+
+  @media (max-width: 768px) {
+    justify-content: center;
+  }
 `;
 
 const Serial = styled.span`
@@ -226,6 +294,11 @@ const Serial = styled.span`
   color: rgba(255, 255, 255, 0.65);
   user-select: none;
   font-weight: 600;
+
+  @media (max-width: 768px) {
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+  }
 `;
 
 const Title = styled.h3`
@@ -234,6 +307,12 @@ const Title = styled.h3`
   letter-spacing: 0.18em;
   font-weight: 900;
   color: #fff;
+
+  @media (max-width: 768px) {
+    font-size: 0.85rem;
+    letter-spacing: 0.12em;
+    line-height: 1.4;
+  }
 `;
 
 const Statement = styled.div`
@@ -245,6 +324,15 @@ const Statement = styled.div`
   border: 1px solid var(--statement-box-border-color, rgba(255, 255, 255, 0.1));
   background: var(--statement-box-bg-color, rgba(255, 255, 255, 0.04));
   max-width: 760px;
+
+  @media (max-width: 768px) {
+    padding: 14px 12px;
+    border-radius: 10px;
+    max-width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 `;
 
 const StatementText = styled.p`
@@ -259,6 +347,12 @@ const StatementText = styled.p`
   -webkit-text-fill-color: transparent;
   word-break: break-word;
   overflow-wrap: anywhere;
+
+  @media (max-width: 768px) {
+    font-size: 0.82rem;
+    line-height: 1.45;
+    text-align: center;
+  }
 `;
 
 const Meta = styled.div`
@@ -268,6 +362,14 @@ const Meta = styled.div`
   color: rgba(255, 255, 255, 0.75);
   letter-spacing: 0.18em;
   font-size: 0.66rem;
+
+  @media (max-width: 768px) {
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    gap: 6px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
 `;
 
 const Barcode = styled.div`
@@ -292,6 +394,26 @@ const Barcode = styled.div`
     height: 6px;
     background: rgba(255, 255, 255, 0.08);
     border-radius: 4px;
+  }
+
+  @media (max-width: 768px) {
+    /* Horizontal barcode for vertical ticket */
+    width: 85%;
+    max-width: 220px;
+    height: 36px;
+    background: repeating-linear-gradient(
+      to right,
+      var(--barcode-color, rgba(255, 255, 255, 0.85)) 0 1.5px,
+      transparent 1.5px 3px
+    );
+    border-radius: 4px;
+
+    &::after {
+      bottom: auto;
+      top: calc(100% + 6px);
+      width: 60%;
+      height: 4px;
+    }
   }
 `;
 

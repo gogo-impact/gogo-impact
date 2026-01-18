@@ -69,7 +69,9 @@ const Title = styled.h2<TitleProps>`
   margin-bottom: 1rem;
   background: ${(p) => p.$gradient || `linear-gradient(to right, ${COLORS.gogo_blue}, ${COLORS.gogo_teal})`};
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
+  color: transparent;
   display: inline-block;
 `;
 

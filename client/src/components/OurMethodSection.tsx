@@ -74,7 +74,9 @@ const Title = styled.h2<TitleProps>`
   letter-spacing: -0.02em;
   background: ${(p) => p.$gradient};
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
+  color: transparent;
   display: inline-block;
 `;
 
@@ -100,7 +102,8 @@ const Grid = styled.div`
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   @media (max-width: 600px) {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
   }
 `;
 
@@ -126,6 +129,18 @@ const IconWrap = styled.div<IconWrapProps>`
     width: 32px;
     height: 32px;
     stroke-width: 1.5;
+  }
+
+  @media (max-width: 600px) {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    margin-bottom: 0.5rem;
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
   }
 `;
 
@@ -160,6 +175,7 @@ const Card = styled.div<CardProps>`
       rgba(255, 255, 255, 0.1),
       rgba(255, 255, 255, 0.01)
     );
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
@@ -201,6 +217,16 @@ const Card = styled.div<CardProps>`
       box-shadow: 0 0 20px ${COLORS.gogo_blue}66;
     }
   }
+
+  @media (max-width: 600px) {
+    padding: 1rem;
+    gap: 0.75rem;
+    border-radius: 16px;
+
+    &::before {
+      border-radius: 16px;
+    }
+  }
 `;
 
 interface CardTitleProps {
@@ -217,6 +243,11 @@ const CardTitle = styled.h3<CardTitleProps>`
   letter-spacing: -0.01em;
   position: relative;
   z-index: 1;
+
+  @media (max-width: 600px) {
+    font-size: 0.75rem;
+    line-height: 1.3;
+  }
 `;
 
 const NarrativeContainer = styled.div`

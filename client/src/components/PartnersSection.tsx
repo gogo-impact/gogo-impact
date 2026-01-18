@@ -49,6 +49,10 @@ const PartnersSectionWrapper = styled.section<SectionProps>`
     );
     pointer-events: none;
   }
+
+  @media (max-width: 768px) {
+    padding: 3rem 0;
+  }
 `;
 
 // Separate glow element for glow 3
@@ -72,11 +76,19 @@ const SectionContainer = styled.div`
   width: 100%;
   position: relative;
   z-index: 1;
+
+  @media (max-width: 480px) {
+    padding: 0 1rem;
+  }
 `;
 
 const Heading = styled.div`
   text-align: center;
   margin-bottom: 3rem;
+
+  @media (max-width: 768px) {
+    margin-bottom: 1.5rem;
+  }
 `;
 
 interface TitleProps {
@@ -91,7 +103,13 @@ const Title = styled.h2<TitleProps>`
   letter-spacing: -0.02em;
   background: ${(p) => p.$titleGradient || 'linear-gradient(135deg, #fff 0%, #cbd5e1 100%)'};
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
+  color: transparent;
+
+  @media (max-width: 768px) {
+    font-size: 2rem;
+  }
 `;
 
 interface SubTitleProps {
@@ -104,6 +122,10 @@ const SubTitle = styled.p<SubTitleProps>`
   color: ${(p) => p.$subtitleColor || '#94a3b8'};
   font-size: 1.1rem;
   line-height: 1.6;
+
+  @media (max-width: 768px) {
+    font-size: 0.95rem;
+  }
 `;
 
 interface GridLabelProps {
@@ -126,6 +148,12 @@ const Grid = styled.div`
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 1.5rem;
   margin-top: 1.5rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
 `;
 
 interface BadgeProps {
@@ -156,6 +184,12 @@ const Badge = styled.a<BadgeProps>`
     background: ${(p) => p.$badgeHoverBgColor || 'rgba(255, 255, 255, 0.06)'};
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
   }
+
+  @media (max-width: 768px) {
+    padding: 0.6rem;
+    gap: 0.5rem;
+    border-radius: 10px;
+  }
 `;
 
 const Dot = styled.span<{ $color: string }>`
@@ -165,6 +199,11 @@ const Dot = styled.span<{ $color: string }>`
   background: ${(p) => p.$color};
   box-shadow: 0 0 10px ${(p) => p.$color}, 0 0 0 2px rgba(255, 255, 255, 0.1) inset;
   flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    width: 6px;
+    height: 6px;
+  }
 `;
 
 const BadgeText = styled.div`
@@ -182,6 +221,11 @@ const BadgeTitle = styled.span<BadgeTitleProps>`
   font-size: 1rem;
   line-height: 1.2;
   color: ${(p) => p.$badgeTitleColor || '#f1f5f9'};
+
+  @media (max-width: 768px) {
+    font-size: 0.65rem;
+    line-height: 1.3;
+  }
 `;
 
 interface BadgeSubProps {
@@ -191,6 +235,10 @@ interface BadgeSubProps {
 const BadgeSub = styled.span<BadgeSubProps>`
   font-size: 0.85rem;
   color: ${(p) => p.$badgeDescriptorColor || '#94a3b8'};
+
+  @media (max-width: 768px) {
+    font-size: 0.55rem;
+  }
 `;
 
 interface ScrollProps {
@@ -238,6 +286,11 @@ const TickerRow = styled.div`
     width: 100px;
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  }
+
+  @media (max-width: 768px) {
+    gap: 1.25rem;
+    margin-top: 2rem;
   }
 `;
 
@@ -312,6 +365,10 @@ const BetweenNote = styled.p<BetweenNoteProps>`
   font-size: 0.95rem;
   text-align: center;
   max-width: 600px;
+
+  @media (max-width: 768px) {
+    font-size: 0.85rem;
+  }
 `;
 
 interface TickerTrackProps {

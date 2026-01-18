@@ -26,3 +26,5 @@ export {
   useGradientColorPicker,
 } from './GradientEditor';
 export type { GradientType, ParsedGradient, GradientEditorProps, GradientColorPickerState } from './GradientEditor';
+export { VersionHistoryModal } from './VersionHistoryModal';
+export { ComparisonView } from './ComparisonView';

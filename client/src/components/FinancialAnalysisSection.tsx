@@ -21,6 +21,10 @@ const SectionWrapper = styled.section<SectionWrapperProps>`
   position: relative;
   overflow: hidden;
   --section-underline: ${(p) => p.$underlineGradient || 'var(--spotify-green)'};
+
+  @media (max-width: 768px) {
+    padding: 3rem 0;
+  }
 `;
 
 const BackgroundDecoration = styled.div`
@@ -48,11 +52,19 @@ const MainContainer = styled.div`
   padding: 0 2rem;
   position: relative;
   z-index: 1;
+
+  @media (max-width: 480px) {
+    padding: 0 1rem;
+  }
 `;
 
 const SectionHeader = styled.div`
   text-align: center;
   margin-bottom: 3.5rem;
+
+  @media (max-width: 768px) {
+    margin-bottom: 2rem;
+  }
 `;
 
 const Title = styled.h2<{ $gradient?: string }>`
@@ -64,6 +76,10 @@ const Title = styled.h2<{ $gradient?: string }>`
   background-clip: text;
   margin-bottom: 0.75rem;
   letter-spacing: -0.01em;
+
+  @media (max-width: 768px) {
+    font-size: 2rem;
+  }
 `;
 
 const Subtitle = styled.p`
@@ -71,6 +87,10 @@ const Subtitle = styled.p`
   color: rgba(255, 255, 255, 0.75);
   max-width: 820px;
   margin: 0 auto;
+
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
 `;
 
 const ControlsRow = styled.div`
@@ -120,6 +140,11 @@ const KpiGrid = styled.div`
   @media (max-width: 1024px) {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
 `;
 
 const KpiCard = styled.div`
@@ -131,17 +156,30 @@ const KpiCard = styled.div`
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
   padding: 1rem 1.25rem;
+
+  @media (max-width: 480px) {
+    padding: 0.75rem;
+    border-radius: 12px;
+  }
 `;
 
 const KpiValue = styled.div`
   font-size: 1.5rem;
   font-weight: 900;
   color: white;
+
+  @media (max-width: 480px) {
+    font-size: 1.1rem;
+  }
 `;
 
 const KpiLabel = styled.div`
   font-size: 0.9rem;
   color: rgba(255, 255, 255, 0.7);
+
+  @media (max-width: 480px) {
+    font-size: 0.75rem;
+  }
 `;
 
 // Dashboard layout: 12-column grid for precise alignment
@@ -175,6 +213,23 @@ const ChartCard = styled.div`
     display: grid;
     grid-template-rows: auto 1fr;
   }
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+    border-radius: 12px;
+
+    &.tall {
+      min-height: 280px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.75rem;
+
+    &.tall {
+      min-height: 240px;
+    }
+  }
 `;
 
 const CardTitle = styled.h3`
@@ -182,6 +237,11 @@ const CardTitle = styled.h3`
   font-weight: 800;
   color: white;
   margin-bottom: 1rem;
+
+  @media (max-width: 768px) {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+  }
 `;
 
 const Legend = styled.div`
@@ -231,14 +291,31 @@ const PieRow = styled.div`
 
 const PieCard = styled(ChartCard)`
   height: 480px;
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: auto 1fr;
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: 768px) {
+    height: 320px;
+  }
+
+  @media (max-width: 480px) {
+    height: 100%;
+  }
 `;
 
 const PieContainer = styled.div`
   height: 380px;
   min-height: 320px;
+
+  @media (max-width: 768px) {
+    height: 240px;
+    min-height: 200px;
+  }
+
+  @media (max-width: 480px) {
+    height: 200px;
+    min-height: 160px;
+  }
 `;
 
 const Tooltip = styled.div`
@@ -262,6 +339,23 @@ const Bullets = styled.ul`
   gap: 0.5rem;
 `;
 
+const BottomCardsGrid = styled.div`
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 280px));
+  justify-content: center;
+  gap: 1.5rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  @media (max-width: 480px) {
+    gap: 0.5rem;
+  }
+`;
+
 const BulletItem = styled.li`
   display: grid;
   grid-template-columns: 14px auto 1fr;
@@ -269,6 +363,11 @@ const BulletItem = styled.li`
   gap: 0.6rem;
   color: rgba(255, 255, 255, 0.9);
   font-size: 0.95rem;
+
+  @media (max-width: 480px) {
+    font-size: 0.85rem;
+    gap: 0.4rem;
+  }
 `;
 
 const BulletDot = styled.span<{ $color: string }>`
@@ -754,14 +853,7 @@ function FinancialAnalysisSection({
           </ChartCard>
 
           {/* Second row: four boxes arranged across the bottom */}
-          <div
-            style={{
-              gridColumn: '1 / -1',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-              gap: '1.5rem',
-            }}
-          >
+          <BottomCardsGrid>
             <PieCard className="animate-child" data-anim-id="pie-comes-from">
               <CardTitle>{comesFromTitle}</CardTitle>
               <PieContainer>
@@ -822,7 +914,7 @@ function FinancialAnalysisSection({
               </Bullets>
             </ChartCard>
 
-          </div>
+          </BottomCardsGrid>
         </Grid>
       </MainContainer>
     </SectionWrapper>

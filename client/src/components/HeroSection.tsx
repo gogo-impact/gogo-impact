@@ -258,6 +258,19 @@ const HeroContainer = styled.section<{
   /* Ensure this container receives all mouse events */
   cursor: default;
   z-index: 1;
+
+  @media (max-width: 768px) {
+    /* Adjust for smaller header on mobile */
+    margin-top: -124px;
+    min-height: 100vh;
+    height: auto;
+    padding: 80px 0 40px;
+  }
+
+  @media (max-width: 480px) {
+    margin-top: -120px;
+    padding: 70px 0 30px;
+  }
 `;
 
 // Waveform container that spans the entire width of the page as a background element
@@ -286,7 +299,7 @@ const BackdropImage = styled.div<{ $image?: string; $grayscale?: boolean }>`
   background-image: ${(props) =>
     props.$image ? `url(${props.$image})` : "none"};
   background-size: cover;
-  background-position: center;
+  background-position: top center;
   background-repeat: no-repeat;
   z-index: 0;
   pointer-events: none;
@@ -334,6 +347,11 @@ const ContentWrapper = styled.div`
   gap: 2rem;
   justify-items: center;
   pointer-events: auto;
+
+  @media (max-width: 768px) {
+    padding: 0 4%;
+    gap: 1rem;
+  }
 `;
 
 // Left side content container
@@ -385,7 +403,7 @@ const toLinearGradient = (value?: string): string | undefined => {
 // Main title - "IMPACT REPORT" (supports gradient colors)
 const MainTitle = styled.h1<{ $gradient?: string }>`
   font-family: "Airwaves", sans-serif;
-  font-size: clamp(4rem, 8vw, 7rem);
+  font-size: clamp(2.5rem, 8vw, 7rem);
   font-weight: 800;
   margin: 0;
   text-align: center;
@@ -409,12 +427,22 @@ const MainTitle = styled.h1<{ $gradient?: string }>`
       text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     `;
   }}
+
+  @media (max-width: 768px) {
+    font-size: clamp(1.5rem, 8vw, 2.5rem);
+    letter-spacing: 0.03em;
+  }
+
+  @media (max-width: 480px) {
+    font-size: clamp(1.3rem, 8vw, 2rem);
+    letter-spacing: 0.02em;
+  }
 `;
 
 // Subtitle - "GUITARS OVER GUNS"
 const SubtitleText = styled.h2`
   font-family: "Airwaves", sans-serif;
-  font-size: clamp(2rem, 3vw, 2.5rem);
+  font-size: clamp(1.2rem, 3vw, 2.5rem);
   font-weight: 700;
   color: rgba(119, 221, 171, 0.8);
   margin: 0;
@@ -431,6 +459,16 @@ const SubtitleText = styled.h2`
   &::before {
     display: none;
     content: none;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 0.85rem;
+    letter-spacing: 0.03em;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
   }
 `;
 
@@ -456,12 +494,12 @@ const TitleUnderline = styled.div<{ $color?: string }>`
 
 // Report year text
 const ReportYear = styled.div`
-  font-size: 2.2rem;
+  font-size: clamp(1.4rem, 5vw, 2.2rem);
   color: var(--spotify-orange, #e9bb4d);
   font-family: "Century Gothic-Bold", "Arial", sans-serif;
   font-weight: 500;
   margin-top: 1rem;
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
   opacity: 0;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   pointer-events: none; /* Let events pass through */
@@ -474,6 +512,17 @@ const ReportYear = styled.div`
     display: none;
     content: none;
   }
+
+  @media (max-width: 768px) {
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
 `;
 
 // Button container
@@ -484,6 +533,20 @@ const ButtonContainer = styled.div`
   flex-wrap: wrap;
   pointer-events: auto; /* Re-enable pointer events for buttons */
   justify-content: center;
+
+  @media (max-width: 768px) {
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+    width: 100%;
+    padding: 0 0.5rem;
+  }
 `;
 
 // Primary button styling (more Spotify-like)
@@ -515,6 +578,19 @@ const PrimaryButton = styled.button<{
     transform: scale(1.05);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
   }
+
+  @media (max-width: 768px) {
+    font-size: 0.65rem;
+    padding: 0.5rem 1rem;
+    gap: 0.3rem;
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
+    justify-content: center;
+    padding: 0.45rem 0.8rem;
+    font-size: 0.6rem;
+  }
 `;
 
 // Secondary button styling (more Spotify-like)
@@ -543,6 +619,18 @@ const SecondaryButton = styled.button<{
     transform: scale(1.05);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
   }
+
+  @media (max-width: 768px) {
+    font-size: 0.65rem;
+    padding: 0.5rem 1rem;
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
+    justify-content: center;
+    padding: 0.45rem 0.8rem;
+    font-size: 0.6rem;
+  }
 `;
 
 // Tagline – brand: "choose your sound"
@@ -555,6 +643,12 @@ const Tagline = styled.div`
   color: ${COLORS.gogo_green};
   opacity: 0; /* for entrance animation */
   pointer-events: none;
+
+  @media (max-width: 768px) {
+    font-size: 0.55rem;
+    margin-top: 0.4rem;
+    letter-spacing: 0.05em;
+  }
 `;
 
 // City chips – Miami, Chicago, Los Angeles, New York
@@ -564,6 +658,17 @@ const ChipsRow = styled.div`
   gap: 0.5rem;
   margin-top: 1.25rem;
   pointer-events: none;
+  justify-content: center;
+
+  @media (max-width: 768px) {
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+  }
+
+  @media (max-width: 480px) {
+    gap: 0.2rem;
+    margin-top: 0.4rem;
+  }
 `;
 
 const Chip = styled.span<{
@@ -589,6 +694,18 @@ const Chip = styled.span<{
   &:hover {
     background: rgba(255, 255, 255, 0.14);
     transform: translateY(-1px);
+  }
+
+  @media (max-width: 768px) {
+    font-size: 0.55rem;
+    padding: 0.25rem 0.5rem;
+    letter-spacing: 0.03em;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 0.5rem;
+    padding: 0.2rem 0.4rem;
+    letter-spacing: 0.02em;
   }
 `;
 
@@ -643,6 +760,11 @@ const SequencerFloat = styled.div`
   align-items: flex-end;
   pointer-events: none;
   z-index: 20;
+
+  /* Hide the music toy on mobile devices */
+  @media (max-width: 768px) {
+    display: none;
+  }
 `;
 
 const SequencerToggle = styled.button`

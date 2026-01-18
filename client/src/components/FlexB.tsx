@@ -56,12 +56,20 @@ const Wrapper = styled.section<WrapperProps>`
   --key-takeaway-bg-color: ${(p) => p.$keyTakeawayBgColor || COLORS.gogo_purple};
   --key-takeaway-text-color: ${(p) => p.$keyTakeawayTextColor || '#fff'};
   --key-takeaway-border-radius: ${(p) => p.$keyTakeawayBorderRadius ?? 12}px;
+
+  @media (max-width: 768px) {
+    padding: 3rem 0;
+  }
 `;
 
 const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 2rem;
+
+  @media (max-width: 480px) {
+    padding: 0 1rem;
+  }
 `;
 
 const Grid = styled.div`
@@ -72,6 +80,11 @@ const Grid = styled.div`
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  @media (max-width: 480px) {
+    gap: 1.5rem;
   }
 `;
 
@@ -101,6 +114,10 @@ const Headline = styled.h2`
   line-height: 1.1;
   color: var(--headline-color);
   margin-bottom: 2rem;
+
+  @media (max-width: 768px) {
+    margin-bottom: 1.25rem;
+  }
 `;
 
 const LeadParagraph = styled.p`
@@ -109,6 +126,11 @@ const LeadParagraph = styled.p`
   color: var(--lead-paragraph-color);
   margin-bottom: 2rem;
   font-weight: 300;
+
+  @media (max-width: 768px) {
+    font-size: 1.1rem;
+    margin-bottom: 1.25rem;
+  }
 `;
 
 const BodyText = styled.div`
@@ -118,6 +140,14 @@ const BodyText = styled.div`
 
   p {
     margin-bottom: 1.5rem;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 1rem;
+
+    p {
+      margin-bottom: 1rem;
+    }
   }
 `;
 
@@ -134,6 +164,12 @@ const PullQuote = styled.blockquote`
 
   @media (max-width: 900px) {
     margin-right: 0;
+  }
+
+  @media (max-width: 768px) {
+    margin: 1.5rem 0;
+    padding: 1.25rem;
+    font-size: 1.15rem;
   }
 `;
 
@@ -154,6 +190,11 @@ const SidebarBox = styled.div`
   border-radius: var(--sidebar-border-radius, 16px);
   padding: 2rem;
   margin-bottom: 2rem;
+
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
 `;
 
 const SidebarTitle = styled.h3`
@@ -207,6 +248,11 @@ const KeyTakeaway = styled.div`
   line-height: 1.5;
   font-size: 1.1rem;
   text-align: center;
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+    font-size: 1rem;
+  }
 `;
 
 const ImageContainer = styled.div<{ $src: string }>`
@@ -215,6 +261,11 @@ const ImageContainer = styled.div<{ $src: string }>`
   background: url('${(p) => p.$src}') center/cover no-repeat;
   border-radius: var(--sidebar-image-border-radius, 12px);
   margin-bottom: 2rem;
+
+  @media (max-width: 768px) {
+    height: 200px;
+    margin-bottom: 1.5rem;
+  }
 `;
 
 function FlexB({ previewMode = false, flexBOverride }: FlexBProps): JSX.Element | null {

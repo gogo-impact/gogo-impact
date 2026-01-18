@@ -18,6 +18,7 @@ import {
   ImpactHighlightCard,
 } from '../services/impact.api';
 import { getImpactIconByKey } from './IconSelector';
+import { getOptimalColumns } from '../util/gridColumns';
 
 // Ambient gradient animation
 const ambientShift = keyframes`
@@ -193,11 +194,23 @@ const StatsTitle = styled.h3<StatsTitleProps>`
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 `;
 
-const TurntableGrid = styled.div`
+interface TurntableGridProps {
+  $columns?: number;
+}
+
+const TurntableGrid = styled.div<TurntableGridProps>`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: ${(p) => p.$columns 
+    ? `repeat(${p.$columns}, minmax(260px, 300px))` 
+    : 'repeat(auto-fit, minmax(260px, 300px))'};
+  justify-content: center;
   gap: 1.5rem;
   margin-top: 0.5rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
 `;
 
 interface TurntableCardProps {
@@ -209,15 +222,25 @@ const TurntableCard = styled.div<TurntableCardProps>`
   position: relative;
   border-radius: 16px;
   padding: 1.25rem 1.25rem 1.5rem;
-  background: ${(p) => p.$bgGradient || 'linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03))'};
-  border: 1px solid ${(p) => p.$borderColor || 'rgba(255, 255, 255, 0.08)'};
+  background: ${(p) =>
+    p.$bgGradient ||
+    "linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03))"};
+  border: 1px solid ${(p) => p.$borderColor || "rgba(255, 255, 255, 0.08)"};
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
-  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    background 0.3s ease;
   user-select: none;
 
   &:hover {
     transform: translateY(-6px);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.75rem 0.5rem 1rem;
+    border-radius: 12px;
   }
 `;
 
@@ -227,15 +250,20 @@ const Deck = styled.div`
   height: 180px;
   margin: 0 auto;
   border-radius: 50%;
-  background: radial-gradient(
-    circle at 50% 50%,
-    #1a1a1a 0%,
-    #0f0f0f 100%
-  );
+  background: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #0f0f0f 100%);
   box-shadow:
     inset 0 0 20px rgba(0, 0, 0, 0.5),
     0 0 0 4px #2a2a2a,
     0 0 0 5px #111;
+
+  @media (max-width: 768px) {
+    width: 100px;
+    height: 100px;
+    box-shadow:
+      inset 0 0 10px rgba(0, 0, 0, 0.5),
+      0 0 0 2px #2a2a2a,
+      0 0 0 3px #111;
+  }
 `;
 
 const Record = styled.div`
@@ -287,6 +315,12 @@ const RecordLabel = styled.div<{ $colorA: string; $colorB: string }>`
   letter-spacing: -0.5px;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
   box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.35);
+
+  @media (max-width: 768px) {
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
+  }
 `;
 
 const Spindle = styled.div`
@@ -310,7 +344,7 @@ const Tonearm = styled.div<{ $engaged: boolean }>`
   pointer-events: none;
 
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     right: 8px;
     top: 8px;
@@ -319,13 +353,13 @@ const Tonearm = styled.div<{ $engaged: boolean }>`
     background: linear-gradient(90deg, #bfbfbf, #6f6f6f);
     border-radius: 6px;
     transform-origin: calc(100% - 8px) 50%;
-    transform: rotate(${(p) => (p.$engaged ? '-28deg' : '0deg')});
+    transform: rotate(${(p) => (p.$engaged ? "-28deg" : "0deg")});
     transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
   }
 
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     right: 94px;
     top: 4px;
@@ -335,6 +369,29 @@ const Tonearm = styled.div<{ $engaged: boolean }>`
     border-radius: 50%;
     box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.4);
   }
+
+  @media (max-width: 768px) {
+    right: 5px;
+    top: 5px;
+    width: 90px;
+    height: 90px;
+
+    &::before {
+      right: 4px;
+      top: 4px;
+      width: 54px;
+      height: 4px;
+      border-radius: 4px;
+      transform-origin: calc(100% - 4px) 50%;
+    }
+
+    &::after {
+      right: 52px;
+      top: 2px;
+      width: 8px;
+      height: 8px;
+    }
+  }
 `;
 
 interface StatCaptionProps {
@@ -343,11 +400,17 @@ interface StatCaptionProps {
 
 const StatCaption = styled.div<StatCaptionProps>`
   margin-top: 0.9rem;
-  color: ${(p) => p.$color || 'rgba(255, 255, 255, 0.85)'};
+  color: ${(p) => p.$color || "rgba(255, 255, 255, 0.85)"};
   text-align: center;
   font-weight: 700;
   font-size: 1.05rem;
   line-height: 1.4;
+
+  @media (max-width: 768px) {
+    margin-top: 0.5rem;
+    font-size: 0.7rem;
+    line-height: 1.3;
+  }
 `;
 
 // Highlights section
@@ -424,13 +487,14 @@ const HighlightCardsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1.25rem;
-  
+
   @media (max-width: 1024px) {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   @media (max-width: 600px) {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
   }
 `;
 
@@ -440,14 +504,19 @@ interface HighlightCardStyleProps {
 }
 
 const HighlightCardStyled = styled.div<HighlightCardStyleProps>`
-  background: ${(p) => p.$bgColor || 'rgba(255, 255, 255, 0.03)'};
-  border: 1px solid ${(p) => p.$borderColor || 'rgba(255, 255, 255, 0.08)'};
+  background: ${(p) => p.$bgColor || "rgba(255, 255, 255, 0.03)"};
+  border: 1px solid ${(p) => p.$borderColor || "rgba(255, 255, 255, 0.08)"};
   border-radius: 12px;
   padding: 1.5rem;
   transition: transform 0.3s ease;
 
   &:hover {
     transform: translateY(-4px);
+  }
+
+  @media (max-width: 600px) {
+    padding: 0.75rem;
+    border-radius: 8px;
   }
 `;
 
@@ -458,8 +527,13 @@ interface HighlightCardTitleProps {
 const HighlightCardTitle = styled.h4<HighlightCardTitleProps>`
   font-size: 1.1rem;
   font-weight: 700;
-  color: ${(p) => p.$color || 'white'};
+  color: ${(p) => p.$color || "white"};
   margin-bottom: 0.5rem;
+
+  @media (max-width: 600px) {
+    font-size: 0.8rem;
+    margin-bottom: 0.25rem;
+  }
 `;
 
 interface HighlightCardTextProps {
@@ -467,10 +541,15 @@ interface HighlightCardTextProps {
 }
 
 const HighlightCardText = styled.p<HighlightCardTextProps>`
-  color: ${(p) => p.$color || 'rgba(255, 255, 255, 0.7)'};
+  color: ${(p) => p.$color || "rgba(255, 255, 255, 0.7)"};
   font-size: 0.95rem;
   line-height: 1.5;
   margin: 0;
+
+  @media (max-width: 600px) {
+    font-size: 0.65rem;
+    line-height: 1.3;
+  }
 `;
 
 // Measurement section
@@ -556,8 +635,14 @@ const AudioBar = styled.div<AudioBarProps>`
 
 const SpotifyGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 340px));
+  justify-content: center;
   gap: 2rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 `;
 
 const SpotifyCard = styled.div`
@@ -565,6 +650,11 @@ const SpotifyCard = styled.div`
   border-radius: 16px;
   padding: 2rem;
   border: 1px solid rgba(255, 255, 255, 0.08);
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+    border-radius: 12px;
+  }
 `;
 
 interface MethodTitleProps {
@@ -591,6 +681,13 @@ const MethodText = styled.div<MethodTextProps>`
 // Spotify-style methods list
 const SpotifyMethodsList = styled.div`
   margin-bottom: 2rem;
+
+  @media (max-width: 768px) {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
 `;
 
 interface SpotifyMethodProps {
@@ -599,17 +696,24 @@ interface SpotifyMethodProps {
 }
 
 const SpotifyMethod = styled.div<SpotifyMethodProps>`
-  background: ${(p) => p.$bgColor || 'rgba(30, 30, 30, 0.5)'};
+  background: ${(p) => p.$bgColor || "rgba(30, 30, 30, 0.5)"};
   border-radius: 8px;
   padding: 1.2rem 1.5rem;
   margin-bottom: 1rem;
   transition: all 0.3s ease;
-  border-left: 3px solid ${(p) => p.$borderColor || 'rgba(30, 215, 96, 0.5)'};
+  border-left: 3px solid ${(p) => p.$borderColor || "rgba(30, 215, 96, 0.5)"};
 
   &:hover {
     background: rgba(40, 40, 40, 0.6);
     transform: translateX(5px);
     border-left-color: #1ed760;
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.6rem 0.75rem;
+    margin-bottom: 0;
+    border-radius: 6px;
+    border-left-width: 2px;
   }
 `;
 
@@ -618,11 +722,11 @@ interface MethodNameProps {
 }
 
 const MethodName = styled.h4<MethodNameProps>`
-  color: ${(p) => p.$color || 'white'};
+  color: ${(p) => p.$color || "white"};
   margin: 0 0 0.5rem 0;
   font-size: 1.1rem;
   font-weight: 700;
-  font-family: 'Century Gothic', 'CenturyGothic', sans-serif;
+  font-family: "Century Gothic", "CenturyGothic", sans-serif;
   display: flex;
   align-items: center;
   letter-spacing: 0.02em;
@@ -631,6 +735,17 @@ const MethodName = styled.h4<MethodNameProps>`
     margin-right: 0.5rem;
     color: #1ed760;
   }
+
+  @media (max-width: 768px) {
+    font-size: 0.7rem;
+    margin-bottom: 0.25rem;
+
+    svg {
+      width: 12px;
+      height: 12px;
+      margin-right: 0.25rem;
+    }
+  }
 `;
 
 interface MethodDescriptionProps {
@@ -638,11 +753,16 @@ interface MethodDescriptionProps {
 }
 
 const MethodDescription = styled.p<MethodDescriptionProps>`
-  color: ${(p) => p.$color || 'rgba(255, 255, 255, 0.7)'};
+  color: ${(p) => p.$color || "rgba(255, 255, 255, 0.7)"};
   margin: 0;
   font-size: 0.9rem;
   line-height: 1.5;
-  font-family: 'Century Gothic', 'CenturyGothic', sans-serif;
+  font-family: "Century Gothic", "CenturyGothic", sans-serif;
+
+  @media (max-width: 768px) {
+    font-size: 0.55rem;
+    line-height: 1.3;
+  }
 `;
 
 interface ToolsSectionProps {
@@ -652,18 +772,37 @@ interface ToolsSectionProps {
 }
 
 const ToolsSection = styled.div<ToolsSectionProps>`
-  background: ${(p) => p.$bgColor || 'rgba(30, 30, 30, 0.5)'};
+  background: ${(p) => p.$bgColor || "rgba(30, 30, 30, 0.5)"};
   border-radius: 12px;
   padding: 1.5rem;
-  border: 1px solid ${(p) => p.$borderColor || 'transparent'};
+  border: 1px solid ${(p) => p.$borderColor || "transparent"};
 
   h3 {
-    color: ${(p) => p.$titleColor || 'white'};
+    color: ${(p) => p.$titleColor || "white"};
     font-size: 1.3rem;
     margin-top: 0;
     margin-bottom: 1.5rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     padding-bottom: 0.8rem;
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.75rem;
+    border-radius: 10px;
+
+    h3 {
+      font-size: 0.85rem;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+    }
+  }
+`;
+
+const ToolItemsGrid = styled.div`
+  @media (max-width: 768px) {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
   }
 `;
 
@@ -682,6 +821,16 @@ const ToolItem = styled.div`
       color: #1ed760;
     }
   }
+
+  @media (max-width: 768px) {
+    padding: 0.5rem;
+    border-bottom: none;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
 `;
 
 interface ToolIconProps {
@@ -691,17 +840,32 @@ interface ToolIconProps {
 const ToolIcon = styled.div<ToolIconProps>`
   width: 32px;
   height: 32px;
-  background: ${(p) => p.$bgGradient || 'linear-gradient(135deg, #1ed760, #169c46)'};
+  background: ${(p) =>
+    p.$bgGradient || "linear-gradient(135deg, #1ed760, #169c46)"};
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 12px;
+  flex-shrink: 0;
 
   svg {
     color: white;
     width: 16px;
     height: 16px;
+  }
+
+  @media (max-width: 768px) {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    margin-right: 0;
+    margin-bottom: 0.25rem;
+
+    svg {
+      width: 10px;
+      height: 10px;
+    }
   }
 `;
 
@@ -714,10 +878,14 @@ interface ToolNameStyledProps {
 }
 
 const ToolNameStyled = styled.div<ToolNameStyledProps>`
-  color: ${(p) => p.$color || 'white'};
+  color: ${(p) => p.$color || "white"};
   font-weight: 600;
   font-size: 1rem;
   transition: color 0.2s ease;
+
+  @media (max-width: 768px) {
+    font-size: 0.7rem;
+  }
 `;
 
 interface ToolDescriptionStyledProps {
@@ -725,9 +893,14 @@ interface ToolDescriptionStyledProps {
 }
 
 const ToolDescriptionStyled = styled.div<ToolDescriptionStyledProps>`
-  color: ${(p) => p.$color || 'rgba(255, 255, 255, 0.6)'};
+  color: ${(p) => p.$color || "rgba(255, 255, 255, 0.6)"};
   font-size: 0.85rem;
   margin-top: 0.2rem;
+
+  @media (max-width: 768px) {
+    font-size: 0.6rem;
+    margin-top: 0.1rem;
+  }
 `;
 
 interface MethodCardProps {
@@ -736,10 +909,20 @@ interface MethodCardProps {
 }
 
 const MethodCard = styled.div<MethodCardProps>`
-  background: ${(p) => p.$bgColor || 'rgba(255, 255, 255, 0.05)'};
+  background: ${(p) => p.$bgColor || "rgba(255, 255, 255, 0.05)"};
   border-radius: 16px;
   padding: 2rem;
-  border: 1px solid ${(p) => p.$borderColor || 'rgba(255, 255, 255, 0.08)'};
+  border: 1px solid ${(p) => p.$borderColor || "rgba(255, 255, 255, 0.08)"};
+
+  @media (max-width: 768px) {
+    padding: 0.75rem;
+    border-radius: 12px;
+
+    h4 {
+      font-size: 0.9rem !important;
+      margin-bottom: 0.25rem !important;
+    }
+  }
 `;
 
 // TurntableStat component
@@ -1006,14 +1189,24 @@ function ImpactSection({
 
   return (
     <>
-      <ImpactContainer ref={sectionRef} $bgGradient={sectionBgGradient} $topBorderGradient={topBorderGradient} $underlineGradient={topBorderGradient}>
+      <ImpactContainer
+        ref={sectionRef}
+        $bgGradient={sectionBgGradient}
+        $topBorderGradient={topBorderGradient}
+        $underlineGradient={topBorderGradient}
+      >
         <SectionContainer>
           {topImagesForBelt.length > 0 && (
-            <BeltContainer style={{ marginBottom: '1.5rem' }}>
+            <BeltContainer style={{ marginBottom: "1.5rem" }}>
               <BeltTrack $direction="left">
                 {topImagesForBelt.map((src, i) => (
                   <BeltCard key={`top-belt-${i}`}>
-                    <img src={src} alt="Program" loading="lazy" decoding="async" />
+                    <img
+                      src={src}
+                      alt="Program"
+                      loading="lazy"
+                      decoding="async"
+                    />
                   </BeltCard>
                 ))}
               </BeltTrack>
@@ -1023,21 +1216,24 @@ function ImpactSection({
           {statsTitle && (
             <StatsGrid
               style={{
-                background: 'transparent',
-                border: 'none',
-                boxShadow: 'none',
+                background: "transparent",
+                border: "none",
+                boxShadow: "none",
                 padding: 0,
-                margin: '0.5rem 0 1rem',
+                margin: "0.5rem 0 1rem",
               }}
             >
-              <StatsTitle $color={statsTitleColor} style={{ margin: '0.25rem 0 0.75rem' }}>
+              <StatsTitle
+                $color={statsTitleColor}
+                style={{ margin: "0.25rem 0 0.75rem" }}
+              >
                 {statsTitle}
               </StatsTitle>
             </StatsGrid>
           )}
 
           {turntableStats.length > 0 && (
-            <TurntableGrid>
+            <TurntableGrid $columns={getOptimalColumns(turntableStats.length, 4)}>
               {turntableStats.map((stat, idx) => (
                 <TurntableStatComponent
                   key={stat.id}
@@ -1051,14 +1247,26 @@ function ImpactSection({
             </TurntableGrid>
           )}
 
-          {(highlightsTitle || highlightChips.length > 0 || highlightCards.length > 0) && (
+          {(highlightsTitle ||
+            highlightChips.length > 0 ||
+            highlightCards.length > 0) && (
             <HighlightsContainer aria-label="Program capacities">
-              {highlightsTitle && <HighlightsTitle $color={highlightsTitleColor}>{highlightsTitle}</HighlightsTitle>}
-              {highlightsSubtitle && <HighlightsSubtitle $color={highlightsSubtitleColor}>{highlightsSubtitle}</HighlightsSubtitle>}
+              {highlightsTitle && (
+                <HighlightsTitle $color={highlightsTitleColor}>
+                  {highlightsTitle}
+                </HighlightsTitle>
+              )}
+              {highlightsSubtitle && (
+                <HighlightsSubtitle $color={highlightsSubtitleColor}>
+                  {highlightsSubtitle}
+                </HighlightsSubtitle>
+              )}
               {highlightChips.length > 0 && (
                 <HighlightsRow>
                   {highlightChips.map((chip) => {
-                    const iconEntry = chip.iconKey ? getImpactIconByKey(chip.iconKey) : null;
+                    const iconEntry = chip.iconKey
+                      ? getImpactIconByKey(chip.iconKey)
+                      : null;
                     const IconComponent = iconEntry?.Icon;
                     return (
                       <HighlightChip
@@ -1082,8 +1290,12 @@ function ImpactSection({
                       $bgColor={highlightCardBgColor}
                       $borderColor={highlightCardBorderColor}
                     >
-                      <HighlightCardTitle $color={highlightCardTitleColor}>{card.title}</HighlightCardTitle>
-                      <HighlightCardText $color={highlightCardTextColor}>{card.text}</HighlightCardText>
+                      <HighlightCardTitle $color={highlightCardTitleColor}>
+                        {card.title}
+                      </HighlightCardTitle>
+                      <HighlightCardText $color={highlightCardTextColor}>
+                        {card.text}
+                      </HighlightCardText>
                     </HighlightCardStyled>
                   ))}
                 </HighlightCardsGrid>
@@ -1092,11 +1304,16 @@ function ImpactSection({
           )}
 
           {bottomImagesForBelt.length > 0 && (
-            <BeltContainer style={{ marginTop: '1.5rem' }}>
+            <BeltContainer style={{ marginTop: "1.5rem" }}>
               <BeltTrack $direction="right">
                 {bottomImagesForBelt.map((src, i) => (
                   <BeltCard key={`bottom-belt-${i}`}>
-                    <img src={src} alt="Program" loading="lazy" decoding="async" />
+                    <img
+                      src={src}
+                      alt="Program"
+                      loading="lazy"
+                      decoding="async"
+                    />
                   </BeltCard>
                 ))}
               </BeltTrack>
@@ -1106,37 +1323,56 @@ function ImpactSection({
       </ImpactContainer>
 
       {/* Measurement Section - fully data-driven from MongoDB */}
-      <MeasurementContainer ref={measureRef} $bgGradient={measureSectionBgGradient} $underlineColor={measureTitleHighlightColor}>
+      <MeasurementContainer
+        ref={measureRef}
+        $bgGradient={measureSectionBgGradient}
+        $underlineColor={measureTitleHighlightColor}
+      >
         <MeasurementWrapper>
           <MeasurementHeader>
-            <MeasureTitle $color={measureTitleColor} $highlightColor={measureTitleHighlightColor}>
+            <MeasureTitle
+              $color={measureTitleColor}
+              $highlightColor={measureTitleHighlightColor}
+            >
               {measureTitle && <span className="regular">{measureTitle} </span>}
-              {measureTitleHighlight && <span className="highlight">{measureTitleHighlight}</span>}
+              {measureTitleHighlight && (
+                <span className="highlight">{measureTitleHighlight}</span>
+              )}
             </MeasureTitle>
             {measureSubtitle && (
-              <SpotifySubtitle $color={measureSubtitleColor} style={{ marginTop: '0.1rem' }}>
+              <SpotifySubtitle
+                $color={measureSubtitleColor}
+                style={{ marginTop: "0.1rem" }}
+              >
                 {measureSubtitle}
               </SpotifySubtitle>
             )}
 
             <AudioWaveContainer>
               {[...Array(18)].map((_, i) => (
-                <AudioBar key={`audio-bar-${i}`} $index={i} $color={measureAudioBarColor} />
+                <AudioBar
+                  key={`audio-bar-${i}`}
+                  $index={i}
+                  $color={measureAudioBarColor}
+                />
               ))}
             </AudioWaveContainer>
           </MeasurementHeader>
 
           <SpotifyGrid>
             <div>
-              <MethodCard $bgColor={methodCardBgColor} $borderColor={methodCardBorderColor}>
+              <MethodCard
+                $bgColor={methodCardBgColor}
+                $borderColor={methodCardBorderColor}
+              >
                 {methodCardTitle && (
                   <h4
                     style={{
-                      color: methodCardTitleColor || 'white',
+                      color: methodCardTitleColor || "white",
                       fontWeight: 700,
-                      fontSize: '1.5rem',
-                      margin: '0 0 0.4rem 0',
-                      letterSpacing: '0.02em',
+                      fontSize: "1.5rem",
+                      margin: "0 0 0.4rem 0",
+                      letterSpacing: "0.02em",
                     }}
                   >
                     {methodCardTitle}
@@ -1145,18 +1381,20 @@ function ImpactSection({
                 {methodCardAccentGradient && (
                   <div
                     style={{
-                      width: '80px',
-                      height: '2.5px',
+                      width: "80px",
+                      height: "2.5px",
                       background: methodCardAccentGradient,
-                      borderRadius: '2px',
-                      marginBottom: '1.3rem',
+                      borderRadius: "2px",
+                      marginBottom: "1.3rem",
                     }}
                   />
                 )}
                 {methodItems.length > 0 && (
                   <SpotifyMethodsList>
                     {methodItems.map((item) => {
-                      const iconEntry = item.iconKey ? getImpactIconByKey(item.iconKey) : null;
+                      const iconEntry = item.iconKey
+                        ? getImpactIconByKey(item.iconKey)
+                        : null;
                       const IconComponent = iconEntry?.Icon;
                       return (
                         <SpotifyMethod
@@ -1181,9 +1419,9 @@ function ImpactSection({
                   <SpotifySubtitle
                     $color={methodCardFooterTextColor}
                     style={{
-                      fontSize: '1rem',
-                      marginTop: '2rem',
-                      maxWidth: '100%',
+                      fontSize: "1rem",
+                      marginTop: "2rem",
+                      maxWidth: "100%",
                     }}
                   >
                     {methodCardFooterText}
@@ -1200,51 +1438,58 @@ function ImpactSection({
               >
                 {toolsCardTitle && <h3>{toolsCardTitle}</h3>}
 
-                {toolItems.length > 0 && toolItems.map((tool) => (
-                  <ToolItem key={tool.id}>
-                    <ToolIcon $bgGradient={toolIconBgGradient}>
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M3 7.8C3 6.11984 3 5.27976 3.32698 4.63803C3.6146 4.07354 4.07354 3.6146 4.63803 3.32698C5.27976 3 6.11984 3 7.8 3H16.2C17.8802 3 18.7202 3 19.362 3.32698C19.9265 3.6146 20.3854 4.07354 20.673 4.63803C21 5.27976 21 6.11984 21 7.8V16.2C21 17.8802 21 18.7202 20.673 19.362C20.3854 19.9265 19.9265 20.3854 19.362 20.673C18.7202 21 17.8802 21 16.2 21H7.8C6.11984 21 5.27976 21 4.63803 20.673C4.07354 20.3854 3.6146 19.9265 3.32698 19.362C3 18.7202 3 17.8802 3 16.2V7.8Z"
-                          stroke="white"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M8.5 11L11.5 14L16 9"
-                          stroke="white"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </ToolIcon>
-                    <ToolInfo>
-                      <ToolNameStyled className="tool-name" $color={toolNameColor}>
-                        {tool.title}
-                      </ToolNameStyled>
-                      <ToolDescriptionStyled $color={toolDescriptionColor}>
-                        {tool.description}
-                      </ToolDescriptionStyled>
-                    </ToolInfo>
-                  </ToolItem>
-                ))}
+                {toolItems.length > 0 && (
+                  <ToolItemsGrid>
+                    {toolItems.map((tool) => (
+                      <ToolItem key={tool.id}>
+                        <ToolIcon $bgGradient={toolIconBgGradient}>
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M3 7.8C3 6.11984 3 5.27976 3.32698 4.63803C3.6146 4.07354 4.07354 3.6146 4.63803 3.32698C5.27976 3 6.11984 3 7.8 3H16.2C17.8802 3 18.7202 3 19.362 3.32698C19.9265 3.6146 20.3854 4.07354 20.673 4.63803C21 5.27976 21 6.11984 21 7.8V16.2C21 17.8802 21 18.7202 20.673 19.362C20.3854 19.9265 19.9265 20.3854 19.362 20.673C18.7202 21 17.8802 21 16.2 21H7.8C6.11984 21 5.27976 21 4.63803 20.673C4.07354 20.3854 3.6146 19.9265 3.32698 19.362C3 18.7202 3 17.8802 3 16.2V7.8Z"
+                              stroke="white"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <path
+                              d="M8.5 11L11.5 14L16 9"
+                              stroke="white"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </ToolIcon>
+                        <ToolInfo>
+                          <ToolNameStyled
+                            className="tool-name"
+                            $color={toolNameColor}
+                          >
+                            {tool.title}
+                          </ToolNameStyled>
+                          <ToolDescriptionStyled $color={toolDescriptionColor}>
+                            {tool.description}
+                          </ToolDescriptionStyled>
+                        </ToolInfo>
+                      </ToolItem>
+                    ))}
+                  </ToolItemsGrid>
+                )}
               </ToolsSection>
 
               {toolsFooterText && (
                 <SpotifySubtitle
                   $color={toolsFooterTextColor}
                   style={{
-                    fontSize: '0.95rem',
-                    margin: '1.5rem 0',
-                    textAlign: 'center',
+                    fontSize: "0.95rem",
+                    margin: "1.5rem 0",
+                    textAlign: "center",
                   }}
                 >
                   {toolsFooterText}

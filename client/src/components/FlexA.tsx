@@ -53,17 +53,29 @@ const Wrapper = styled.section<WrapperProps>`
   --sidebar-title-border-color: ${(p) => p.$sidebarTitleBorderColor || 'rgba(255, 255, 255, 0.1)'};
   --stat-number-color: ${(p) => p.$statNumberColor || '#fff'};
   --stat-label-color: ${(p) => p.$statLabelColor || 'rgba(255, 255, 255, 0.7)'};
+
+  @media (max-width: 768px) {
+    padding: 3rem 0;
+  }
 `;
 
 const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 2rem;
+
+  @media (max-width: 480px) {
+    padding: 0 1rem;
+  }
 `;
 
 const Header = styled.header`
   margin-bottom: 4rem;
   text-align: center;
+
+  @media (max-width: 768px) {
+    margin-bottom: 2rem;
+  }
 `;
 
 const Label = styled.span`
@@ -100,6 +112,11 @@ const Subhead = styled.p`
   margin: 1.5rem auto 0;
   line-height: 1.5;
   font-weight: 300;
+
+  @media (max-width: 768px) {
+    font-size: 1.1rem;
+    margin-top: 1rem;
+  }
 `;
 
 const HeroImage = styled.div<{ $src: string }>`
@@ -122,6 +139,14 @@ const HeroImage = styled.div<{ $src: string }>`
     height: 40%;
     background: linear-gradient(to top, var(--hero-overlay-color, rgba(15, 15, 15, 0.9)), transparent);
   }
+
+  @media (max-width: 768px) {
+    height: 40vh;
+    min-height: 200px;
+    max-height: 300px;
+    margin-bottom: 2rem;
+    border-radius: 12px;
+  }
 `;
 
 const ContentGrid = styled.div`
@@ -132,6 +157,11 @@ const ContentGrid = styled.div`
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  @media (max-width: 480px) {
+    gap: 1.5rem;
   }
 `;
 
@@ -152,6 +182,18 @@ const ArticleBody = styled.div`
     color: var(--primary-color, ${COLORS.gogo_yellow});
     font-weight: 900;
   }
+
+  @media (max-width: 768px) {
+    font-size: 1rem;
+
+    p {
+      margin-bottom: 1rem;
+    }
+
+    p:first-of-type::first-letter {
+      font-size: 2.5em;
+    }
+  }
 `;
 
 const Sidebar = styled.aside`
@@ -161,6 +203,10 @@ const Sidebar = styled.aside`
   padding: 2rem;
   border-radius: var(--sidebar-border-radius, 16px);
   border: 1px solid var(--sidebar-border-color, rgba(255, 255, 255, 0.05));
+
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+  }
 `;
 
 const SidebarTitle = styled.h3`
@@ -187,6 +233,10 @@ const StatNumber = styled.div`
   color: var(--stat-number-color, #fff);
   line-height: 1;
   margin-bottom: 0.25rem;
+
+  @media (max-width: 768px) {
+    font-size: 2rem;
+  }
 `;
 
 const StatLabel = styled.div`
@@ -204,6 +254,12 @@ const Quote = styled.blockquote`
   font-style: italic;
   color: var(--quote-text-color, #fff);
   font-weight: 500;
+
+  @media (max-width: 768px) {
+    padding: 1.25rem;
+    margin: 1.5rem 0;
+    font-size: 1.1rem;
+  }
 `;
 
 const QuoteAuthor = styled.cite`

@@ -3,6 +3,7 @@ import styled, { keyframes } from 'styled-components';
 import { animate, stagger } from 'animejs';
 import COLORS from '../../assets/colors';
 import { fetchCurriculumContent, CurriculumContent, CurriculumPedalCard, CurriculumTimelineItem } from '../services/impact.api';
+import { getOptimalColumns } from '../util/gridColumns';
 
 interface SectionProps {
   $bgGradient?: string;
@@ -109,7 +110,9 @@ const Title = styled.h2<TitleProps>`
   margin: 0 0 1rem;
   background: ${(p) => p.$gradient || `linear-gradient(90deg, ${COLORS.gogo_blue}, ${COLORS.gogo_teal})`};
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
+  color: transparent;
   letter-spacing: 0.02em;
 `;
 
@@ -143,9 +146,16 @@ const EqBar = styled.div<{ $h: number; $d: number; $c: string }>`
   animation-delay: ${(p) => p.$d}s;
 `;
 
-const Grid = styled.div`
+interface GridProps {
+  $columns?: number;
+}
+
+const Grid = styled.div<GridProps>`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: ${(p) => p.$columns 
+    ? `repeat(${p.$columns}, minmax(300px, 340px))` 
+    : 'repeat(auto-fit, minmax(300px, 340px))'};
+  justify-content: center;
   gap: 2rem;
   margin-top: 3rem;
 `;
@@ -570,7 +580,7 @@ function CurriculumSection({
         </Header>
 
         {pedalCards.length > 0 && (
-          <Grid>
+          <Grid $columns={getOptimalColumns(pedalCards.length, 3)}>
             {pedalCards.map((card, idx) => (
               <Pedal
                 key={card.id}

@@ -2358,4 +2358,3 @@ export async function saveFooterContent(
     return null;
   }
 }
-

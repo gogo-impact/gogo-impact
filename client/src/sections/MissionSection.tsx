@@ -112,6 +112,12 @@ const SectionContainer = styled.section<{
   text-align: ${(p) => p.$textAlign ?? 'center'};
   --section-underline: ${(p) => p.$underlineGradient || 'var(--spotify-green)'};
 
+  @media (max-width: 768px) {
+    padding: 1.5rem 0;
+    margin: 1rem 0;
+    border-radius: 8px;
+  }
+
   &::before {
     content: '';
     position: absolute;
@@ -154,6 +160,12 @@ const SectionHeader = styled.div`
   align-items: center;
   margin-bottom: 3rem;
   z-index: 1;
+
+  @media (max-width: 768px) {
+    margin-bottom: 1rem;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
 `;
 
 const SectionTitle = styled.h2<{
@@ -179,6 +191,10 @@ const SectionTitle = styled.h2<{
   position: relative;
   letter-spacing: 0.02em;
 
+  @media (max-width: 768px) {
+    font-size: 1.4rem;
+  }
+
   &::after {
     content: '';
     position: absolute;
@@ -190,6 +206,12 @@ const SectionTitle = styled.h2<{
     p.$underlineGradient ??
     'linear-gradient(to right, #5fa8d3, #7b7fd1)'};
     transition: width 0.3s ease;
+
+    @media (max-width: 768px) {
+      bottom: -6px;
+      width: 40px;
+      height: 3px;
+    }
   }
 
   &:hover::after {
@@ -210,26 +232,72 @@ const SpotifyBadge = styled.div<{
   border: 1px solid ${(p) => p.$border ?? 'rgba(255, 255, 255, 0.1)'};
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 
+  @media (max-width: 768px) {
+    padding: 0.35rem 0.75rem;
+  }
+
   .badge-icon {
     margin-right: 0.8rem;
     font-size: 1.2rem;
     color: ${(p) => p.$textColor ?? '#7b7fd1'};
+
+    @media (max-width: 768px) {
+      margin-right: 0.4rem;
+      font-size: 0.85rem;
+    }
   }
 
   span {
     font-size: 0.9rem;
     font-weight: 600;
     color: ${(p) => p.$textColor ?? 'rgba(255, 255, 255, 0.8)'};
+
+    @media (max-width: 768px) {
+      font-size: 0.65rem;
+    }
   }
 `;
 
-const StatsContainer = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+const StatsContainer = styled.div<{ $itemCount?: number }>`
+  display: flex;
+  flex-wrap: wrap;
   gap: 2rem;
   margin: 4rem 0 2rem;
   position: relative;
   z-index: 1;
+  justify-content: center;
+
+  /* At wide widths (>1000px): all items in one row
+     At narrower widths: 2x2 grid via media queries */
+  & > * {
+    /* Base: allow items to grow and shrink, with a min-width that allows 4 to fit */
+    flex: 1 1 200px;
+    min-width: 200px;
+    /* Max width prevents items from getting too wide when there are few items */
+    max-width: ${(p) => p.$itemCount && p.$itemCount <= 4 ? `calc((100% - ${(p.$itemCount - 1) * 2}rem) / ${p.$itemCount})` : '300px'};
+  }
+
+  /* Intermediate breakpoint: force 2x2 grid when viewport is between 768px and 1000px */
+  @media (max-width: 1000px) and (min-width: 769px) {
+    & > * {
+      /* Force 2 per row at intermediate widths - this prevents 3+1 layout */
+      flex: 1 1 calc(50% - 1rem);
+      min-width: calc(50% - 1rem);
+      max-width: calc(50% - 1rem);
+    }
+  }
+
+  @media (max-width: 768px) {
+    gap: 0.75rem;
+    margin: 1.5rem 0 1rem;
+    
+    & > * {
+      /* On mobile, always 2 per row */
+      flex: 1 1 calc(50% - 0.375rem);
+      min-width: calc(50% - 0.375rem);
+      max-width: calc(50% - 0.375rem);
+    }
+  }
 `;
 
 const AtGlanceLabel = styled.div<{ $color?: string | null }>`
@@ -243,6 +311,13 @@ const AtGlanceLabel = styled.div<{ $color?: string | null }>`
   gap: 0.6rem;
   margin: 2rem 0 0.5rem;
 
+  @media (max-width: 768px) {
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    margin: 1rem 0 0.25rem;
+    gap: 0.4rem;
+  }
+
   &::after {
     content: '';
     display: inline-block;
@@ -253,6 +328,11 @@ const AtGlanceLabel = styled.div<{ $color?: string | null }>`
       ? `linear-gradient(90deg, ${p.$color}, transparent)`
       : `linear-gradient(90deg, ${COLORS.gogo_blue}, transparent)`};
     border-radius: 2px;
+
+    @media (max-width: 768px) {
+      width: 30px;
+      height: 1.5px;
+    }
   }
 `;
 
@@ -270,6 +350,12 @@ const StatItem = styled.div<{ $borderColor?: string; $bgColor?: string; $borderW
   display: flex;
   flex-direction: column;
 
+  @media (max-width: 768px) {
+    border-radius: 8px;
+    padding: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
   &::before {
     content: '';
     position: absolute;
@@ -279,6 +365,10 @@ const StatItem = styled.div<{ $borderColor?: string; $bgColor?: string; $borderW
     height: 100%;
     background: ${(p) => p.$borderColor || COLORS.gogo_green};
     transition: width 0.3s ease, opacity 0.3s ease;
+
+    @media (max-width: 768px) {
+      width: ${(p) => Math.min((p.$borderWidth ?? 4), 3)}px;
+    }
   }
 
   /* Removed hardcoded nth-child colors to support customization */
@@ -289,6 +379,10 @@ const StatItem = styled.div<{ $borderColor?: string; $bgColor?: string; $borderW
       ? `0 15px 45px rgba(0, 0, 0, 0.5), 0 0 20px ${p.$borderColor || COLORS.gogo_green}40`
       : '0 15px 35px rgba(0, 0, 0, 0.5)'};
     border-color: ${(p) => p.$clickable ? `${p.$borderColor || COLORS.gogo_green}60` : 'rgba(255, 255, 255, 0.05)'};
+
+    @media (max-width: 768px) {
+      transform: translateY(-4px);
+    }
   }
 
   &:hover::before {
@@ -317,10 +411,23 @@ const ClickHint = styled.div<{ $color?: string }>`
   opacity: 0.7;
   transition: opacity 0.3s ease, color 0.3s ease;
 
+  @media (max-width: 768px) {
+    font-size: 0.5rem;
+    margin-top: 0.4rem;
+    padding-top: 0.4rem;
+    gap: 0.2rem;
+    letter-spacing: 0.04em;
+  }
+
   svg {
     width: 14px;
     height: 14px;
     transition: transform 0.3s ease;
+
+    @media (max-width: 768px) {
+      width: 10px;
+      height: 10px;
+    }
   }
 
   ${StatItem}:hover & {
@@ -343,6 +450,17 @@ const StatIcon = styled.div`
   margin: 0 auto 1rem;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
+
+  @media (max-width: 768px) {
+    width: 32px;
+    height: 32px;
+    margin: 0 auto 0.4rem;
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
 `;
 
 const StatContent = styled.div`
@@ -360,8 +478,15 @@ const StatNumber = styled.h3`
     ${(props) => props.color || COLORS.gogo_green}
   );
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
+  color: transparent;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+
+  @media (max-width: 768px) {
+    font-size: 1.4rem;
+    margin: 0 0 0.25rem;
+  }
 `;
 
 const StatLabel = styled.p`
@@ -369,6 +494,10 @@ const StatLabel = styled.p`
   color: rgba(255, 255, 255, 0.8);
   margin: 0;
   font-weight: 600;
+
+  @media (max-width: 768px) {
+    font-size: 0.6rem;
+  }
 `;
 
 const EqualizerBars = styled.div`
@@ -379,6 +508,12 @@ const EqualizerBars = styled.div`
   gap: 4px;
   margin-top: auto;
   padding-top: 1.5rem;
+
+  @media (max-width: 768px) {
+    height: 20px;
+    gap: 2px;
+    padding-top: 0.5rem;
+  }
 `;
 
 const EqualizerBar = styled.div<{ $color?: string; $animate?: boolean }>`
@@ -929,7 +1064,7 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element | null {
           {statsTitleText}
         </AtGlanceLabel>
 
-        <StatsContainer>
+        <StatsContainer $itemCount={computedStats.length}>
           {computedStats.map((stat: any, idx) => {
             // Use the computed action from stat (already respects toggle settings)
             const action: string = stat?.action ?? "none";

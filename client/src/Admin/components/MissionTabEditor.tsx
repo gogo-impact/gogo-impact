@@ -649,6 +649,8 @@ export function MissionTabEditor({
           const isMentors = s.id === 'mentors';
           const isSites = s.id === 'sites';
           const isDisciplines = s.id === 'disciplines';
+          // Check if this is one of the 4 special boxes that cannot be deleted
+          const isSpecialBox = isStudents || isMentors || isSites || isDisciplines;
           const displayLabel = s.label || (isStudents ? 'Students' : isMentors ? 'Paid Mentors' : isSites ? 'Sites' : isDisciplines ? 'Disciplines' : 'Stat Item');
 
           return (
@@ -702,9 +704,12 @@ export function MissionTabEditor({
                       </Button>
                     </Box>
                     <IconSelector label="Icon" value={(s.iconKey as ImpactIconKey) || ''} onChange={(iconKey) => { const next = [...mission.stats]; next[idx] = { ...s, iconKey: iconKey || null }; onMissionChange('stats', next); }} noneLabel="Default" />
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                      <IconButton onClick={() => { const next = mission.stats.filter((_, i) => i !== idx); onMissionChange('stats', next); }} color="error"><DeleteIcon /></IconButton>
-                    </Box>
+                    {/* Only show delete button for non-special boxes */}
+                    {!isSpecialBox && (
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <IconButton onClick={() => { const next = mission.stats.filter((_, i) => i !== idx); onMissionChange('stats', next); }} color="error"><DeleteIcon /></IconButton>
+                      </Box>
+                    )}
                   </Box>
                 </CardContent>
               </Card>

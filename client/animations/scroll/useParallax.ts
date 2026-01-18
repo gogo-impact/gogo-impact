@@ -187,3 +187,5 @@ export function calculateParallaxOffset(
 export default useParallax;
 
 
+
+

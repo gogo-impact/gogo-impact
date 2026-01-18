@@ -75,7 +75,9 @@ const Name = styled.h2<NameProps>`
   letter-spacing: 0.02em;
   background: ${(p) => p.$gradient || `linear-gradient(90deg, ${COLORS.gogo_yellow}, ${COLORS.gogo_teal})`};
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
+  color: transparent;
 `;
 
 // Animated equalizer bars for a musical vibe

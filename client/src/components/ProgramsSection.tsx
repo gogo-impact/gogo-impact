@@ -161,7 +161,9 @@ const SectionTitle = styled.h2`
   );
   background-size: 200% auto;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
+  color: transparent;
   animation: ${shimmer} 8s ease-in-out infinite;
 `;
 

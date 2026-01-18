@@ -36,6 +36,7 @@ const Container = styled.section<{
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.08);
   position: relative;
+  overflow: hidden;
   --section-underline: ${(p) => p.$underlineGradient || 'var(--spotify-green)'};
 
   &::before {
@@ -54,6 +55,13 @@ const Container = styled.section<{
       );
     pointer-events: none;
   }
+
+  @media (max-width: 768px) {
+    width: calc(100vw - 16px);
+    margin: 1rem auto;
+    padding: 1rem 0.5rem;
+    border-radius: 10px;
+  }
 `;
 
 const Title = styled.h1<{ $gradient?: string }>`
@@ -70,6 +78,12 @@ const Title = styled.h1<{ $gradient?: string }>`
   -webkit-text-fill-color: transparent;
   color: transparent;
   text-align: center;
+
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.03em;
+  }
 `;
 
 const SectionHeaderWrap = styled.div`
@@ -229,7 +243,9 @@ const BentoGrid = styled.div`
   margin: 3rem 0;
 
   @media (max-width: 900px) {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    margin: 1rem 0;
   }
 `;
 
@@ -245,7 +261,20 @@ const BentoCard = styled.div<{ $colSpan?: number; $bg?: string }>`
   overflow: hidden;
 
   @media (max-width: 900px) {
-    grid-column: span 12;
+    /* Full-width cards (6+ col) span 2, stat cards (3 col) span 1 */
+    grid-column: span ${(p) => (p.$colSpan && p.$colSpan >= 6) ? 2 : 1};
+    border-radius: 12px;
+    padding: 0.6rem;
+  }
+`;
+
+// Stat card variant for consistent sizing on mobile
+const StatBentoCard = styled(BentoCard)`
+  @media (max-width: 900px) {
+    grid-column: span 1;
+    min-height: 140px;
+    justify-content: center;
+    align-items: center;
   }
 `;
 
@@ -256,6 +285,12 @@ const CardTitle = styled.h3`
   display: flex;
   align-items: center;
   gap: 0.5rem;
+
+  @media (max-width: 768px) {
+    font-size: 0.7rem;
+    margin-bottom: 0.4rem;
+    gap: 0.25rem;
+  }
 `;
 
 // --- C-GAS Components ---
@@ -358,8 +393,10 @@ const ImageStrip = styled.div`
   display: flex;
   gap: 1.2rem;
   overflow-x: auto;
+  overflow-y: hidden;
   margin: 2.5rem 0 0 0;
   padding-bottom: 1rem;
+  max-width: 100%;
   mask-image: linear-gradient(
     to right,
     transparent 0,
@@ -374,6 +411,20 @@ const ImageStrip = styled.div`
     black calc(100% - 40px),
     transparent 100%
   );
+
+  /* Mobile: Hide scrollbar but allow touch scroll, prevent overflow outside container */
+  @media (max-width: 768px) {
+    gap: 0.8rem;
+    margin: 1.5rem 0 0 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    max-width: calc(100vw - 32px);
+    
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
 `;
 
 const StripImage = styled.img`
@@ -389,6 +440,7 @@ const StripImage = styled.img`
     transform 0.22s ease,
     box-shadow 0.22s ease,
     border-color 0.22s ease;
+  flex-shrink: 0;
 
   &:nth-child(even) {
     transform: rotate(1.5deg);
@@ -398,6 +450,12 @@ const StripImage = styled.img`
     transform: translateY(-4px) rotate(0deg);
     box-shadow: 0 14px 32px rgba(0, 0, 0, 0.6);
     border-color: rgba(255, 255, 255, 0.22);
+  }
+
+  @media (max-width: 768px) {
+    width: 120px;
+    height: 85px;
+    border-radius: 12px;
   }
 `;
 
@@ -414,6 +472,7 @@ const PieChartWrapper = styled.div`
   @media (max-width: 900px) {
     flex-direction: column;
     align-items: center;
+    gap: 0.5rem;
   }
 `;
 
@@ -421,6 +480,11 @@ const PieContainer = styled.div`
   width: 100%;
   height: 320px;
   min-height: 280px;
+
+  @media (max-width: 768px) {
+    height: 140px;
+    min-height: 120px;
+  }
 `;
 
 const LegendRow = styled.div`
@@ -434,6 +498,8 @@ const LegendRow = styled.div`
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
   }
 `;
 
@@ -450,6 +516,12 @@ const LegendChip = styled.span`
   font-weight: 700;
   cursor: pointer;
   transition: all 0.18s ease;
+
+  @media (max-width: 768px) {
+    font-size: 0.5rem;
+    padding: 0.2rem 0.4rem;
+    gap: 0.2rem;
+  }
 
   &:hover {
     transform: translateY(-1px) scale(1.02);
@@ -503,6 +575,15 @@ const PercentCircle = styled.div<{
   margin-left: auto;
   margin-right: auto;
 
+  @media (max-width: 768px) {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 0.5rem;
+    box-shadow:
+      0 0 0 2px rgba(255, 255, 255, 0.06),
+      0 8px 20px rgba(0, 0, 0, 0.4);
+  }
+
   &::before {
     content: "";
     position: absolute;
@@ -515,6 +596,10 @@ const PercentCircle = styled.div<{
       ),
       ${(p) => p.$innerBgColor || "rgba(6, 6, 6, 0.96)"};
     box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.9);
+
+    @media (max-width: 768px) {
+      inset: 8px;
+    }
   }
 `;
 
@@ -529,6 +614,10 @@ const PercentText = styled.span<{ $gradient?: string }>`
   color: transparent;
   position: relative;
   z-index: 2;
+
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
 `;
 
 const CardLabel = styled.div`
@@ -537,6 +626,12 @@ const CardLabel = styled.div`
   margin-top: 0.25rem;
   text-align: center;
   line-height: 1.5;
+
+  @media (max-width: 768px) {
+    font-size: 0.55rem;
+    line-height: 1.3;
+    margin-top: 0.15rem;
+  }
 `;
 
 const pieTheme = {
@@ -839,7 +934,7 @@ function PopulationComponent({
         </BentoCard>
 
         {/* Academic Gains */}
-        <BentoCard $colSpan={3} $bg={bentoCardBgColor}>
+        <StatBentoCard $colSpan={3} $bg={bentoCardBgColor}>
           <PercentCircle
             $percent={stat1Percent}
             $accent={stat1Color}
@@ -848,10 +943,10 @@ function PopulationComponent({
             <PercentText>{stat1Percent}%</PercentText>
           </PercentCircle>
           <CardLabel>{stat1Text}</CardLabel>
-        </BentoCard>
+        </StatBentoCard>
 
         {/* Conduct Improvement */}
-        <BentoCard $colSpan={3} $bg={bentoCardBgColor}>
+        <StatBentoCard $colSpan={3} $bg={bentoCardBgColor}>
           <PercentCircle
             $percent={stat2Percent}
             $accent={stat2Color}
@@ -860,7 +955,7 @@ function PopulationComponent({
             <PercentText>{stat2Percent}%</PercentText>
           </PercentCircle>
           <CardLabel>{stat2Text}</CardLabel>
-        </BentoCard>
+        </StatBentoCard>
 
         {/* C-GAS Stats - Wide Strip */}
         <BentoCard
@@ -931,11 +1026,13 @@ function PopulationComponent({
       </div>
 
       {!inline && (
-        <ImageStrip className="animate-in">
-          {photos.map((photo, i) => (
-            <StripImage key={i} src={photo} alt={`GOGO Student ${i + 1}`} loading="lazy" decoding="async" />
-          ))}
-        </ImageStrip>
+        <div style={{ overflow: 'hidden', maxWidth: '100%' }}>
+          <ImageStrip className="animate-in">
+            {photos.map((photo, i) => (
+              <StripImage key={i} src={photo} alt={`GOGO Student ${i + 1}`} loading="lazy" decoding="async" />
+            ))}
+          </ImageStrip>
+        </div>
       )}
     </Container>
   );

@@ -99,7 +99,9 @@ const Title = styled.h2<{ $gradient?: string }>`
   font-family: 'Airwaves', 'Century Gothic', 'Arial', sans-serif;
   background: ${(p) => p.$gradient || `linear-gradient(135deg, #ffffff 0%, #e0e0e0 50%, ${COLORS.gogo_blue} 100%)`};
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
+  color: transparent;
 `;
 
 const Subtitle = styled.p<{ $color?: string }>`

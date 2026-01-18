@@ -27,6 +27,10 @@ const FooterWrapper = styled.footer<{
   padding: 4rem 0 2rem;
   position: relative;
   overflow: hidden;
+
+  @media (max-width: 768px) {
+    padding: 2.5rem 0 1.5rem;
+  }
 `;
 
 const TopBorder = styled.div<{ $gradient?: string }>`
@@ -54,6 +58,11 @@ const FooterGrid = styled.div`
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0 1rem;
   }
 `;
 
@@ -64,6 +73,14 @@ const FooterLogo = styled.div<{ $width?: number }>`
     max-width: ${({ $width }) => $width || 180}px;
     height: auto;
   }
+
+  @media (max-width: 768px) {
+    margin-bottom: 1.5rem;
+
+    img {
+      max-width: 150px;
+    }
+  }
 `;
 
 const FooterAbout = styled.div<{ $color?: string }>`
@@ -72,6 +89,11 @@ const FooterAbout = styled.div<{ $color?: string }>`
   color: ${({ $color }) => $color || 'rgba(255, 255, 255, 0.6)'};
   max-width: 400px;
   margin-bottom: 2rem;
+
+  @media (max-width: 768px) {
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+  }
 `;
 
 const FooterColumnWrapper = styled.div``;
@@ -83,6 +105,11 @@ const FooterColumnTitle = styled.h3<{ $color?: string }>`
   margin-bottom: 1.5rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
 `;
 
 const FooterLinks = styled.ul`
@@ -137,6 +164,15 @@ const SocialIcon = styled.a<{
   svg {
     font-size: 1.2rem;
   }
+
+  @media (max-width: 768px) {
+    width: 36px;
+    height: 36px;
+
+    svg {
+      font-size: 1rem;
+    }
+  }
 `;
 
 const BottomBar = styled.div<{ $bgColor?: string; $borderColor?: string }>`
@@ -150,6 +186,13 @@ const BottomBar = styled.div<{ $bgColor?: string; $borderColor?: string }>`
   align-items: center;
   flex-wrap: wrap;
   gap: 1rem;
+
+  @media (max-width: 768px) {
+    margin-top: 2rem;
+    padding: 1.5rem 1rem;
+    flex-direction: column;
+    text-align: center;
+  }
 `;
 
 const Copyright = styled.div<{ $color?: string }>`
@@ -164,6 +207,8 @@ const LegalLinks = styled.div<{
 }>`
   display: flex;
   gap: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
 
   a {
     font-size: 0.8rem;
@@ -173,6 +218,10 @@ const LegalLinks = styled.div<{
     &:hover {
       color: ${({ $linkHoverColor }) => $linkHoverColor || 'white'};
     }
+  }
+
+  @media (max-width: 768px) {
+    gap: 1rem;
   }
 `;
 
