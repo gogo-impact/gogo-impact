@@ -2754,35 +2754,41 @@ function ImpactReportCustomizationPage() {
                     >
                       Discard Changes
                     </Button>
-                    <Button
-                      variant="contained"
-                      startIcon={<PictureAsPdfIcon />}
-                      onClick={handleDownloadPDF}
-                      sx={{
-                        bgcolor: COLORS.gogo_purple,
-                        "&:hover": { bgcolor: "#513ea1" },
-                      }}
-                    >
-                      Download PDF
-                    </Button>
-                    <Tooltip title="View version history, create snapshots, and restore previous configurations">
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                       <Button
-                        variant="outlined"
-                        color="inherit"
-                        startIcon={<HistoryIcon />}
-                        onClick={handleOpenHistory}
-                        disabled={isDirty}
+                        variant="contained"
+                        size="small"
+                        startIcon={<PictureAsPdfIcon />}
+                        onClick={handleDownloadPDF}
                         sx={{
-                          borderColor: 'rgba(255,255,255,0.3)',
-                          '&:hover': {
-                            borderColor: COLORS.gogo_purple,
-                            bgcolor: 'rgba(255,255,255,0.05)',
-                          },
+                          bgcolor: COLORS.gogo_purple,
+                          "&:hover": { bgcolor: "#513ea1" },
+                          py: 0.5,
                         }}
                       >
-                        Version History
+                        Download PDF
                       </Button>
-                    </Tooltip>
+                      <Tooltip title="View version history, create snapshots, and restore previous configurations">
+                        <Button
+                          variant="outlined"
+                          color="inherit"
+                          size="small"
+                          startIcon={<HistoryIcon />}
+                          onClick={handleOpenHistory}
+                          disabled={isDirty}
+                          sx={{
+                            borderColor: 'rgba(255,255,255,0.3)',
+                            '&:hover': {
+                              borderColor: COLORS.gogo_purple,
+                              bgcolor: 'rgba(255,255,255,0.05)',
+                            },
+                            py: 0.5,
+                          }}
+                        >
+                          Version History
+                        </Button>
+                      </Tooltip>
+                    </Box>
                   </Box>
                 </Box>
               </CustomPaper>
