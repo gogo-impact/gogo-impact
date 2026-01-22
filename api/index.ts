@@ -15,7 +15,10 @@ async function getClient(): Promise<MongoClient> {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const path = req.url?.replace(/^\/api/, '') || '/';
+  // Extract path from query parameter (set by Vercel rewrite) or URL
+  const queryPath = req.query.path as string | undefined;
+  const urlPath = req.url?.split('?')[0]?.replace(/^\/api/, '') || '/';
+  const path = queryPath ? `/${queryPath}` : urlPath;
   
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
