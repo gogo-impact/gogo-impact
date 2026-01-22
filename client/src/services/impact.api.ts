@@ -799,8 +799,6 @@ export interface PartnersContent {
 // 3) Render using the publicUrl
 
 
-  (import.meta.env.VITE_BACKEND_URL as string | undefined) ?? DEFAULT_BACKEND_URL;
-
 export async function fetchHeroContent(): Promise<HeroContent | null> {
   try {
     const url = `${API_BASE_URL}/api/impact/hero`;
